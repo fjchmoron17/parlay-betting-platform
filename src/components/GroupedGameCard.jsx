@@ -1,0 +1,270 @@
+import React, { useState } from "react";
+
+const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
+  const [selectedMarket, setSelectedMarket] = useState({});
+
+  const selectOption = (market, team, odds, gameId) => {
+    setSelectedMarket(prev => ({
+      ...prev,
+      [market]: team
+    }));
+    onSelect(gameId, team, odds, {
+      homeTeam: firstGame.home_team,
+      awayTeam: firstGame.away_team,
+      league: firstGame.league,
+      market: market,
+    });
+  };
+
+  // Agrupar por mercado
+  const marketGroups = {
+    h2h: gameGroup.find(g => g.market === 'h2h'),
+    spreads: gameGroup.find(g => g.market === 'spreads'),
+    totals: gameGroup.find(g => g.market === 'totals')
+  };
+
+  const firstGame = gameGroup[0];
+  const matchupTitle = `${firstGame.home_team} vs ${firstGame.away_team}`;
+
+  return (
+    <div className="match-group mb-6">
+      {/* Header con equipos y info */}
+      <div className="match-header mb-3">
+        <div>
+          <h3 className="text-lg font-bold">{matchupTitle}</h3>
+          <p className="text-xs text-gray-600">
+            {firstGame.league || 'OTHER'} • {firstGame.sportTitle || 'Desconocido'}
+          </p>
+        </div>
+        {firstGame.status === 'live' && (
+          <span className="badge badge-success pulse">🔴 VIVO</span>
+        )}
+      </div>
+
+      <p className="text-sm text-gray-500 mb-4">
+        ⏰ {new Date(firstGame.game_time).toLocaleString()}
+      </p>
+
+      {/* Grid de 3 columnas */}
+      <div className="market-grid">
+        {/* Columna H2H */}
+        {marketGroups.h2h ? (
+          <div className="market-column">
+            <div className="market-title">🏆 Head to Head</div>
+            <div className="market-options">
+              <button
+                className={`market-btn ${
+                  selectedMarket.h2h === marketGroups.h2h.home_team
+                    ? "market-btn-selected"
+                    : ""
+                }`}
+                onClick={() => selectOption(
+                  'h2h',
+                  marketGroups.h2h.home_team,
+                  marketGroups.h2h.odds_home,
+                  marketGroups.h2h.id
+                )}
+              >
+                <span className="team-name">{marketGroups.h2h.home_team}</span>
+                <span className="odds">@{marketGroups.h2h.odds_home}</span>
+              </button>
+
+              {marketGroups.h2h.odds_draw && (
+                <button
+                  className={`market-btn market-btn-draw ${
+                    selectedMarket.h2h === 'Draw' ? "market-btn-selected" : ""
+                  }`}
+                  onClick={() => selectOption(
+                    'h2h',
+                    'Draw',
+                    marketGroups.h2h.odds_draw,
+                    marketGroups.h2h.id
+                  )}
+                >
+                  <span className="team-name">Empate</span>
+                  <span className="odds">@{marketGroups.h2h.odds_draw}</span>
+                </button>
+              )}
+
+              <button
+                className={`market-btn ${
+                  selectedMarket.h2h === marketGroups.h2h.away_team
+                    ? "market-btn-selected"
+                    : ""
+                }`}
+                onClick={() => selectOption(
+                  'h2h',
+                  marketGroups.h2h.away_team,
+                  marketGroups.h2h.odds_away,
+                  marketGroups.h2h.id
+                )}
+              >
+                <span className="team-name">{marketGroups.h2h.away_team}</span>
+                <span className="odds">@{marketGroups.h2h.odds_away}</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="market-column market-column-empty">
+            <div className="market-title">🏆 Head to Head</div>
+            <div className="market-empty">No disponible</div>
+          </div>
+        )}
+
+        {/* Columna Spreads */}
+        {marketGroups.spreads ? (
+          <div className="market-column">
+            <div className="market-title">📊 Spreads</div>
+            <div className="market-options">
+              <button
+                className={`market-btn ${
+                  selectedMarket.spreads === marketGroups.spreads.home_team
+                    ? "market-btn-selected"
+                    : ""
+                }`}
+                onClick={() => selectOption(
+                  'spreads',
+                  marketGroups.spreads.home_team,
+                  marketGroups.spreads.odds_home,
+                  marketGroups.spreads.id
+                )}
+              >
+                <span className="team-name">
+                  {marketGroups.spreads.home_team}
+                  {marketGroups.spreads.point_home && (
+                    <span className="reference-value">
+                      {marketGroups.spreads.point_home > 0 ? '+' : ''}{marketGroups.spreads.point_home}
+                    </span>
+                  )}
+                </span>
+                <span className="odds">@{marketGroups.spreads.odds_home}</span>
+              </button>
+
+              {marketGroups.spreads.odds_draw && (
+                <button
+                  className={`market-btn market-btn-draw ${
+                    selectedMarket.spreads === 'Draw' ? "market-btn-selected" : ""
+                  }`}
+                  onClick={() => selectOption(
+                    'spreads',
+                    'Draw',
+                    marketGroups.spreads.odds_draw,
+                    marketGroups.spreads.id
+                  )}
+                >
+                  <span className="team-name">Empate</span>
+                  <span className="odds">@{marketGroups.spreads.odds_draw}</span>
+                </button>
+              )}
+
+              <button
+                className={`market-btn ${
+                  selectedMarket.spreads === marketGroups.spreads.away_team
+                    ? "market-btn-selected"
+                    : ""
+                }`}
+                onClick={() => selectOption(
+                  'spreads',
+                  marketGroups.spreads.away_team,
+                  marketGroups.spreads.odds_away,
+                  marketGroups.spreads.id
+                )}
+              >
+                <span className="team-name">
+                  {marketGroups.spreads.away_team}
+                  {marketGroups.spreads.point_away && (
+                    <span className="reference-value">
+                      {marketGroups.spreads.point_away > 0 ? '+' : ''}{marketGroups.spreads.point_away}
+                    </span>
+                  )}
+                </span>
+                <span className="odds">@{marketGroups.spreads.odds_away}</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="market-column market-column-empty">
+            <div className="market-title">📊 Spreads</div>
+            <div className="market-empty">No disponible</div>
+          </div>
+        )}
+
+        {/* Columna Totals */}
+        {marketGroups.totals ? (
+          <div className="market-column">
+            <div className="market-title">➕ Totales</div>
+            <div className="market-options">
+              <button
+                className={`market-btn ${
+                  selectedMarket.totals === marketGroups.totals.home_team
+                    ? "market-btn-selected"
+                    : ""
+                }`}
+                onClick={() => selectOption(
+                  'totals',
+                  marketGroups.totals.home_team,
+                  marketGroups.totals.odds_home,
+                  marketGroups.totals.id
+                )}
+              >
+                <span className="team-name">
+                  Over
+                  {marketGroups.totals.point_home && (
+                    <span className="reference-value">{marketGroups.totals.point_home}</span>
+                  )}
+                </span>
+                <span className="odds">@{marketGroups.totals.odds_home}</span>
+              </button>
+
+              {marketGroups.totals.odds_draw && (
+                <button
+                  className={`market-btn market-btn-draw ${
+                    selectedMarket.totals === 'Draw' ? "market-btn-selected" : ""
+                  }`}
+                  onClick={() => selectOption(
+                    'totals',
+                    'Draw',
+                    marketGroups.totals.odds_draw,
+                    marketGroups.totals.id
+                  )}
+                >
+                  <span className="team-name">Empate</span>
+                  <span className="odds">@{marketGroups.totals.odds_draw}</span>
+                </button>
+              )}
+
+              <button
+                className={`market-btn ${
+                  selectedMarket.totals === marketGroups.totals.away_team
+                    ? "market-btn-selected"
+                    : ""
+                }`}
+                onClick={() => selectOption(
+                  'totals',
+                  marketGroups.totals.away_team,
+                  marketGroups.totals.odds_away,
+                  marketGroups.totals.id
+                )}
+              >
+                <span className="team-name">
+                  Under
+                  {marketGroups.totals.point_away && (
+                    <span className="reference-value">{marketGroups.totals.point_away}</span>
+                  )}
+                </span>
+                <span className="odds">@{marketGroups.totals.odds_away}</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="market-column market-column-empty">
+            <div className="market-title">➕ Totales</div>
+            <div className="market-empty">No disponible</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default GroupedGameCard;
