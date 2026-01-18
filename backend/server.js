@@ -8,7 +8,14 @@ import gamesRoutes from './routes/games.js';
 import betsRoutes from './routes/bets.js';
 
 // Load environment variables
-dotenv.config();
+// En Railway, las variables están en el sistema. dotenv solo lee archivos locales.
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
+
+console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`📝 ODDS_API_KEY available: ${!!process.env.ODDS_API_KEY}`);
+console.log(`📝 PORT: ${process.env.PORT || 3333}`);
 
 const app = express();
 const PORT = process.env.PORT || 3333;
