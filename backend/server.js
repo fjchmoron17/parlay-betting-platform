@@ -9,6 +9,8 @@ import betsRoutes from './routes/bets.js';
 
 // Load environment variables
 // En Railway, las variables están en el sistema. dotenv solo lee archivos locales.
+// Pero como fallback, también intentamos leer .env.production
+dotenv.config({ path: '.env.production' });
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
