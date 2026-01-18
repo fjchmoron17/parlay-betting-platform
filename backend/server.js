@@ -57,7 +57,9 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    apiKeyConfigured: !!process.env.ODDS_API_KEY && process.env.ODDS_API_KEY !== 'YOUR_API_KEY_HERE',
+    apiKeyLength: process.env.ODDS_API_KEY?.length || 0
   });
 });
 
