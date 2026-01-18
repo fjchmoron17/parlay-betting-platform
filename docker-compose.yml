@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3333:3333"
+    environment:
+      - NODE_ENV=production
+      - ODDS_API_KEY=${ODDS_API_KEY}
+      - ODDS_API_BASE_URL=https://api.the-odds-api.com/v4
+      - CORS_ORIGIN=${CORS_ORIGIN}
+    volumes:
+      - ./backend/data:/app/backend/data
+    restart: unless-stopped

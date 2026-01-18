@@ -7,39 +7,58 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import gamesRoutes from './routes/games.js';
 import betsRoutes from './routes/bets.js';
 
-dotenv.config({ path: '/Users/fjchmoron/Documents/PARLAY_SITE/backend/.env' });
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3333;
 
-// Middleware
+// Middleware - CORS Configuration
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'http://localhost:5173',
   'https://parlay-betting-platform-production.up.railway.app'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    // In production, allow all origins OR specific allowed origins
+    if (process.env.NODE_ENV === 'production') {
+      // Allow all origins in production for mobile/international access
+      callback(null, true);
+    } else if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+// Additional headers for mobile and international access
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  next();
+});
+
 // Health Check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // API Routes
@@ -53,11 +72,12 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Start Server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
   ╔════════════════════════════════════╗
   ║   🎰 PARLAY BETS BACKEND RUNNING   ║
-  ║   🌐 http://localhost:${PORT}             ║
+  ║   🌐 Port: ${PORT}                      ║
+  ║   🌍 ENV: ${process.env.NODE_ENV || 'development'}     ║
   ║   📦 API: /api/games               ║
   ║   📦 API: /api/bets                ║
   ╚════════════════════════════════════╝

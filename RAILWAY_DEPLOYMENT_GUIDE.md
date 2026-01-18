@@ -36,21 +36,28 @@ PRODUCTION_URL=https://parlay-betting-platform-production.up.railway.app
 
 1. **Environment Variables in Railway Dashboard:**
    - `NODE_ENV=production`
-   - `PORT=3333` (or Railway's assigned PORT)
+   - `PORT` (Railway asigna automáticamente)
    - `ODDS_API_KEY=e9b92b60bc4085d52d1d5f8c5b33bd4c`
    - `ODDS_API_BASE_URL=https://api.the-odds-api.com/v4`
 
-2. **Deploy Backend:**
+2. **Important CORS Updates:**
+   - ✅ Backend ahora permite TODOS los orígenes en producción
+   - ✅ Compatible con acceso internacional y desde móviles
+   - ✅ Headers optimizados para cross-origin requests
+   - ✅ Escucha en `0.0.0.0` para Railway compatibility
+
+3. **Deploy Backend:**
    ```bash
    # Push changes to Railway
    git add .
-   git commit -m "Fix CORS configuration"
-   git push railway main
+   git commit -m "Fix CORS for international and mobile access"
+   git push origin main
    ```
 
-3. **Verify Backend URL:**
+4. **Verify Backend URL:**
    - Check Railway dashboard for your backend URL
    - Should be something like: `https://parlay-api-prod.up.railway.app`
+   - Test from mobile: `curl https://YOUR-BACKEND-URL.railway.app/health`
 
 ### Frontend Deployment (Railway)
 
