@@ -47,8 +47,7 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
     const baseUrl = process.env.ODDS_API_BASE_URL || 'https://api.the-odds-api.com/v4';
 
     if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-      console.warn('⚠️ The Odds API key no está configurada. Usando datos mock.');
-      return getGamesMock(league);
+      throw new Error('❌ ODDS_API_KEY no está configurada en el backend');
     }
 
     let allGames = [];
@@ -118,8 +117,7 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
     }
 
     if (allGames.length === 0) {
-      console.warn('⚠️ No games found from The Odds API, using mock data');
-      return getGamesMock(league);
+      throw new Error('❌ No games found from The Odds API');
     }
 
     return {
@@ -132,7 +130,10 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
     };
   } catch (error) {
     console.error('Error fetching games from The Odds API:', error.message);
-    return getGamesMock(league);
+    return {
+      success: false,
+      error: error.message
+    };
   }
 };
 
