@@ -5,7 +5,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api'
 // Función auxiliar para manejar peticiones
 const fetchAPI = async (endpoint, options = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -13,12 +14,37 @@ const fetchAPI = async (endpoint, options = {}) => {
       ...options,
     });
 
+    const contentType = response.headers.get('content-type') || '';
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'API Error');
+      let errorMessage = `HTTP ${response.status} ${response.statusText}`;
+      if (contentType.includes('application/json')) {
+        try {
+          const errorBody = await response.json();
+          errorMessage = errorBody?.error || errorBody?.message || errorMessage;
+        } catch (_) {
+          // ignore JSON parse error, keep default message
+        }
+      } else {
+        try {
+          const text = await response.text();
+          if (text) errorMessage = text;
+        } catch (_) {
+          // ignore text read error
+        }
+      }
+      const err = new Error(errorMessage);
+      err.status = response.status;
+      err.url = url;
+      throw err;
     }
 
-    return await response.json();
+    if (contentType.includes('application/json')) {
+      return await response.json();
+    }
+    // Fallback in case a non-JSON success is returned
+    const text = await response.text();
+    return { success: false, error: text || 'Unexpected non-JSON response' };
   } catch (error) {
     console.error('API Error:', error);
     throw error;
