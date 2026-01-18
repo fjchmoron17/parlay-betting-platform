@@ -4,23 +4,20 @@ export const SPORTS_API = {
     BASE_URL: process.env.ODDS_API_BASE_URL || 'https://api.the-odds-api.com/v4',
     API_KEY: process.env.ODDS_API_KEY,
     SPORTS_MAP: {
-      'NFL': 'americanfootball_nfl',
-      'NBA': 'basketball_nba',
-      'MLB': 'baseball_mlb',
-      'NHL': 'icehockey_nhl',
+      'NFL': ['americanfootball_nfl'],
+      'NBA': ['basketball_nba'],
+      'MLB': ['baseball_mlb'],
+      'NHL': ['icehockey_nhl'],
+      'NCAAB': ['basketball_ncaab'],
       'SOCCER': [
         'soccer_epl',
-        'soccer_la_liga',
-        'soccer_bundesliga',
-        'soccer_serie_a',
-        'soccer_ligue_1',
-        'soccer_championship',
-        'soccer_primeira_liga'
+        'soccer_spain_la_liga',
+        'soccer_germany_bundesliga',
+        'soccer_italy_serie_a',
+        'soccer_france_ligue_one',
+        'soccer_uefa_champs_league'
       ],
-      'TENNIS': ['tennis_atp', 'tennis_wta'],
-      'CRICKET': ['cricket_test', 'cricket_odi'],
-      'RUGBY': 'rugby_union',
-      'GOLF': 'golf_pga'
+      'TENNIS': ['tennis_atp_aus_open_singles', 'tennis_wta_aus_open_singles']
     },
     BOOKMAKERS: ['draftkings', 'fanduel', 'betmgm', 'betrivers'],
     MARKETS: {
