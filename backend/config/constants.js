@@ -54,7 +54,8 @@ export const MOCK_GAMES = [
     game_time: new Date(Date.now() + 86400000).toISOString(),
     odds_home: 1.85,
     odds_away: 2.10,
-    status: 'upcoming'
+    status: 'upcoming',
+    market: 'h2h'
   },
   {
     id: 'nba_20240118_bos_mia',
@@ -64,7 +65,8 @@ export const MOCK_GAMES = [
     game_time: new Date(Date.now() + 172800000).toISOString(),
     odds_home: 1.95,
     odds_away: 1.90,
-    status: 'upcoming'
+    status: 'upcoming',
+    market: 'h2h'
   },
   {
     id: 'mlb_20240118_lad_sd',
@@ -74,7 +76,8 @@ export const MOCK_GAMES = [
     game_time: new Date(Date.now() + 259200000).toISOString(),
     odds_home: 2.0,
     odds_away: 4.0,
-    status: 'upcoming'
+    status: 'upcoming',
+    market: 'h2h'
   },
   {
     id: 'mlb_20240118_nyy_bos',
@@ -84,7 +87,8 @@ export const MOCK_GAMES = [
     game_time: new Date(Date.now() + 345600000).toISOString(),
     odds_home: 1.70,
     odds_away: 2.30,
-    status: 'upcoming'
+    status: 'upcoming',
+    market: 'h2h'
   },
   {
     id: 'nfl_20240118_kc_buf',
@@ -94,6 +98,7 @@ export const MOCK_GAMES = [
     game_time: new Date(Date.now() + 432000000).toISOString(),
     odds_home: 1.75,
     odds_away: 2.20,
-    status: 'upcoming'
+    status: 'upcoming',
+    market: 'h2h'
   }
 ];
