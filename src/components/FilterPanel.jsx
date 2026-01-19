@@ -14,6 +14,13 @@ const FilterPanel = ({ onFilterChange }) => {
     'au': '🇦🇺 Australia'
   };
 
+  const regionDescriptions = {
+    'us': 'Casas de apuestas: DraftKings, FanDuel, BetMGM, etc.',
+    'uk': 'Casas de apuestas: Bet365, William Hill, Ladbrokes, etc.',
+    'eu': 'Casas de apuestas europeas',
+    'au': 'Casas de apuestas australianas'
+  };
+
   // Cargar deportes disponibles
   useEffect(() => {
     loadSports();
@@ -92,20 +99,24 @@ const FilterPanel = ({ onFilterChange }) => {
         {/* Selector de Región */}
         <div className="filter-group">
           <label htmlFor="region-select" className="filter-label">
-            🌍 Región
+            🌍 Casas de Apuestas por Región
           </label>
           <select
             id="region-select"
             value={selectedRegion}
             onChange={handleRegionChange}
             className="filter-select"
+            title={regionDescriptions[selectedRegion]}
           >
             {Object.entries(regions).map(([key, label]) => (
-              <option key={key} value={key}>
+              <option key={key} value={key} title={regionDescriptions[key]}>
                 {label}
               </option>
             ))}
           </select>
+          <small className="filter-hint">
+            {regionDescriptions[selectedRegion]}
+          </small>
         </div>
 
         {/* Botón de Limpiar Filtros */}

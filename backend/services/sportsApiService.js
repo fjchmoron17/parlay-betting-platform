@@ -153,31 +153,36 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
 
             console.log(`✅ Got ${response.data.length} games from ${sport} (${currentMarket})`);
 
-            const mappedGames = response.data.map(game => {
-              const homeOdds = getOdds(game, 'home', currentMarket);
-              const awayOdds = getOdds(game, 'away', currentMarket);
-              const drawOdds = getOdds(game, 'draw', currentMarket);
-              
-              return {
-                id: game.id,
-                league: mapSportToLeague(game.sport_title),
-                sportKey: game.sport_key,
-                sportTitle: game.sport_title,
-                home_team: game.home_team,
-                away_team: game.away_team,
-                game_time: game.commence_time,
-                odds_home: homeOdds.price,
-                odds_away: awayOdds.price,
-                odds_draw: drawOdds.price,
-                point_home: homeOdds.point, // Punto spread o total
-                point_away: awayOdds.point,
-                point_draw: drawOdds.point,
-                status: new Date(game.commence_time) > new Date() ? 'upcoming' : 'live',
-                market: currentMarket,
-                bookmakers: game.bookmakers?.slice(0, 3) // Limitar a 3 bookmakers
-              };
-            });
+            const mappedGames = response.data
+              .filter(game => game.bookmakers && game.bookmakers.length > 0) // Solo juegos con bookmakers disponibles
+              .map(game => {
+                const homeOdds = getOdds(game, 'home', currentMarket);
+                const awayOdds = getOdds(game, 'away', currentMarket);
+                const drawOdds = getOdds(game, 'draw', currentMarket);
+                
+                return {
+                  id: game.id,
+                  league: mapSportToLeague(game.sport_title),
+                  sportKey: game.sport_key,
+                  sportTitle: game.sport_title,
+                  home_team: game.home_team,
+                  away_team: game.away_team,
+                  game_time: game.commence_time,
+                  odds_home: homeOdds.price,
+                  odds_away: awayOdds.price,
+                  odds_draw: drawOdds.price,
+                  point_home: homeOdds.point, // Punto spread o total
+                  point_away: awayOdds.point,
+                  point_draw: drawOdds.point,
+                  status: new Date(game.commence_time) > new Date() ? 'upcoming' : 'live',
+                  market: currentMarket,
+                  bookmakers: game.bookmakers?.slice(0, 3), // Limitar a 3 bookmakers
+                  bookmakerCount: game.bookmakers?.length || 0,
+                  region: region // Indicar la región de los bookmakers
+                };
+              });
 
+            console.log(`✅ Filtered to ${mappedGames.length} games with available bookmakers for region ${region}`);
             allGames = [...allGames, ...mappedGames];
           } catch (error) {
             console.error(`❌ Error fetching ${sport} (${currentMarket}):`, error.message);

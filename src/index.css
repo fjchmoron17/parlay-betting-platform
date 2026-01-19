@@ -827,6 +827,13 @@ tbody tr:last-child td {
   cursor: not-allowed;
 }
 
+.filter-hint {
+  font-size: var(--font-size-xs);
+  color: var(--gray-500);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
 .filter-loading {
   text-align: center;
   color: var(--gray-600);
