@@ -615,6 +615,15 @@ tbody tr:last-child td {
 .cursor-pointer { cursor: pointer; }
 .cursor-not-allowed { cursor: not-allowed; }
 
+.w-full { width: 100%; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+
+.heading-primary {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
 /* ========================================
    RESPONSIVE
    ======================================== */
