@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +12,17 @@ const ContactUs = () => {
     submitted: false,
     error: null
   });
+
+  const timeoutRef = useRef(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,7 +73,7 @@ const ContactUs = () => {
       });
 
       // Clear success message after 5 seconds
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setFormStatus({
           submitted: false,
           error: null
