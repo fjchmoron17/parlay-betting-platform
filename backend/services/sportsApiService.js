@@ -88,8 +88,8 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
       ? [league]
       : ['americanfootball_nfl', 'basketball_nba', 'icehockey_nhl', 'basketball_ncaab'];
 
-    // Solo usar h2h por defecto para minimizar llamadas a la API
-    const marketsToFetch = market ? [market] : ['h2h'];
+    // Traer todos los mercados disponibles
+    const marketsToFetch = market ? [market] : ['h2h', 'spreads', 'totals'];
 
     for (const sport of leaguesToFetch) {
       if (!sport) continue;
