@@ -6,7 +6,7 @@ import { SPORTS_API, MOCK_GAMES } from '../config/constants.js';
 const CACHE_TTL_MS = parseInt(process.env.GAMES_CACHE_TTL_MS || '300000', 10); // default 5 minutes
 const CACHE_REFRESH_THRESHOLD = 0.8; // Refresh cache at 80% TTL to avoid stale data
 const cache = {
-  all: { data: [], timestamp: 0, region: 'us', markets: ['h2h','spreads','totals'] },
+  all: new Map(), // key: `${region}|${markets}` -> { data, timestamp }
   perLeague: new Map(), // key: `${league}|${region}|${market}` -> { data, timestamp }
   stats: { hits: 0, misses: 0, apiCalls: 0, lastRefresh: 0 }
 };
@@ -32,7 +32,7 @@ export const getCacheStats = () => {
     apiCalls: cache.stats.apiCalls,
     lastRefresh: new Date(cache.stats.lastRefresh).toISOString(),
     activeCacheSize: {
-      all: cache.all.data.length,
+      all: cache.all.size,
       perLeague: cache.perLeague.size
     }
   };
@@ -91,22 +91,21 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
 
     // Serve from cache if fresh
     if (!league) {
-      if (
-        cache.all.data.length > 0 &&
-        isFresh(cache.all.timestamp) &&
-        cache.all.region === region &&
-        JSON.stringify(cache.all.markets) === JSON.stringify(marketsToFetch)
-      ) {
-        cache.stats.hits++;
-        console.log(`✅ Cache HIT - Served ${cache.all.data.length} games from memory (${((cache.stats.hits / (cache.stats.hits + cache.stats.misses)) * 100).toFixed(1)}% hit rate)`);
-        return {
-          success: true,
-          data: cache.all.data,
-          timestamp: new Date().toISOString(),
-          source: 'Cache',
-          gameCount: cache.all.data.length,
-          region
-        };
+      const allCacheKey = `${region}|${marketsToFetch.join(',')}`;
+      if (cache.all.has(allCacheKey)) {
+        const cached = cache.all.get(allCacheKey);
+        if (isFresh(cached.timestamp)) {
+          cache.stats.hits++;
+          console.log(`✅ Cache HIT for region ${region} - Served ${cached.data.length} games from memory (${((cache.stats.hits / (cache.stats.hits + cache.stats.misses)) * 100).toFixed(1)}% hit rate)`);
+          return {
+            success: true,
+            data: cached.data,
+            timestamp: new Date().toISOString(),
+            source: 'Cache',
+            gameCount: cached.data.length,
+            region
+          };
+        }
       }
     }
 
@@ -188,15 +187,33 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
 
       if (allGames.length === 0) {
         // Fallback to last cached dataset if available
-        if (!league && cache.all.data.length > 0) {
-          console.warn('⚠️ No games from API, serving last cached dataset');
+        if (!league) {
+          const allCacheKey = `${region}|${marketsToFetch.join(',')}`;
+          if (cache.all.has(allCacheKey)) {
+            const cached = cache.all.get(allCacheKey);
+            console.warn(`⚠️ No games from API, serving last cached dataset for region ${region}`);
+            pendingRequests.delete(cacheKey);
+            return {
+              success: true,
+              data: cached.data,
+              timestamp: new Date().toISOString(),
+              source: 'Cache (Stale)',
+              gameCount: cached.data.length,
+              region
+            };
+          }
+        }
+        const leagueCacheKey = `${league || 'all'}|${region}|${market || 'all'}`;
+        if (cache.perLeague.has(leagueCacheKey)) {
+          const cached = cache.perLeague.get(leagueCacheKey);
+          console.warn(`⚠️ No games from API, serving last cached dataset for ${leagueCacheKey}`);
           pendingRequests.delete(cacheKey);
           return {
             success: true,
-            data: cache.all.data,
+            data: cached.data,
             timestamp: new Date().toISOString(),
             source: 'Cache (Stale)',
-            gameCount: cache.all.data.length,
+            gameCount: cached.data.length,
             region
           };
         }
@@ -224,8 +241,12 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
 
       // Update cache
       if (!league) {
-        cache.all = { data: allGames, timestamp: now(), region, markets: marketsToFetch };
+        const allCacheKey = `${region}|${marketsToFetch.join(',')}`;
+        cache.all.set(allCacheKey, { data: allGames, timestamp: now() });
         cache.stats.lastRefresh = now();
+      } else {
+        const leagueCacheKey = `${league}|${region}|${market || 'all'}`;
+        cache.perLeague.set(leagueCacheKey, { data: allGames, timestamp: now() });
       }
 
       pendingRequests.delete(cacheKey);
@@ -237,15 +258,19 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
   } catch (error) {
     console.error('Error fetching games from The Odds API:', error.message);
     // On error, serve cached data if available
-    if (!league && cache.all.data.length > 0) {
-      return {
-        success: true,
-        data: cache.all.data,
-        timestamp: new Date().toISOString(),
-        source: 'Cache (Error Fallback)',
-        gameCount: cache.all.data.length,
-        region
-      };
+    if (!league) {
+      const allCacheKey = `${region}|${marketsToFetch.join(',')}`;
+      if (cache.all.has(allCacheKey)) {
+        const cached = cache.all.get(allCacheKey);
+        return {
+          success: true,
+          data: cached.data,
+          timestamp: new Date().toISOString(),
+          source: 'Cache (Error Fallback)',
+          gameCount: cached.data.length,
+          region
+        };
+      }
     }
     const cacheKey = `${league || 'all'}|${region}|${market || 'all'}`;
     if (cache.perLeague.has(cacheKey)) {
