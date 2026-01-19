@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import gamesRoutes from './routes/games.js';
 import betsRoutes from './routes/bets.js';
+import { getCacheStats } from './services/sportsApiService.js';
 
 // Load environment variables
 // En Railway, las variables están en el sistema. dotenv solo lee archivos locales.
@@ -69,6 +70,17 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development',
     apiKeyConfigured: !!process.env.ODDS_API_KEY && process.env.ODDS_API_KEY !== 'YOUR_API_KEY_HERE',
     apiKeyLength: process.env.ODDS_API_KEY?.length || 0
+  });
+});
+
+// Cache Statistics Endpoint
+app.get('/api/cache-stats', (req, res) => {
+  const stats = getCacheStats();
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    cache: stats,
+    message: 'Cache statistics for The Odds API. Higher hit rate means lower API usage and cost.'
   });
 });
 

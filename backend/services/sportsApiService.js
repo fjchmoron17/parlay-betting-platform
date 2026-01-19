@@ -2,15 +2,41 @@
 import axios from 'axios';
 import { SPORTS_API, MOCK_GAMES } from '../config/constants.js';
 
-// Simple in-memory cache to mitigate rate limits
-const CACHE_TTL_MS = parseInt(process.env.GAMES_CACHE_TTL_MS || '120000', 10); // default 2 minutes
+// Advanced in-memory cache with request deduplication and statistics
+const CACHE_TTL_MS = parseInt(process.env.GAMES_CACHE_TTL_MS || '300000', 10); // default 5 minutes
+const CACHE_REFRESH_THRESHOLD = 0.8; // Refresh cache at 80% TTL to avoid stale data
 const cache = {
   all: { data: [], timestamp: 0, region: 'us', markets: ['h2h','spreads','totals'] },
   perLeague: new Map(), // key: `${league}|${region}|${market}` -> { data, timestamp }
+  stats: { hits: 0, misses: 0, apiCalls: 0, lastRefresh: 0 }
 };
+
+// Request deduplication: prevent multiple simultaneous requests for the same data
+const pendingRequests = new Map(); // key: requestKey -> Promise
 
 const now = () => Date.now();
 const isFresh = (ts) => (now() - ts) < CACHE_TTL_MS;
+const shouldRefresh = (ts) => (now() - ts) > (CACHE_TTL_MS * CACHE_REFRESH_THRESHOLD);
+
+// Log cache statistics
+export const getCacheStats = () => {
+  const hits = cache.stats.hits;
+  const misses = cache.stats.misses;
+  const total = hits + misses;
+  const hitRate = total > 0 ? ((hits / total) * 100).toFixed(2) : 0;
+  return {
+    cacheHitRate: `${hitRate}%`,
+    totalRequests: total,
+    cacheHits: hits,
+    cacheMisses: misses,
+    apiCalls: cache.stats.apiCalls,
+    lastRefresh: new Date(cache.stats.lastRefresh).toISOString(),
+    activeCacheSize: {
+      all: cache.all.data.length,
+      perLeague: cache.perLeague.size
+    }
+  };
+};
 
 // Obtener lista de todos los deportes disponibles
 export const getSportsAvailable = async () => {
@@ -60,15 +86,19 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
       throw new Error('❌ ODDS_API_KEY no está configurada en el backend');
     }
 
-    // Serve from cache if possible
+    const marketsToFetch = market ? [market] : ['h2h','spreads','totals'];
+    const cacheKey = `${league || 'all'}|${region}|${marketsToFetch.join(',')}`;
+
+    // Serve from cache if fresh
     if (!league) {
-      const marketsToFetch = market ? [market] : ['h2h','spreads','totals'];
       if (
         cache.all.data.length > 0 &&
         isFresh(cache.all.timestamp) &&
         cache.all.region === region &&
         JSON.stringify(cache.all.markets) === JSON.stringify(marketsToFetch)
       ) {
+        cache.stats.hits++;
+        console.log(`✅ Cache HIT - Served ${cache.all.data.length} games from memory (${((cache.stats.hits / (cache.stats.hits + cache.stats.misses)) * 100).toFixed(1)}% hit rate)`);
         return {
           success: true,
           data: cache.all.data,
@@ -80,6 +110,12 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
       }
     }
 
+    // Request deduplication: if same request is already in progress, wait for it
+    if (pendingRequests.has(cacheKey)) {
+      console.log(`⏳ Request already in progress for ${cacheKey}, waiting...`);
+      return pendingRequests.get(cacheKey);
+    }
+
     let allGames = [];
     
     // Si se especifica una liga, usarla directamente
@@ -88,121 +124,116 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
       ? [league]
       : ['americanfootball_nfl', 'basketball_nba', 'icehockey_nhl', 'basketball_ncaab'];
 
-    // Traer todos los mercados disponibles
-    const marketsToFetch = market ? [market] : ['h2h', 'spreads', 'totals'];
+    // Create a promise for this request so deduplication can work
+    const requestPromise = (async () => {
+      cache.stats.misses++;
+      console.log(`📊 Cache MISS - Fetching fresh data (${((cache.stats.hits / (cache.stats.hits + cache.stats.misses)) * 100).toFixed(1)}% hit rate)`);
 
-    for (const sport of leaguesToFetch) {
-      if (!sport) continue;
+      for (const sport of leaguesToFetch) {
+        if (!sport) continue;
 
-      for (const currentMarket of marketsToFetch) {
-        try {
-          console.log(`📡 Fetching ${sport} from The Odds API (market: ${currentMarket})...`);
-          
-          const response = await axios.get(
-            `${baseUrl}/sports/${sport}/odds`,
-            {
-              params: {
-                apiKey: apiKey,
-                regions: region,
-                markets: currentMarket,
-                oddsFormat: 'decimal',
-                dateFormat: 'iso',
-                limit: 50
-              },
-              timeout: 10000
-            }
-          );
-
-          console.log(`✅ Got ${response.data.length} games from ${sport} (${currentMarket})`);
-
-          const mappedGames = response.data.map(game => {
-            const homeOdds = getOdds(game, 'home', currentMarket);
-            const awayOdds = getOdds(game, 'away', currentMarket);
-            const drawOdds = getOdds(game, 'draw', currentMarket);
+        for (const currentMarket of marketsToFetch) {
+          try {
+            console.log(`📡 Fetching ${sport} from The Odds API (market: ${currentMarket})...`);
+            cache.stats.apiCalls++;
             
-            return {
-              id: game.id,
-              league: mapSportToLeague(game.sport_title),
-              sportKey: game.sport_key,
-              sportTitle: game.sport_title,
-              home_team: game.home_team,
-              away_team: game.away_team,
-              game_time: game.commence_time,
-              odds_home: homeOdds.price,
-              odds_away: awayOdds.price,
-              odds_draw: drawOdds.price,
-              point_home: homeOdds.point, // Punto spread o total
-              point_away: awayOdds.point,
-              point_draw: drawOdds.point,
-              status: new Date(game.commence_time) > new Date() ? 'upcoming' : 'live',
-              market: currentMarket,
-              bookmakers: game.bookmakers?.slice(0, 3) // Limitar a 3 bookmakers
-            };
-          });
+            const response = await axios.get(
+              `${baseUrl}/sports/${sport}/odds`,
+              {
+                params: {
+                  apiKey: apiKey,
+                  regions: region,
+                  markets: currentMarket,
+                  oddsFormat: 'decimal',
+                  dateFormat: 'iso',
+                  limit: 50
+                },
+                timeout: 10000
+              }
+            );
 
-          allGames = [...allGames, ...mappedGames];
-        } catch (error) {
-          console.error(`❌ Error fetching ${sport} (${currentMarket}):`, error.message);
+            console.log(`✅ Got ${response.data.length} games from ${sport} (${currentMarket})`);
+
+            const mappedGames = response.data.map(game => {
+              const homeOdds = getOdds(game, 'home', currentMarket);
+              const awayOdds = getOdds(game, 'away', currentMarket);
+              const drawOdds = getOdds(game, 'draw', currentMarket);
+              
+              return {
+                id: game.id,
+                league: mapSportToLeague(game.sport_title),
+                sportKey: game.sport_key,
+                sportTitle: game.sport_title,
+                home_team: game.home_team,
+                away_team: game.away_team,
+                game_time: game.commence_time,
+                odds_home: homeOdds.price,
+                odds_away: awayOdds.price,
+                odds_draw: drawOdds.price,
+                point_home: homeOdds.point, // Punto spread o total
+                point_away: awayOdds.point,
+                point_draw: drawOdds.point,
+                status: new Date(game.commence_time) > new Date() ? 'upcoming' : 'live',
+                market: currentMarket,
+                bookmakers: game.bookmakers?.slice(0, 3) // Limitar a 3 bookmakers
+              };
+            });
+
+            allGames = [...allGames, ...mappedGames];
+          } catch (error) {
+            console.error(`❌ Error fetching ${sport} (${currentMarket}):`, error.message);
+          }
         }
       }
-    }
 
-    if (allGames.length === 0) {
-      // Fallback to last cached dataset if available
-      if (!league && cache.all.data.length > 0) {
-        console.warn('⚠️ No games from API, serving last cached dataset');
+      if (allGames.length === 0) {
+        // Fallback to last cached dataset if available
+        if (!league && cache.all.data.length > 0) {
+          console.warn('⚠️ No games from API, serving last cached dataset');
+          pendingRequests.delete(cacheKey);
+          return {
+            success: true,
+            data: cache.all.data,
+            timestamp: new Date().toISOString(),
+            source: 'Cache (Stale)',
+            gameCount: cache.all.data.length,
+            region
+          };
+        }
+        console.warn('⚠️ No games available from The Odds API right now');
+        pendingRequests.delete(cacheKey);
         return {
           success: true,
-          data: cache.all.data,
+          data: [],
           timestamp: new Date().toISOString(),
-          source: 'Cache (Stale)',
-          gameCount: cache.all.data.length,
-          region
+          source: 'The Odds API',
+          gameCount: 0,
+          region,
+          message: 'No hay juegos disponibles en este momento'
         };
       }
-      const cacheKey = `${league || 'all'}|${region}|${market || 'all'}`;
-      if (cache.perLeague.has(cacheKey)) {
-        const cached = cache.perLeague.get(cacheKey);
-        console.warn(`⚠️ No games from API, serving last cached dataset for ${cacheKey}`);
-        return {
-          success: true,
-          data: cached.data,
-          timestamp: new Date().toISOString(),
-          source: 'Cache (Stale)',
-          gameCount: cached.data.length,
-          region
-        };
-      }
-      console.warn('⚠️ No games available from The Odds API right now');
-      return {
+
+      const result = {
         success: true,
-        data: [],
+        data: allGames,
         timestamp: new Date().toISOString(),
         source: 'The Odds API',
-        gameCount: 0,
-        region,
-        message: 'No hay juegos disponibles en este momento'
+        gameCount: allGames.length,
+        region: region
       };
-    }
 
-    const result = {
-      success: true,
-      data: allGames,
-      timestamp: new Date().toISOString(),
-      source: 'The Odds API',
-      gameCount: allGames.length,
-      region: region
-    };
+      // Update cache
+      if (!league) {
+        cache.all = { data: allGames, timestamp: now(), region, markets: marketsToFetch };
+        cache.stats.lastRefresh = now();
+      }
 
-    // Update cache
-    if (!league) {
-      cache.all = { data: allGames, timestamp: now(), region, markets: marketsToFetch };
-    } else {
-      const cacheKey = `${league}|${region}|${market || 'all'}`;
-      cache.perLeague.set(cacheKey, { data: allGames, timestamp: now() });
-    }
+      pendingRequests.delete(cacheKey);
+      return result;
+    })();
 
-    return result;
+    pendingRequests.set(cacheKey, requestPromise);
+    return requestPromise;
   } catch (error) {
     console.error('Error fetching games from The Odds API:', error.message);
     // On error, serve cached data if available
