@@ -1,0 +1,261 @@
+/* src/components/BetsList.css */
+
+.bets-list {
+  padding: 20px;
+}
+
+.bets-list-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.bets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.bets-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #1f2937;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.filter-buttons button {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.filter-buttons button:hover {
+  color: #1f2937;
+}
+
+.filter-buttons button.active {
+  background: white;
+  color: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bets-table-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bets-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.bets-table thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.bets-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bets-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.2s;
+}
+
+.bets-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.bets-table td {
+  padding: 14px 16px;
+  color: #1f2937;
+}
+
+.ticket-col {
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.ticket-number {
+  background: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.bet-type {
+  text-transform: capitalize;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.amount-col,
+.potential-col {
+  font-weight: 600;
+  color: #059669;
+}
+
+.odds-col {
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.date-col {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.actions-col {
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.settle-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.win-btn {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.win-btn:hover {
+  background: #10b981;
+  color: white;
+  transform: scale(1.1);
+}
+
+.lose-btn {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.lose-btn:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.1);
+}
+
+.win-amount {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  color: #6b7280;
+}
+
+.bets-summary {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.summary-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+@media (max-width: 1024px) {
+  .bets-table {
+    font-size: 13px;
+  }
+
+  .bets-table th,
+  .bets-table td {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bets-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-buttons {
+    justify-content: center;
+  }
+
+  .bets-summary {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,198 @@
+// src/services/b2bApi.js
+// API Service para endpoints B2B (Betting Houses, Bets, Reports)
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
+
+// ============================================
+// BETTING HOUSES
+// ============================================
+
+export async function getAllBettingHouses() {
+  try {
+    const response = await fetch(`${API_URL}/betting-houses`);
+    if (!response.ok) throw new Error('Failed to fetch betting houses');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching betting houses:', error);
+    throw error;
+  }
+}
+
+export async function getBettingHouseById(id) {
+  try {
+    const response = await fetch(`${API_URL}/betting-houses/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch betting house');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching betting house:', error);
+    throw error;
+  }
+}
+
+export async function createBettingHouse(data) {
+  try {
+    const response = await fetch(`${API_URL}/betting-houses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to create betting house');
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating betting house:', error);
+    throw error;
+  }
+}
+
+export async function getBettingHousesSummary() {
+  try {
+    const response = await fetch(`${API_URL}/betting-houses/summary`);
+    if (!response.ok) throw new Error('Failed to fetch summary');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching summary:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// BETS
+// ============================================
+
+export async function placeBet(betData) {
+  try {
+    const response = await fetch(`${API_URL}/bets-db`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(betData)
+    });
+    if (!response.ok) throw new Error('Failed to place bet');
+    return await response.json();
+  } catch (error) {
+    console.error('Error placing bet:', error);
+    throw error;
+  }
+}
+
+export async function getBetsForHouse(bettingHouseId, limit = 50, offset = 0) {
+  try {
+    const response = await fetch(
+      `${API_URL}/bets-db?betting_house_id=${bettingHouseId}&limit=${limit}&offset=${offset}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch bets');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching bets:', error);
+    throw error;
+  }
+}
+
+export async function getBetById(betId) {
+  try {
+    const response = await fetch(`${API_URL}/bets-db/${betId}`);
+    if (!response.ok) throw new Error('Failed to fetch bet');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching bet:', error);
+    throw error;
+  }
+}
+
+export async function settleBet(betId, status, actualWin = 0) {
+  try {
+    const response = await fetch(`${API_URL}/bets-db/${betId}/settle`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, actual_win: actualWin })
+    });
+    if (!response.ok) throw new Error('Failed to settle bet');
+    return await response.json();
+  } catch (error) {
+    console.error('Error settling bet:', error);
+    throw error;
+  }
+}
+
+export async function getBetStats(bettingHouseId, fromDate = null, toDate = null) {
+  try {
+    let url = `${API_URL}/bets-db/stats?betting_house_id=${bettingHouseId}`;
+    if (fromDate) url += `&from_date=${fromDate}`;
+    if (toDate) url += `&to_date=${toDate}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch stats');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    throw error;
+  }
+}
+
+export async function getBetsByDate(bettingHouseId, date) {
+  try {
+    const response = await fetch(
+      `${API_URL}/bets-db/by-date?betting_house_id=${bettingHouseId}&date=${date}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch bets by date');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching bets by date:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// REPORTS
+// ============================================
+
+export async function calculateDailyReport(bettingHouseId, reportDate) {
+  try {
+    const response = await fetch(`${API_URL}/reports/calculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ betting_house_id: bettingHouseId, report_date: reportDate })
+    });
+    if (!response.ok) throw new Error('Failed to calculate report');
+    return await response.json();
+  } catch (error) {
+    console.error('Error calculating report:', error);
+    throw error;
+  }
+}
+
+export async function getDailyReportByDate(bettingHouseId, date) {
+  try {
+    const response = await fetch(
+      `${API_URL}/reports/daily?betting_house_id=${bettingHouseId}&date=${date}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch report');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching report:', error);
+    throw error;
+  }
+}
+
+export async function getReportsByRange(bettingHouseId, fromDate, toDate) {
+  try {
+    const response = await fetch(
+      `${API_URL}/reports/range?betting_house_id=${bettingHouseId}&from_date=${fromDate}&to_date=${toDate}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch reports');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    throw error;
+  }
+}
+
+export async function getLatestReport(bettingHouseId) {
+  try {
+    const response = await fetch(`${API_URL}/reports/latest?betting_house_id=${bettingHouseId}`);
+    if (!response.ok) throw new Error('Failed to fetch latest report');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching latest report:', error);
+    throw error;
+  }
+}
