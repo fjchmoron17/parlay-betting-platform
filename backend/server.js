@@ -6,6 +6,9 @@ import dotenv from 'dotenv';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import gamesRoutes from './routes/games.js';
 import betsRoutes from './routes/bets.js';
+import bettingHousesRoutes from './routes/bettingHouses.js';
+import betsDBRoutes from './routes/betsDB.js';
+import reportsRoutes from './routes/reports.js';
 import { getCacheStats } from './services/sportsApiService.js';
 
 // Load environment variables
@@ -87,6 +90,9 @@ app.get('/api/cache-stats', (req, res) => {
 // API Routes
 app.use('/api/games', gamesRoutes);
 app.use('/api/bets', betsRoutes);
+app.use('/api/betting-houses', bettingHousesRoutes);
+app.use('/api/bets-db', betsDBRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // 404 Handler
 app.use(notFoundHandler);
@@ -103,6 +109,9 @@ app.listen(PORT, '0.0.0.0', () => {
   ║   🌍 ENV: ${process.env.NODE_ENV || 'development'}     ║
   ║   📦 API: /api/games               ║
   ║   📦 API: /api/bets                ║
+  ║   📦 API: /api/betting-houses      ║
+  ║   📦 API: /api/bets-db             ║
+  ║   📦 API: /api/reports             ║
   ╚════════════════════════════════════╝
   `);
 });
