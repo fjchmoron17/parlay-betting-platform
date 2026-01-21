@@ -3,10 +3,12 @@ import { useState } from 'react';
 import BettingHousesList from '../components/BettingHousesList';
 import CreateBettingHouse from '../components/CreateBettingHouse';
 import BetsList from '../components/BetsList';
+import DailyReports from '../components/DailyReports';
+import ApiQuotaMonitor from '../components/ApiQuotaMonitor';
 import './Admin.css';
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState('houses'); // houses, create, bets
+  const [activeTab, setActiveTab] = useState('houses'); // houses, create, bets, reports, quota
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -49,6 +51,19 @@ export default function Admin() {
           disabled={!selectedHouse}
         >
           🎲 Apuestas {selectedHouse && `- ${selectedHouse.name}`}
+        </button>
+        <button
+          className={activeTab === 'reports' ? 'active' : ''}
+          onClick={() => setActiveTab('reports')}
+          disabled={!selectedHouse}
+        >
+          📊 Reportes {selectedHouse && `- ${selectedHouse.name}`}
+        </button>
+        <button
+          className={activeTab === 'quota' ? 'active' : ''}
+          onClick={() => setActiveTab('quota')}
+        >
+          ⚡ Cuota API
         </button>
       </div>
 
@@ -108,6 +123,30 @@ export default function Admin() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="tab-content">
+            {selectedHouse ? (
+              <DailyReports 
+                bettingHouseId={selectedHouse.id}
+                houseName={selectedHouse.name}
+              />
+            ) : (
+              <div className="empty-selection">
+                <p>Selecciona una casa de apuestas para ver reportes</p>
+                <button onClick={() => setActiveTab('houses')} className="primary-btn">
+                  Ver Casas
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'quota' && (
+          <div className="tab-content">
+            <ApiQuotaMonitor />
           </div>
         )}
       </div>
