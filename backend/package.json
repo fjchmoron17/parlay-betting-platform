@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:setup": "echo 'Run DATABASE_SCHEMA.sql in your PostgreSQL client'",
+    "db:migrate": "node scripts/migrate.js"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +19,8 @@
     "axios": "^1.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "pg": "^8.11.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
