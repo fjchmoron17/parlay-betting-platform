@@ -1,9 +1,18 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
+import HousePortal from "./pages/HousePortal";
+import LoginForm from "./components/LoginForm";
 
-function App() {
+function AppContent() {
+  const { isAuthenticated } = useAuth();
   const [currentView, setCurrentView] = useState('home'); // 'home' or 'admin'
+
+  // Si está autenticado, mostrar el portal de la casa
+  if (isAuthenticated) {
+    return <HousePortal />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -35,14 +44,34 @@ function App() {
               >
                 👔 Admin B2B
               </button>
+              <button
+                onClick={() => setCurrentView('login')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  currentView === 'login'
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                🏠 Portal Casa
+              </button>
             </div>
           </div>
         </div>
       </nav>
 
       {/* Content */}
-      {currentView === 'home' ? <Home /> : <Admin />}
+      {currentView === 'home' && <Home />}
+      {currentView === 'admin' && <Admin />}
+      {currentView === 'login' && <LoginForm onSuccess={() => {}} />}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

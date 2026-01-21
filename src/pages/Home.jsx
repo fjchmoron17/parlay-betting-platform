@@ -4,7 +4,7 @@ import ParlayPanel from "../components/ParlayPanel";
 import FilterPanel from "../components/FilterPanel";
 import { gamesAPI } from "../services/api";
 
-const Home = () => {
+const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
   const [games, setGames] = useState([]);
   const [parlay, setParlay] = useState({});
   const [loading, setLoading] = useState(true);
@@ -47,6 +47,24 @@ const Home = () => {
   };
 
   const handleSelect = (gameId, team, odds, gameData = {}) => {
+    // Si está en modo betting, usar el callback externo
+    if (bettingMode && onGameSelect) {
+      onGameSelect({
+        id: gameId,
+        home_team: gameData.homeTeam,
+        away_team: gameData.awayTeam,
+        sport_title: gameData.league,
+        market: gameData.market,
+        selectedTeam: team,
+        selectedOdds: odds,
+        pointSpread: gameData.pointSpread,
+        bookmaker: gameData.bookmaker,
+        commence_time: gameData.commenceTime
+      });
+      return;
+    }
+
+    // Modo normal con parlay panel
     setParlay((prev) => ({
       ...prev,
       [gameId]: {
@@ -84,12 +102,14 @@ const Home = () => {
   return (
     <div className="flex flex-col p-6 gap-6">
       {/* Header */}
-      <div>
-        <h1 className="heading-primary">🎰 Parlay Bets (En vivo)</h1>
-        <p className="text-gray-600 text-sm mt-1">
-          {games.length} juegos disponibles • {Object.keys(parlay).length} seleccionados
-        </p>
-      </div>
+      {!bettingMode && (
+        <div>
+          <h1 className="heading-primary">🎰 Parlay Bets (En vivo)</h1>
+          <p className="text-gray-600 text-sm mt-1">
+            {games.length} juegos disponibles • {Object.keys(parlay).length} seleccionados
+          </p>
+        </div>
+      )}
 
       {/* Filtros */}
       <FilterPanel onFilterChange={handleFilterChange} />
@@ -141,7 +161,7 @@ const Home = () => {
         </div>
 
         {/* Panel de Parlay */}
-        <ParlayPanel parlay={parlay} onRemove={handleRemove} />
+        {!bettingMode && <ParlayPanel parlay={parlay} onRemove={handleRemove} />}
       </div>
     </div>
   );
