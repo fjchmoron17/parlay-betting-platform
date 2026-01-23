@@ -65,12 +65,13 @@
 
 .form-group label {
   font-size: 14px;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #1f2937; /* Darker labels for better readability */
 }
 
 .required {
-  color: #ef4444;
+  color: #dc2626; /* Brighter red for better visibility */
+  font-weight: 700;
 }
 
 .form-group input,
@@ -120,23 +121,27 @@
 }
 
 .cancel-btn {
-  background: #f3f4f6;
-  color: #374151;
+  background: #e5e7eb;
+  color: #1f2937;
+  font-weight: 500;
 }
 
 .cancel-btn:hover:not(:disabled) {
-  background: #e5e7eb;
+  background: #d1d5db;
+  filter: brightness(0.95);
 }
 
 .submit-btn {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  filter: brightness(1.05);
 }
 
 .cancel-btn:disabled,

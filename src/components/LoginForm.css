@@ -69,8 +69,8 @@
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #1f2937; /* Darker labels for better readability */
 }
 
 .form-group input,
@@ -121,7 +121,8 @@
 
 .login-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 12px 28px rgba(102, 126, 234, 0.5);
+  filter: brightness(1.05);
 }
 
 .login-btn:disabled {
