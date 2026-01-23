@@ -127,8 +127,8 @@ export default function BettingHousesList({ onSelectHouse }) {
                 </div>
 
                 <div className="info-row">
-                  <span className="info-label">Comisión:</span>
-                  <span className="info-value">{house.commission_percentage}%</span>
+                  <span className="info-label">Comisión Plataforma:</span>
+                  <span className="info-value commission">5%</span>
                 </div>
 
                 <div className="info-row">

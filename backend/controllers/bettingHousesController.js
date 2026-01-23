@@ -6,10 +6,18 @@ import { sendBettingHouseRegistrationEmail } from '../services/emailService.js';
 export const getAllBettingHouses = async (req, res) => {
   try {
     const houses = await BettingHouse.findAll();
+    
+    // Enriquecer con información de comisiones generadas
+    const enrichedHouses = houses.map(house => ({
+      ...house,
+      commission_percentage: 5, // Comisión fija 5%
+      commission_percentage_generated: house.commission_generated || 0 // Comisión acumulada generada
+    }));
+    
     res.json({
       success: true,
-      data: houses,
-      total: houses.length
+      data: enrichedHouses,
+      total: enrichedHouses.length
     });
   } catch (error) {
     console.error('Error fetching betting houses:', error);
