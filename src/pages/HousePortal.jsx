@@ -1,5 +1,5 @@
 // src/pages/HousePortal.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { placeBet } from '../services/b2bApi';
 import BetsList from '../components/BetsList';
@@ -15,6 +15,14 @@ export default function HousePortal() {
   const [potentialWin, setPotentialWin] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Recalcular ganancia potencial automáticamente cuando cambien selecciones o monto
+  useEffect(() => {
+    const stake = parseFloat(stakeAmount) || 0;
+    const totalOdds = calculateTotalOdds();
+    const potential = stake * totalOdds;
+    setPotentialWin(potential);
+  }, [selectedGames, stakeAmount]);
 
   const handleGameSelection = (game) => {
     // Agregar/remover juego de la selección
@@ -48,14 +56,6 @@ export default function HousePortal() {
     const value = e.target.value;
     setStakeAmount(value);
     setError(null);
-  };
-
-  const handleStakeBlur = () => {
-    // Calcular ganancia potencial cuando el usuario sale del input
-    const stake = parseFloat(stakeAmount) || 0;
-    const totalOdds = calculateTotalOdds();
-    const potential = stake * totalOdds;
-    setPotentialWin(potential);
   };
 
   const handlePlaceBet = async () => {
@@ -268,7 +268,6 @@ export default function HousePortal() {
                       type="number"
                       value={stakeAmount}
                       onChange={handleStakeChange}
-                      onBlur={handleStakeBlur}
                       placeholder="Ingresa el monto..."
                       min="0"
                       step="0.01"
