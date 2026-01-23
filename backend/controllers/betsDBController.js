@@ -124,7 +124,9 @@ export const getBetById = async (req, res) => {
 export const settleBet = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, actualWin = 0 } = req.body;
+    // Aceptar tanto camelCase como snake_case por compatibilidad
+    const { status, actualWin, actual_win } = req.body;
+    const winAmount = actualWin || actual_win || 0;
     
     if (!['won', 'lost', 'void'].includes(status)) {
       return res.status(400).json({
@@ -137,7 +139,8 @@ export const settleBet = async (req, res) => {
     // La comisión se calcula a nivel diario (5% del total apostado), no por apuesta
     const commission = 0;
     
-    const updatedBet = await Bet.updateStatus(id, status, actualWin, commission);
+    console.log(`Settling bet ${id}: status=${status}, actualWin=${winAmount}`);
+    const updatedBet = await Bet.updateStatus(id, status, winAmount, commission);
     
     res.json({
       success: true,

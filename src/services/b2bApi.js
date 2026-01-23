@@ -114,10 +114,11 @@ export async function getBetById(betId) {
 
 export async function settleBet(betId, status, actualWin = 0) {
   try {
+    console.log(`Settling bet ${betId}: status=${status}, actualWin=${actualWin}`);
     const response = await fetch(`${API_URL}/bets-db/${betId}/settle`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, actual_win: actualWin })
+      body: JSON.stringify({ status, actualWin })
     });
     if (!response.ok) throw new Error('Failed to settle bet');
     return await response.json();
