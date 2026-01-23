@@ -88,7 +88,8 @@ export const Bet = {
 
   // Crear una apuesta
   async create(bettingHouseId, betTicketNumber, betType, totalStake, totalOdds, potentialWin) {
-    const commissionAmount = totalStake * 0.05; // 5% comisión de plataforma
+    // La comisión se calcula a nivel diario (5% del total apostado), no por apuesta individual
+    const commissionAmount = 0;
     const result = await query(
       `INSERT INTO bets (
         betting_house_id, bet_ticket_number, bet_type, 
@@ -144,7 +145,7 @@ export const Bet = {
         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as bets_pending,
         SUM(total_stake) as total_wagered,
         SUM(CASE WHEN status = 'won' THEN actual_win ELSE 0 END) as total_winnings,
-        SUM(commission_amount) as total_commissions,
+        COALESCE(SUM(total_stake), 0) * 0.05 as total_commissions,
         SUM(net_win) as net_profit_loss
       FROM bets
       WHERE betting_house_id = $1
@@ -219,10 +220,8 @@ export const DailyReport = {
     const totalWagered = parseFloat(dayStats.total_wagered);
     const totalWinnings = parseFloat(dayStats.total_winnings);
 
-    // Comisión de plataforma fija 5% sobre monto apostado
-    const platformCommission = totalWagered * 0.05;
-    // Sumar cualquier comisión ya registrada en las apuestas
-    const totalCommissions = parseFloat(dayStats.total_commissions) + platformCommission;
+    // Comisión de plataforma fija 5% sobre el total apostado del día
+    const totalCommissions = totalWagered * 0.05;
 
     // Pérdidas del operador = monto apostado - premios pagados
     const totalLosses = totalWagered - totalWinnings;
@@ -258,7 +257,7 @@ export const DailyReport = {
         bettingHouseId, reportDate,
         dayStats.total_bets, dayStats.total_wagered,
         dayStats.bets_won, dayStats.bets_lost, dayStats.bets_void, dayStats.bets_pending,
-        dayStats.total_winnings, totalLosses, dayStats.total_commissions, netProfitLoss,
+        dayStats.total_winnings, totalLosses, totalCommissions, netProfitLoss,
         openingBalance, closingBalance
       ]
     );

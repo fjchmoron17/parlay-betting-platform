@@ -19,24 +19,27 @@ export default function ApiQuotaMonitor() {
     try {
       setLoading(true);
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
-      
-      // Hacer una petición real a la API para obtener el header de requests restantes
-      const response = await fetch(`${API_URL}/games/sports`);
-      
+
+      // Consumir el endpoint de juegos que ya expone quotaRemaining/quotaUsed en el body
+      const response = await fetch(`${API_URL}/games?region=us`);
       if (!response.ok) {
         throw new Error('Failed to fetch quota info');
       }
+      const data = await response.json();
 
-      // The Odds API devuelve el remaining en headers
-      const remaining = response.headers.get('x-requests-remaining');
-      const used = response.headers.get('x-requests-used');
-      
+      // Intentar primero con los campos enviados en el cuerpo; usar headers como respaldo
+      const remainingHeader = response.headers.get('x-requests-remaining');
+      const usedHeader = response.headers.get('x-requests-used');
+
+      const remaining = data?.quotaRemaining ?? (remainingHeader ? parseInt(remainingHeader) : null);
+      const used = data?.quotaUsed ?? (usedHeader ? parseInt(usedHeader) : null);
+
       setQuotaInfo({
-        remaining: remaining ? parseInt(remaining) : null,
-        used: used ? parseInt(used) : null,
+        remaining,
+        used,
         total: 500 // Plan gratuito de The Odds API
       });
-      
+
       setLastUpdate(new Date());
       setError(null);
     } catch (err) {
