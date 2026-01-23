@@ -177,10 +177,72 @@ export const DailyReport = {
 
   // Calcular reporte diario
   async calculate(bettingHouseId, reportDate) {
-    const result = await query(
-      `SELECT calculate_daily_report($1, $2)`,
+    // Obtener balance de apertura (del día anterior)
+    const prevReport = await query(
+      `SELECT closing_balance FROM daily_reports
+       WHERE betting_house_id = $1 AND report_date = $2::date - INTERVAL '1 day'
+       ORDER BY report_date DESC LIMIT 1`,
       [bettingHouseId, reportDate]
     );
+    
+    const openingBalance = prevReport.rows[0]?.closing_balance || 
+      (await query('SELECT account_balance FROM betting_houses WHERE id = $1', [bettingHouseId]))
+        .rows[0]?.account_balance || 0;
+    
+    // Calcular totales del día desde las apuestas
+    const stats = await query(
+      `SELECT
+        COUNT(*) as total_bets,
+        COALESCE(SUM(total_stake), 0) as total_wagered,
+        COALESCE(SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END), 0) as bets_won,
+        COALESCE(SUM(CASE WHEN status = 'lost' THEN 1 ELSE 0 END), 0) as bets_lost,
+        COALESCE(SUM(CASE WHEN status = 'void' THEN 1 ELSE 0 END), 0) as bets_void,
+        COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) as bets_pending,
+        COALESCE(SUM(CASE WHEN status = 'won' THEN actual_win ELSE 0 END), 0) as total_winnings,
+        COALESCE(SUM(commission_amount), 0) as total_commissions
+      FROM bets
+      WHERE betting_house_id = $1 AND placed_date = $2`,
+      [bettingHouseId, reportDate]
+    );
+    
+    const dayStats = stats.rows[0];
+    const totalLosses = parseFloat(dayStats.total_wagered) - parseFloat(dayStats.total_winnings);
+    const netProfitLoss = parseFloat(dayStats.total_winnings) - parseFloat(dayStats.total_wagered) - parseFloat(dayStats.total_commissions);
+    const closingBalance = parseFloat(openingBalance) + netProfitLoss;
+    
+    // Insertar o actualizar reporte
+    const result = await query(
+      `INSERT INTO daily_reports (
+        betting_house_id, report_date, 
+        total_bets_placed, total_amount_wagered,
+        bets_won, bets_lost, bets_void, bets_pending,
+        total_winnings, total_losses, total_commissions, net_profit_loss,
+        opening_balance, closing_balance
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      ON CONFLICT (betting_house_id, report_date) 
+      DO UPDATE SET
+        total_bets_placed = EXCLUDED.total_bets_placed,
+        total_amount_wagered = EXCLUDED.total_amount_wagered,
+        bets_won = EXCLUDED.bets_won,
+        bets_lost = EXCLUDED.bets_lost,
+        bets_void = EXCLUDED.bets_void,
+        bets_pending = EXCLUDED.bets_pending,
+        total_winnings = EXCLUDED.total_winnings,
+        total_losses = EXCLUDED.total_losses,
+        total_commissions = EXCLUDED.total_commissions,
+        net_profit_loss = EXCLUDED.net_profit_loss,
+        closing_balance = EXCLUDED.closing_balance,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *`,
+      [
+        bettingHouseId, reportDate,
+        dayStats.total_bets, dayStats.total_wagered,
+        dayStats.bets_won, dayStats.bets_lost, dayStats.bets_void, dayStats.bets_pending,
+        dayStats.total_winnings, totalLosses, dayStats.total_commissions, netProfitLoss,
+        openingBalance, closingBalance
+      ]
+    );
+    
     return result.rows[0];
   },
 
