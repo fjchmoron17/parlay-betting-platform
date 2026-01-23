@@ -5,7 +5,15 @@ const GameCard = ({ game, onSelect, index }) => {
 
   const selectTeam = (team, odds) => {
     setSelected(team);
-    onSelect(game.id, team, odds);
+    onSelect(game.id, team, odds, {
+      homeTeam: game.home_team,
+      awayTeam: game.away_team,
+      league: game.league,
+      market: game.market,
+      pointSpread: null,
+      bookmaker: 'Desconocido',
+      commenceTime: game.game_time
+    });
   };
 
   // Alternar colores: índice par = azul claro, índice impar = verde claro

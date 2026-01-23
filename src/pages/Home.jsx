@@ -69,7 +69,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
 
     // Verificar si este juego ya está en el parlay
     if (parlay[gameMatchId]) {
-      alert(`⚠️ Ya has seleccionado una opción de este juego:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\nSolo puedes seleccionar una opción por juego en un parlay.`);
+      alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior si quieres elegir otra opción de este juego.`);
       return;
     }
 
