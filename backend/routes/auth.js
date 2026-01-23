@@ -23,12 +23,30 @@ router.get('/test-email', async (req, res) => {
 
 // GET /api/auth/debug-env - Mostrar variables de entorno (DEBUG ONLY)
 router.get('/debug-env', (req, res) => {
+  // Buscar todas las variables que contengan MAIL o EMAIL
+  const allEnvKeys = Object.keys(process.env);
+  const mailRelated = allEnvKeys.filter(key => 
+    key.includes('MAIL') || key.includes('EMAIL') || key.includes('SMTP')
+  );
+  
+  const mailVars = {};
+  mailRelated.forEach(key => {
+    mailVars[key] = key.includes('PASSWORD') || key.includes('PASS') 
+      ? 'SET (' + process.env[key].length + ' chars)' 
+      : process.env[key];
+  });
+  
   res.json({
-    MAIL_SERVICE: process.env.MAIL_SERVICE || 'NOT SET',
-    MAIL_USER: process.env.MAIL_USER || 'NOT SET',
-    MAIL_PASSWORD_LENGTH: process.env.MAIL_PASSWORD ? process.env.MAIL_PASSWORD.length : 'NOT SET',
-    MAIL_PASSWORD_FIRST_CHAR: process.env.MAIL_PASSWORD ? process.env.MAIL_PASSWORD[0] : 'NOT SET',
+    targetVars: {
+      MAIL_SERVICE: process.env.MAIL_SERVICE || 'NOT SET',
+      MAIL_USER: process.env.MAIL_USER || 'NOT SET',
+      MAIL_PASSWORD_LENGTH: process.env.MAIL_PASSWORD ? process.env.MAIL_PASSWORD.length : 'NOT SET',
+      MAIL_PASSWORD_FIRST_CHAR: process.env.MAIL_PASSWORD ? process.env.MAIL_PASSWORD[0] : 'NOT SET'
+    },
+    allMailRelatedVars: mailVars,
+    totalEnvVarsCount: allEnvKeys.length,
     NODE_ENV: process.env.NODE_ENV || 'development',
+    RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT || 'NOT SET',
     TIMESTAMP: new Date().toISOString()
   });
 });
