@@ -17,32 +17,45 @@ if (!DATABASE_URL) {
   console.warn('⚠️ DATABASE_URL no está configurada. Usando modo sin base de datos.');
 }
 
-// Crear pool de conexiones
-export const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20, // Máximo de conexiones
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+// Crear pool de conexiones SOLO si DATABASE_URL existe
+let pool = null;
 
-// Manejar errores de conexión
-pool.on('error', (err) => {
-  console.error('❌ Error inesperado en pool de conexiones:', err);
-});
+if (DATABASE_URL) {
+  pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
 
-// Verificar conexión al iniciar (sin bloquear el server)
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('⚠️ Error conectando a la base de datos:', err.message);
-    console.error('   El servidor continuará pero las operaciones de BD fallarán.');
-  } else {
-    console.log('✅ Conectado a PostgreSQL:', res.rows[0].now);
-  }
-});
+  // Manejar errores de conexión
+  pool.on('error', (err) => {
+    console.error('❌ Error inesperado en pool de conexiones:', err);
+  });
+
+  // Verificar conexión (async, non-blocking)
+  pool.query('SELECT NOW()', (err, res) => {
+    if (err) {
+      console.error('⚠️ Error conectando a PostgreSQL:', err.message);
+    } else {
+      console.log('✅ Conectado a PostgreSQL:', res.rows[0].now);
+    }
+  });
+}
+
+// Crear pool dummy si no hay DATABASE_URL para evitar errores
+if (!pool) {
+  console.warn('⚠️ Se usará un pool dummy (no habrá acceso a BD)');
+}
+
+export { pool };
 
 // Funciones helper para queries
 export async function query(text, params = []) {
+  if (!pool) {
+    throw new Error('DATABASE_URL not configured. Cannot execute queries.');
+  }
   try {
     const result = await pool.query(text, params);
     return result;
