@@ -82,6 +82,8 @@
   font-size: 15px;
   transition: all 0.2s;
   box-sizing: border-box;
+  background: #ffffff;
+  color: #111827; /* Texto más oscuro y legible */
 }
 
 .form-group input:focus,
@@ -95,6 +97,12 @@
 .form-group select:disabled {
   background: #f3f4f6;
   cursor: not-allowed;
+}
+
+/* Placeholders más visibles */
+.form-group input::placeholder,
+.form-group select::placeholder {
+  color: #6b7280;
 }
 
 .login-btn {

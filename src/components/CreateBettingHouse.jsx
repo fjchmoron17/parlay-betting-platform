@@ -24,6 +24,20 @@ export default function CreateBettingHouse({ onSuccess, onCancel }) {
     { code: 'VES', name: 'Bolívar (VES)' }
   ];
 
+  const countries = [
+    'México',
+    'Colombia',
+    'Argentina',
+    'Chile',
+    'Perú',
+    'Ecuador',
+    'Uruguay',
+    'Panamá',
+    'España',
+    'Estados Unidos',
+    'Venezuela'
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -117,16 +131,19 @@ export default function CreateBettingHouse({ onSuccess, onCancel }) {
           <label htmlFor="country">
             País <span className="required">*</span>
           </label>
-          <input
-            type="text"
+          <select
             id="country"
             name="country"
             value={formData.country}
             onChange={handleChange}
-            placeholder="Ej: México"
             disabled={loading}
             required
-          />
+          >
+            <option value="" disabled>Seleccione un país</option>
+            {countries.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
