@@ -58,8 +58,15 @@ export const placeBet = async (req, res) => {
 
 export const getBetsForHouse = async (req, res) => {
   try {
-    const { bettingHouseId } = req.params;
+    const bettingHouseId = req.query.betting_house_id || req.query.bettingHouseId;
     const { limit = 50, offset = 0, status } = req.query;
+    
+    if (!bettingHouseId) {
+      return res.status(400).json({
+        success: false,
+        error: 'betting_house_id is required'
+      });
+    }
     
     let bets = await Bet.findAll(bettingHouseId, limit, offset);
     
@@ -140,8 +147,15 @@ export const settleBet = async (req, res) => {
 
 export const getBetStats = async (req, res) => {
   try {
-    const { bettingHouseId } = req.params;
+    const bettingHouseId = req.query.betting_house_id || req.query.bettingHouseId;
     const { fromDate, toDate } = req.query;
+    
+    if (!bettingHouseId) {
+      return res.status(400).json({
+        success: false,
+        error: 'betting_house_id is required'
+      });
+    }
     
     const stats = await Bet.getStats(bettingHouseId, fromDate, toDate);
     
@@ -161,7 +175,16 @@ export const getBetStats = async (req, res) => {
 
 export const getBetsByDate = async (req, res) => {
   try {
-    const { bettingHouseId, date } = req.params;
+    const bettingHouseId = req.query.betting_house_id || req.query.bettingHouseId;
+    const date = req.query.date;
+    
+    if (!bettingHouseId || !date) {
+      return res.status(400).json({
+        success: false,
+        error: 'betting_house_id and date are required'
+      });
+    }
+    
     const bets = await Bet.findByDate(bettingHouseId, date);
     
     res.json({

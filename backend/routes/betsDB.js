@@ -14,16 +14,16 @@ const router = express.Router();
 // POST /api/bets-db - Realizar una apuesta
 router.post('/', placeBet);
 
-// GET /api/bets-db/:bettingHouseId - Obtener apuestas de una casa
-router.get('/:bettingHouseId', getBetsForHouse);
+// GET /api/bets-db?betting_house_id=X - Obtener apuestas de una casa (query params)
+router.get('/', getBetsForHouse);
 
-// GET /api/bets-db/:bettingHouseId/date/:date - Obtener apuestas por fecha
-router.get('/:bettingHouseId/date/:date', getBetsByDate);
+// GET /api/bets-db/stats?betting_house_id=X - Estadísticas de apuestas
+router.get('/stats', getBetStats);
 
-// GET /api/bets-db/:bettingHouseId/stats - Estadísticas de apuestas
-router.get('/:bettingHouseId/stats', getBetStats);
+// GET /api/bets-db/by-date?betting_house_id=X&date=Y - Obtener apuestas por fecha
+router.get('/by-date', getBetsByDate);
 
-// GET /api/bets-db/:id - Obtener una apuesta por ID
+// GET /api/bets-db/detail/:id - Obtener una apuesta por ID
 router.get('/detail/:id', getBetById);
 
 // PUT /api/bets-db/:id/settle - Resolver una apuesta
