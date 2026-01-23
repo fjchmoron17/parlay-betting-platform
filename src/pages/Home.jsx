@@ -154,6 +154,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
                   gameGroup={gameGroup}
                   onSelect={handleSelect}
                   index={index}
+                  selectedGames={bettingMode ? selectedGames : []}
                 />
               ))}
             </div>

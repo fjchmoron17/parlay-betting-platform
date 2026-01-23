@@ -1,18 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
 
-const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
-  const [selectedMarket, setSelectedMarket] = useState({});
+const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => {
+  const isSelected = (market, team, gameId) => {
+    return selectedGames.some(
+      (sel) => sel.id === gameId && sel.market === market && sel.selectedTeam === team
+    );
+  };
 
-  const selectOption = (market, team, odds, gameId) => {
-    setSelectedMarket(prev => ({
-      ...prev,
-      [market]: team
-    }));
+  const selectOption = (market, team, odds, gameId, pointSpread = null) => {
     onSelect(gameId, team, odds, {
       homeTeam: firstGame.home_team,
       awayTeam: firstGame.away_team,
       league: firstGame.league,
       market: market,
+      pointSpread,
+      bookmaker: firstGame.bookmaker || firstGame.bookmakers?.[0]?.title || 'Desconocido',
+      commenceTime: firstGame.commence_time
     });
   };
 
@@ -54,7 +57,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
             <div className="market-options">
               <button
                 className={`market-btn ${
-                  selectedMarket.h2h === marketGroups.h2h.home_team
+                  isSelected('h2h', marketGroups.h2h.home_team, marketGroups.h2h.id)
                     ? "market-btn-selected"
                     : ""
                 }`}
@@ -72,8 +75,8 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
               {marketGroups.h2h.odds_draw && (
                 <button
                   className={`market-btn market-btn-draw ${
-                    selectedMarket.h2h === 'Draw' ? "market-btn-selected" : ""
-                  }`}
+                      isSelected('h2h', 'Draw', marketGroups.h2h.id) ? "market-btn-selected" : ""
+                    }`}
                   onClick={() => selectOption(
                     'h2h',
                     'Draw',
@@ -88,7 +91,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
 
               <button
                 className={`market-btn ${
-                  selectedMarket.h2h === marketGroups.h2h.away_team
+                  isSelected('h2h', marketGroups.h2h.away_team, marketGroups.h2h.id)
                     ? "market-btn-selected"
                     : ""
                 }`}
@@ -118,7 +121,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
             <div className="market-options">
               <button
                 className={`market-btn ${
-                  selectedMarket.spreads === marketGroups.spreads.home_team
+                  isSelected('spreads', marketGroups.spreads.home_team, marketGroups.spreads.id)
                     ? "market-btn-selected"
                     : ""
                 }`}
@@ -126,7 +129,8 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
                   'spreads',
                   marketGroups.spreads.home_team,
                   marketGroups.spreads.odds_home,
-                  marketGroups.spreads.id
+                  marketGroups.spreads.id,
+                  marketGroups.spreads.point_home || null
                 )}
               >
                 <span className="team-name">
@@ -143,13 +147,14 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
               {marketGroups.spreads.odds_draw && (
                 <button
                   className={`market-btn market-btn-draw ${
-                    selectedMarket.spreads === 'Draw' ? "market-btn-selected" : ""
-                  }`}
+                      isSelected('spreads', 'Draw', marketGroups.spreads.id) ? "market-btn-selected" : ""
+                    }`}
                   onClick={() => selectOption(
                     'spreads',
                     'Draw',
                     marketGroups.spreads.odds_draw,
-                    marketGroups.spreads.id
+                    marketGroups.spreads.id,
+                    0
                   )}
                 >
                   <span className="team-name">Empate</span>
@@ -159,7 +164,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
 
               <button
                 className={`market-btn ${
-                  selectedMarket.spreads === marketGroups.spreads.away_team
+                  isSelected('spreads', marketGroups.spreads.away_team, marketGroups.spreads.id)
                     ? "market-btn-selected"
                     : ""
                 }`}
@@ -167,7 +172,8 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
                   'spreads',
                   marketGroups.spreads.away_team,
                   marketGroups.spreads.odds_away,
-                  marketGroups.spreads.id
+                  marketGroups.spreads.id,
+                  marketGroups.spreads.point_away || null
                 )}
               >
                 <span className="team-name">
@@ -196,7 +202,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
             <div className="market-options">
               <button
                 className={`market-btn ${
-                  selectedMarket.totals === marketGroups.totals.home_team
+                  isSelected('totals', marketGroups.totals.home_team, marketGroups.totals.id)
                     ? "market-btn-selected"
                     : ""
                 }`}
@@ -204,7 +210,8 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
                   'totals',
                   marketGroups.totals.home_team,
                   marketGroups.totals.odds_home,
-                  marketGroups.totals.id
+                  marketGroups.totals.id,
+                  marketGroups.totals.point_home || null
                 )}
               >
                 <span className="team-name">
@@ -219,13 +226,14 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
               {marketGroups.totals.odds_draw && (
                 <button
                   className={`market-btn market-btn-draw ${
-                    selectedMarket.totals === 'Draw' ? "market-btn-selected" : ""
-                  }`}
+                      isSelected('totals', 'Draw', marketGroups.totals.id) ? "market-btn-selected" : ""
+                    }`}
                   onClick={() => selectOption(
                     'totals',
                     'Draw',
                     marketGroups.totals.odds_draw,
-                    marketGroups.totals.id
+                    marketGroups.totals.id,
+                    0
                   )}
                 >
                   <span className="team-name">Empate</span>
@@ -235,7 +243,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
 
               <button
                 className={`market-btn ${
-                  selectedMarket.totals === marketGroups.totals.away_team
+                  isSelected('totals', marketGroups.totals.away_team, marketGroups.totals.id)
                     ? "market-btn-selected"
                     : ""
                 }`}
@@ -243,7 +251,8 @@ const GroupedGameCard = ({ gameGroup, onSelect, index }) => {
                   'totals',
                   marketGroups.totals.away_team,
                   marketGroups.totals.odds_away,
-                  marketGroups.totals.id
+                  marketGroups.totals.id,
+                  marketGroups.totals.point_away || null
                 )}
               >
                 <span className="team-name">
