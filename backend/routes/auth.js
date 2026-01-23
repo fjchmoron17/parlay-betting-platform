@@ -36,6 +36,17 @@ router.get('/debug-env', (req, res) => {
       : process.env[key];
   });
   
+  // Mostrar TODAS las variables (primeras 10 letras de valores sensibles)
+  const allVars = {};
+  allEnvKeys.forEach(key => {
+    const value = process.env[key];
+    if (key.includes('PASSWORD') || key.includes('SECRET') || key.includes('KEY') || key.includes('TOKEN')) {
+      allVars[key] = value ? `${value.substring(0, 10)}... (${value.length} chars)` : 'NOT SET';
+    } else {
+      allVars[key] = value;
+    }
+  });
+  
   res.json({
     targetVars: {
       MAIL_SERVICE: process.env.MAIL_SERVICE || 'NOT SET',
@@ -44,6 +55,7 @@ router.get('/debug-env', (req, res) => {
       MAIL_PASSWORD_FIRST_CHAR: process.env.MAIL_PASSWORD ? process.env.MAIL_PASSWORD[0] : 'NOT SET'
     },
     allMailRelatedVars: mailVars,
+    allEnvVars: allVars,
     totalEnvVarsCount: allEnvKeys.length,
     NODE_ENV: process.env.NODE_ENV || 'development',
     RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT || 'NOT SET',
