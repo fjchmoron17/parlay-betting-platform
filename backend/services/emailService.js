@@ -10,6 +10,20 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Función de prueba para verificar configuración
+export async function testEmailConnection() {
+  try {
+    await transporter.verify();
+    return { success: true, message: 'Email service configured correctly' };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: 'Email service configuration error',
+      error: error.message 
+    };
+  }
+}
+
 export async function sendBettingHouseRegistrationEmail(
   houseData,
   userData
