@@ -3,13 +3,13 @@ import { DailyReport } from '../db/models/index.js';
 
 export const calculateDailyReport = async (req, res) => {
   try {
-    const { bettingHouseId } = req.params;
-    const { reportDate } = req.body;
+    const bettingHouseId = req.body.betting_house_id || req.body.bettingHouseId;
+    const reportDate = req.body.report_date || req.body.reportDate;
     
-    if (!reportDate) {
+    if (!bettingHouseId || !reportDate) {
       return res.status(400).json({
         success: false,
-        error: 'reportDate is required'
+        error: 'betting_house_id and report_date are required'
       });
     }
     
@@ -31,7 +31,15 @@ export const calculateDailyReport = async (req, res) => {
 
 export const getDailyReportByDate = async (req, res) => {
   try {
-    const { bettingHouseId, date } = req.params;
+    const bettingHouseId = req.query.betting_house_id || req.query.bettingHouseId;
+    const date = req.query.date;
+    
+    if (!bettingHouseId || !date) {
+      return res.status(400).json({
+        success: false,
+        error: 'betting_house_id and date are required'
+      });
+    }
     
     const report = await DailyReport.findByDate(bettingHouseId, date);
     
@@ -57,13 +65,14 @@ export const getDailyReportByDate = async (req, res) => {
 
 export const getReportsByRange = async (req, res) => {
   try {
-    const { bettingHouseId } = req.params;
-    const { fromDate, toDate } = req.query;
+    const bettingHouseId = req.query.betting_house_id || req.query.bettingHouseId;
+    const fromDate = req.query.from_date || req.query.fromDate;
+    const toDate = req.query.to_date || req.query.toDate;
     
-    if (!fromDate || !toDate) {
+    if (!bettingHouseId || !fromDate || !toDate) {
       return res.status(400).json({
         success: false,
-        error: 'fromDate and toDate are required'
+        error: 'betting_house_id, from_date and to_date are required'
       });
     }
     
@@ -97,7 +106,14 @@ export const getReportsByRange = async (req, res) => {
 
 export const getLatestReport = async (req, res) => {
   try {
-    const { bettingHouseId } = req.params;
+    const bettingHouseId = req.query.betting_house_id || req.query.bettingHouseId;
+    
+    if (!bettingHouseId) {
+      return res.status(400).json({
+        success: false,
+        error: 'betting_house_id is required'
+      });
+    }
     
     const report = await DailyReport.getLatest(bettingHouseId);
     

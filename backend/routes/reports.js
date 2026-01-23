@@ -9,16 +9,16 @@ import {
 
 const router = express.Router();
 
-// POST /api/reports/:bettingHouseId/calculate - Calcular reporte diario
-router.post('/:bettingHouseId/calculate', calculateDailyReport);
+// POST /api/reports/calculate - Calcular reporte diario (con betting_house_id y report_date en body)
+router.post('/calculate', calculateDailyReport);
 
-// GET /api/reports/:bettingHouseId/date/:date - Obtener reporte de una fecha
-router.get('/:bettingHouseId/date/:date', getDailyReportByDate);
+// GET /api/reports/daily?betting_house_id=X&date=Y - Obtener reporte de una fecha
+router.get('/daily', getDailyReportByDate);
 
-// GET /api/reports/:bettingHouseId/range - Obtener reportes por rango de fechas
-router.get('/:bettingHouseId/range', getReportsByRange);
+// GET /api/reports/range?betting_house_id=X&from_date=Y&to_date=Z - Obtener reportes por rango
+router.get('/range', getReportsByRange);
 
-// GET /api/reports/:bettingHouseId/latest - Obtener último reporte
-router.get('/:bettingHouseId/latest', getLatestReport);
+// GET /api/reports/latest?betting_house_id=X - Obtener último reporte
+router.get('/latest', getLatestReport);
 
 export default router;
