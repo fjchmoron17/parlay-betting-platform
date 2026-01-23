@@ -1,6 +1,6 @@
 // backend/controllers/bettingHousesController.js
 import { BettingHouse, BettingHouseUser } from '../db/models/index.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { sendBettingHouseRegistrationEmail } from '../services/emailService.js';
 
 export const getAllBettingHouses = async (req, res) => {
