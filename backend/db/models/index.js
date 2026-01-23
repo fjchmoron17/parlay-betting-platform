@@ -262,6 +262,14 @@ export const DailyReport = {
       ]
     );
     
+    // Actualizar el balance de la casa con el closing_balance del reporte
+    await query(
+      `UPDATE betting_houses 
+       SET account_balance = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2`,
+      [closingBalance, bettingHouseId]
+    );
+    
     return result.rows[0];
   },
 

@@ -1,5 +1,6 @@
 // backend/controllers/bettingHousesController.js
 import { BettingHouse, BettingHouseUser } from '../db/models/index.js';
+import { query as queryDb } from '../db/dbConfig.js';
 import bcrypt from 'bcryptjs';
 import { sendBettingHouseRegistrationEmail } from '../services/emailService.js';
 
@@ -7,12 +8,37 @@ export const getAllBettingHouses = async (req, res) => {
   try {
     const houses = await BettingHouse.findAll();
     
-    // Enriquecer con información de comisiones generadas
-    const enrichedHouses = houses.map(house => ({
-      ...house,
-      commission_percentage: 5, // Comisión fija 5%
-      commission_percentage_generated: house.commission_generated || 0 // Comisión acumulada generada
-    }));
+    // Enriquecer cada casa con información de comisiones acumuladas
+    const enrichedHouses = await Promise.all(
+      houses.map(async (house) => {
+        try {
+          // Obtener total de comisiones generadas del reporte
+          const commissionResult = await queryDb(
+            `SELECT COALESCE(SUM(total_commissions), 0) as total_commissions_generated
+             FROM daily_reports
+             WHERE betting_house_id = $1`,
+            [house.id]
+          );
+          
+          const commissionsGenerated = parseFloat(
+            commissionResult.rows[0]?.total_commissions_generated || 0
+          );
+          
+          return {
+            ...house,
+            commission_percentage: 5, // Comisión fija 5%
+            commission_generated: commissionsGenerated
+          };
+        } catch (err) {
+          console.error(`Error calculating commissions for house ${house.id}:`, err);
+          return {
+            ...house,
+            commission_percentage: 5,
+            commission_generated: 0
+          };
+        }
+      })
+    );
     
     res.json({
       success: true,
