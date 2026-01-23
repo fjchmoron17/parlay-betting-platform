@@ -19,31 +19,48 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Verificar si hay sesión guardada
-    const savedSession = localStorage.getItem('bettingHouseSession');
+    const savedSession = localStorage.getItem('authSession');
     if (savedSession) {
       const session = JSON.parse(savedSession);
-      setUser(session.user);
-      setHouse(session.house);
+      setUser(session.user || null);
+      setHouse(session.house || null);
     }
     setLoading(false);
   }, []);
 
-  const login = async (houseId, username, password) => {
+  const login = async ({ role, houseId, username, password }) => {
     try {
-      // Obtener datos de la casa
+      if (role === 'super_admin') {
+        // Autenticación de super admin (demo). En producción validar en backend.
+        const userData = {
+          id: 0,
+          username,
+          role: 'super_admin'
+        };
+
+        const session = { user: userData, house: null };
+        localStorage.setItem('authSession', JSON.stringify(session));
+        setUser(userData);
+        setHouse(null);
+        return { success: true };
+      }
+
+      if (!houseId) {
+        throw new Error('Debes indicar la casa de apuestas');
+      }
+
       const response = await getBettingHouseById(houseId);
-      
+
       if (!response.success) {
         throw new Error('Casa de apuestas no encontrada');
       }
 
       const houseData = response.data;
 
-      // En producción, aquí validarías username/password contra la BD
-      // Por ahora, simulamos autenticación básica
+      // En producción validar credenciales contra backend / BD
       const userData = {
         id: houseId,
-        username: username,
+        username,
         role: 'house_admin'
       };
 
@@ -52,7 +69,7 @@ export const AuthProvider = ({ children }) => {
         house: houseData
       };
 
-      localStorage.setItem('bettingHouseSession', JSON.stringify(session));
+      localStorage.setItem('authSession', JSON.stringify(session));
       setUser(userData);
       setHouse(houseData);
 
@@ -64,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('bettingHouseSession');
+    localStorage.removeItem('authSession');
     setUser(null);
     setHouse(null);
   };
@@ -78,9 +95,11 @@ export const AuthProvider = ({ children }) => {
         setHouse(response.data);
         
         // Actualizar en localStorage
-        const savedSession = JSON.parse(localStorage.getItem('bettingHouseSession'));
-        savedSession.house = response.data;
-        localStorage.setItem('bettingHouseSession', JSON.stringify(savedSession));
+        const savedSession = JSON.parse(localStorage.getItem('authSession'));
+        if (savedSession) {
+          savedSession.house = response.data;
+          localStorage.setItem('authSession', JSON.stringify(savedSession));
+        }
       }
     } catch (error) {
       console.error('Error refreshing house data:', error);
@@ -94,7 +113,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     refreshHouseData,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    isSuperAdmin: user?.role === 'super_admin'
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
