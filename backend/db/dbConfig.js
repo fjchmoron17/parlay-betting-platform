@@ -31,12 +31,13 @@ pool.on('error', (err) => {
   console.error('❌ Error inesperado en pool de conexiones:', err);
 });
 
-// Verificar conexión al iniciar
+// Verificar conexión al iniciar (sin bloquear el server)
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
-    console.error('❌ Error conectando a la base de datos:', err.message);
+    console.error('⚠️ Error conectando a la base de datos:', err.message);
+    console.error('   El servidor continuará pero las operaciones de BD fallarán.');
   } else {
-    console.log('✅ Conectado a PostgreSQL:', res.rows[0]);
+    console.log('✅ Conectado a PostgreSQL:', res.rows[0].now);
   }
 });
 
