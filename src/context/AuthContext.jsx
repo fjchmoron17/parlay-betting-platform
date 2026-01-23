@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getBettingHouseById } from '../services/b2bApi';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
 
 const AuthContext = createContext(null);
 
@@ -30,48 +31,26 @@ export const AuthProvider = ({ children }) => {
 
   const login = async ({ role, houseId, username, password }) => {
     try {
-      if (role === 'super_admin') {
-        // Autenticación de super admin (demo). En producción validar en backend.
-        const userData = {
-          id: 0,
-          username,
-          role: 'super_admin'
-        };
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, houseId, username, password })
+      });
 
-        const session = { user: userData, house: null };
-        localStorage.setItem('authSession', JSON.stringify(session));
-        setUser(userData);
-        setHouse(null);
-        return { success: true };
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Credenciales inválidas');
       }
-
-      if (!houseId) {
-        throw new Error('Debes indicar la casa de apuestas');
-      }
-
-      const response = await getBettingHouseById(houseId);
-
-      if (!response.success) {
-        throw new Error('Casa de apuestas no encontrada');
-      }
-
-      const houseData = response.data;
-
-      // En producción validar credenciales contra backend / BD
-      const userData = {
-        id: houseId,
-        username,
-        role: 'house_admin'
-      };
 
       const session = {
-        user: userData,
-        house: houseData
+        user: data.data.user,
+        house: data.data.house || null
       };
 
       localStorage.setItem('authSession', JSON.stringify(session));
-      setUser(userData);
-      setHouse(houseData);
+      setUser(data.data.user);
+      setHouse(data.data.house || null);
 
       return { success: true };
     } catch (error) {
@@ -90,7 +69,8 @@ export const AuthProvider = ({ children }) => {
     if (!house) return;
     
     try {
-      const response = await getBettingHouseById(house.id);
+      const resp = await fetch(`${API_URL}/betting-houses/${house.id}`);
+      const response = await resp.json();
       if (response.success) {
         setHouse(response.data);
         

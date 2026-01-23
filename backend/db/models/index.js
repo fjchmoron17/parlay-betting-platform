@@ -223,3 +223,42 @@ export const Transaction = {
     return result.rows[0];
   }
 };
+
+// backend/db/models/BettingHouseUser.js
+export const BettingHouseUser = {
+  async findByUsername(username) {
+    return getOne(
+      `SELECT id, betting_house_id, username, email, password_hash, role, is_active
+       FROM betting_house_users
+       WHERE username = $1`,
+      [username]
+    );
+  },
+
+  async create({ betting_house_id = null, username, email, password_hash, role = 'house_admin' }) {
+    const result = await query(
+      `INSERT INTO betting_house_users (betting_house_id, username, email, password_hash, role, is_active)
+       VALUES ($1, $2, $3, $4, $5, true)
+       RETURNING id, betting_house_id, username, email, role, is_active`,
+      [betting_house_id, username, email, password_hash, role]
+    );
+    return result.rows[0];
+  },
+
+  async upsert(user) {
+    const { betting_house_id = null, username, email, password_hash, role = 'house_admin' } = user;
+    const result = await query(
+      `INSERT INTO betting_house_users (betting_house_id, username, email, password_hash, role, is_active)
+       VALUES ($1, $2, $3, $4, $5, true)
+       ON CONFLICT (username) DO UPDATE
+       SET betting_house_id = EXCLUDED.betting_house_id,
+           email = EXCLUDED.email,
+           password_hash = EXCLUDED.password_hash,
+           role = EXCLUDED.role,
+           is_active = true
+       RETURNING id, betting_house_id, username, email, role, is_active`,
+      [betting_house_id, username, email, password_hash, role]
+    );
+    return result.rows[0];
+  }
+};

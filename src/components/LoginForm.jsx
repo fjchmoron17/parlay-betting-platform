@@ -143,7 +143,8 @@ export default function LoginForm({ onSuccess }) {
             💡 <strong>Demo:</strong> Usa "super admin" para ver todas las casas o selecciona una casa por ID
           </p>
           <p className="demo-credentials">
-            Usuario: <code>admin</code> | Contraseña: <code>demo123</code>
+            Super Admin: <code>superadmin</code> / <code>Super!123</code><br />
+            Casa 1-4: <code>casa1</code>.. <code>casa4</code> / <code>CasaN!123</code>
           </p>
         </div>
       </div>
