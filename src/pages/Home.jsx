@@ -55,10 +55,13 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
 
   const handleSelect = (gameId, team, odds, gameData = {}) => {
     console.log('🎯 handleSelect called:', { gameId, team, odds, gameData });
+    console.log('🔍 gameData keys:', Object.keys(gameData));
+    console.log('🔍 homeTeam:', gameData.homeTeam, 'awayTeam:', gameData.awayTeam);
     
     // Validar que gameData tenga la información necesaria
     if (!gameData.homeTeam || !gameData.awayTeam) {
       console.error('❌ ERROR: gameData incompleto', gameData);
+      console.error('❌ homeTeam:', gameData.homeTeam, 'awayTeam:', gameData.awayTeam);
       alert('Error: Datos del juego incompletos. Intenta de nuevo.');
       return;
     }
@@ -107,8 +110,11 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
       },
     };
     
+    console.log('📝 newParlay object:', newParlay);
     parlayRef.current = newParlay; // Actualizar ref inmediatamente
+    console.log('✅ parlayRef.current updated:', parlayRef.current);
     setParlay(newParlay); // Actualizar state para re-render
+    console.log('✅ setParlay called with:', newParlay);
   };
 
   const handleRemove = (gameId) => {
