@@ -84,22 +84,6 @@ export default function LoginForm({ onSuccess }) {
             </select>
           </div>
 
-          {formData.role === 'house_admin' && (
-            <div className="form-group">
-              <label htmlFor="houseId">ID de Casa de Apuestas</label>
-              <input
-                type="number"
-                id="houseId"
-                name="houseId"
-                value={formData.houseId}
-                onChange={handleChange}
-                placeholder="Ej: 1"
-                disabled={loading}
-                autoFocus
-              />
-            </div>
-          )}
-
           <div className="form-group">
             <label htmlFor="username">Usuario</label>
             <input
