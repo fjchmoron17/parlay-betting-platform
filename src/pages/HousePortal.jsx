@@ -30,6 +30,12 @@ export default function HousePortal() {
     });
   };
 
+  const handleRemoveSelection = (selection) => {
+    setSelectedGames(prev => prev.filter(g => 
+      !(g.id === selection.id && g.selectedTeam === selection.selectedTeam && g.market === selection.market)
+    ));
+  };
+
   const handlePlaceBet = () => {
     if (selectedGames.length === 0) {
       alert('Selecciona al menos un juego para apostar');
@@ -110,21 +116,49 @@ export default function HousePortal() {
             ) : (
               <>
                 {selectedGames.length > 0 && (
-                  <div className="selection-bar">
-                    <div className="selection-info">
-                      <span className="selection-count">
-                        {selectedGames.length} selección(es)
-                      </span>
-                      <button 
-                        onClick={() => setSelectedGames([])}
-                        className="clear-btn"
-                      >
-                        Limpiar
-                      </button>
+                  <div className="selection-panel">
+                    <div className="selection-header">
+                      <div>
+                        <p className="selection-title">Selecciones actuales</p>
+                        <p className="selection-subtitle">{selectedGames.length} selección(es) listas</p>
+                      </div>
+                      <div className="selection-actions">
+                        <button 
+                          onClick={() => setSelectedGames([])}
+                          className="clear-btn"
+                        >
+                          Vaciar
+                        </button>
+                        <button onClick={handlePlaceBet} className="create-bet-btn">
+                          Crear Apuesta
+                        </button>
+                      </div>
                     </div>
-                    <button onClick={handlePlaceBet} className="create-bet-btn">
-                      Crear Apuesta
-                    </button>
+                    <div className="selection-list">
+                      {selectedGames.map((sel, idx) => (
+                        <div key={`${sel.id}-${sel.market}-${sel.selectedTeam}-${idx}`} className="selection-item">
+                          <div className="selection-main">
+                            <div className="selection-matchup">
+                              <span className="selection-teams">{sel.home_team} vs {sel.away_team}</span>
+                              <span className="selection-market">{sel.market.toUpperCase()}</span>
+                            </div>
+                            <div className="selection-pick">
+                              <span className="selection-team">{sel.selectedTeam}</span>
+                              {sel.pointSpread !== null && sel.pointSpread !== undefined && (
+                                <span className="selection-spread">{sel.pointSpread > 0 ? '+' : ''}{sel.pointSpread}</span>
+                              )}
+                              <span className="selection-odds">@{sel.selectedOdds?.toFixed ? sel.selectedOdds.toFixed(2) : sel.selectedOdds}</span>
+                            </div>
+                          </div>
+                          <button
+                            className="remove-selection"
+                            onClick={() => handleRemoveSelection(sel)}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 <Home 
