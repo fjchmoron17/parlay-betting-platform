@@ -58,6 +58,8 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
 
     // Crear un identificador único del juego basado en home_team + away_team
     const gameMatchId = `${gameData.homeTeam}_vs_${gameData.awayTeam}`;
+    console.log('📌 gameMatchId:', gameMatchId);
+    console.log('📋 parlay state:', parlay);
 
     // Si está en modo betting, usar el callback externo
     if (bettingMode && onGameSelect) {
@@ -76,32 +78,28 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
       return;
     }
 
-    // Verificar si este juego ya está en el parlay usando setParlay con función
-    setParlay((currentParlay) => {
-      console.log('📌 Checking gameMatchId:', gameMatchId, 'Current parlay:', currentParlay);
-      
-      if (currentParlay[gameMatchId]) {
-        console.warn('⚠️ DUPLICATE DETECTED:', gameMatchId);
-        alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior (✕) si quieres elegir otra opción de este juego.`);
-        return currentParlay; // No cambiar el estado
-      }
+    // VALIDACIÓN ANTES DE setParlay - usar el parlay actual del closure
+    if (parlay[gameMatchId]) {
+      console.warn('⚠️ DUPLICATE DETECTED:', gameMatchId);
+      alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior (✕) si quieres elegir otra opción de este juego.`);
+      return;
+    }
 
-      console.log('✅ Adding selection:', gameMatchId);
-      // Agregar la nueva selección
-      return {
-        ...currentParlay,
-        [gameMatchId]: {
-          team,
-          odds,
-          homeTeam: gameData.homeTeam,
-          awayTeam: gameData.awayTeam,
-          league: gameData.league,
-          market: gameData.market,
-          gameId
-        },
-      };
-    });
-  }, [bettingMode, onGameSelect]);
+    console.log('✅ Adding selection:', gameMatchId);
+    // Agregar la nueva selección
+    setParlay((prev) => ({
+      ...prev,
+      [gameMatchId]: {
+        team,
+        odds,
+        homeTeam: gameData.homeTeam,
+        awayTeam: gameData.awayTeam,
+        league: gameData.league,
+        market: gameData.market,
+        gameId
+      },
+    }));
+  }, [parlay, bettingMode, onGameSelect]);
 
   const handleRemove = (gameId) => {
     setParlay((prev) => {
