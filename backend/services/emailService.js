@@ -1,6 +1,12 @@
 // backend/services/emailService.js
 import nodemailer from 'nodemailer';
 
+// Log de configuración al iniciar
+console.log('📧 Email Service Init:');
+console.log('  SERVICE:', process.env.EMAIL_SERVICE || 'NOT SET');
+console.log('  USER:', process.env.EMAIL_USER || 'NOT SET');
+console.log('  PASSWORD:', process.env.EMAIL_PASSWORD ? 'SET (' + process.env.EMAIL_PASSWORD.length + ' chars)' : 'NOT SET');
+
 // Configurar transportador de email
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || 'gmail',
