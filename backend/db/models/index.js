@@ -117,7 +117,7 @@ export const Bet = {
   async findByDate(bettingHouseId, date) {
     return getAll(
       `SELECT * FROM bets 
-       WHERE betting_house_id = $1 AND placed_date = $2
+       WHERE betting_house_id = $1 AND placed_at::date = $2::date
        ORDER BY placed_at DESC`,
       [bettingHouseId, date]
     );
@@ -210,13 +210,19 @@ export const DailyReport = {
         COALESCE(SUM(CASE WHEN status = 'won' THEN actual_win ELSE 0 END), 0) as total_winnings,
         COALESCE(SUM(commission_amount), 0) as total_commissions
       FROM bets
-      WHERE betting_house_id = $1 AND placed_date = $2`,
+      WHERE betting_house_id = $1 AND placed_at::date = $2::date`,
       [bettingHouseId, reportDate]
     );
     
     const dayStats = stats.rows[0];
-    const totalLosses = parseFloat(dayStats.total_wagered) - parseFloat(dayStats.total_winnings);
-    const netProfitLoss = parseFloat(dayStats.total_winnings) - parseFloat(dayStats.total_wagered) - parseFloat(dayStats.total_commissions);
+    const totalWagered = parseFloat(dayStats.total_wagered);
+    const totalWinnings = parseFloat(dayStats.total_winnings);
+    const totalCommissions = parseFloat(dayStats.total_commissions);
+
+    // Pérdidas del operador = monto apostado - premios pagados
+    const totalLosses = totalWagered - totalWinnings;
+    // Utilidad neta del operador = monto apostado - premios - comisiones (salida)
+    const netProfitLoss = totalWagered - totalWinnings - totalCommissions;
     const closingBalance = parseFloat(openingBalance) + netProfitLoss;
     
     // Insertar o actualizar reporte
