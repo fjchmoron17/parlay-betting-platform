@@ -21,4 +21,16 @@ router.get('/test-email', async (req, res) => {
   }
 });
 
+// GET /api/auth/debug-env - Mostrar variables de entorno (DEBUG ONLY)
+router.get('/debug-env', (req, res) => {
+  res.json({
+    EMAIL_SERVICE: process.env.EMAIL_SERVICE || 'NOT SET',
+    EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
+    EMAIL_PASSWORD_LENGTH: process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.length : 'NOT SET',
+    EMAIL_PASSWORD_FIRST_CHAR: process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD[0] : 'NOT SET',
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    TIMESTAMP: new Date().toISOString()
+  });
+});
+
 export default router;
