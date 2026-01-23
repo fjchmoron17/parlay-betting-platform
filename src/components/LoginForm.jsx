@@ -7,19 +7,18 @@ export default function LoginForm({ onSuccess }) {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     role: 'house_admin',
-    houseId: '',
     username: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
-      ...(name === 'role' && value === 'super_admin' ? { houseId: '' } : {})
+      [name]: value
     }));
     setError(null);
   };
@@ -28,12 +27,7 @@ export default function LoginForm({ onSuccess }) {
     e.preventDefault();
 
     if (!formData.username || !formData.password) {
-      setError('Todos los campos son obligatorios');
-      return;
-    }
-
-    if (formData.role === 'house_admin' && !formData.houseId) {
-      setError('Debes indicar el ID de tu casa de apuestas');
+      setError('Usuario y contraseña son obligatorios');
       return;
     }
 
@@ -43,7 +37,6 @@ export default function LoginForm({ onSuccess }) {
 
       const result = await login({
         role: formData.role,
-        houseId: formData.role === 'house_admin' ? parseInt(formData.houseId) : null,
         username: formData.username,
         password: formData.password
       });
@@ -120,17 +113,28 @@ export default function LoginForm({ onSuccess }) {
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group password-group">
             <label htmlFor="password">Contraseña</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              disabled={loading}
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                title={showPassword ? 'Ocultar' : 'Mostrar'}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="login-btn" disabled={loading}>
@@ -140,7 +144,7 @@ export default function LoginForm({ onSuccess }) {
 
         <div className="login-footer">
           <p className="demo-info">
-            💡 <strong>Demo:</strong> Usa "super admin" para ver todas las casas o selecciona una casa por ID
+            💡 <strong>Demo:</strong> Usa "super admin" para ver todas las casas o selecciona "Casa de Apuestas"
           </p>
         </div>
       </div>

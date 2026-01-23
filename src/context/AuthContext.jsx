@@ -29,12 +29,12 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async ({ role, houseId, username, password }) => {
+  const login = async ({ role, username, password }) => {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, houseId, username, password })
+        body: JSON.stringify({ role, username, password })
       });
 
       const data = await response.json();
