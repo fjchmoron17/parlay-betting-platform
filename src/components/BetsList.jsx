@@ -8,6 +8,7 @@ export default function BetsList({ bettingHouseId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all, pending, won, lost
+  const [selectedBet, setSelectedBet] = useState(null); // Para el modal de detalles
 
   useEffect(() => {
     if (bettingHouseId) {
@@ -43,6 +44,157 @@ export default function BetsList({ bettingHouseId }) {
       console.error('Error settling bet:', err);
       alert('Error al liquidar la apuesta');
     }
+  };
+
+  const handlePrintTicket = () => {
+    if (!selectedBet) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Ticket ${selectedBet.bet_ticket_number}</title>
+        <style>
+          body {
+            font-family: monospace;
+            margin: 0;
+            padding: 20px;
+            background: white;
+          }
+          .ticket {
+            width: 80mm;
+            margin: 0 auto;
+            border: 2px solid #333;
+            padding: 20px;
+            text-align: center;
+          }
+          .header {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 10px;
+          }
+          .ticket-number {
+            font-size: 14px;
+            margin: 10px 0;
+          }
+          .divider {
+            border-bottom: 2px dashed #333;
+            margin: 10px 0;
+          }
+          .selection {
+            text-align: left;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 11px;
+          }
+          .selection-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .summary {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 12px;
+          }
+          .summary-item {
+            margin: 5px 0;
+          }
+          .summary-label {
+            font-weight: bold;
+          }
+          .footer {
+            margin-top: 20px;
+            border-top: 2px dashed #333;
+            padding-top: 10px;
+            font-size: 10px;
+          }
+          .status {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #2ecc71;
+          }
+          @media print {
+            body {
+              margin: 0;
+              padding: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="ticket">
+          <div class="header">🎰 TICKET DE APUESTA</div>
+          <div class="ticket-number">
+            Ticket: <strong>${selectedBet.bet_ticket_number}</strong>
+          </div>
+          <div class="divider"></div>
+          
+          <div style="text-align: center; font-weight: bold; margin: 10px 0;">
+            ${selectedBet.bet_type === 'parlay' ? 'PARLAY' : 'APUESTA SIMPLE'}
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div style="margin: 15px 0; text-align: center;">
+            <strong>SELECCIONES:</strong>
+          </div>
+          
+          ${selectedBet.selections?.map((sel, idx) => `
+            <div class="selection">
+              <div class="selection-title">${idx + 1}. ${sel.home_team} vs ${sel.away_team}</div>
+              <div>Mercado: ${sel.market.toUpperCase()}</div>
+              <div>Selección: <strong>${sel.selected_team}</strong></div>
+              <div>Cuota: <strong>${parseFloat(sel.selected_odds).toFixed(2)}</strong></div>
+              ${sel.point_spread !== null ? `<div>Punto: ${sel.point_spread > 0 ? '+' : ''}${sel.point_spread}</div>` : ''}
+            </div>
+          `).join('')}
+          
+          <div class="divider"></div>
+          
+          <div class="summary">
+            <div class="summary-item">
+              <span class="summary-label">Monto Apostado:</span> $${parseFloat(selectedBet.total_stake).toFixed(2)}
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Cuota Total:</span> ${parseFloat(selectedBet.total_odds).toFixed(2)}
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Ganancia Potencial:</span> $${parseFloat(selectedBet.potential_win).toFixed(2)}
+            </div>
+            ${selectedBet.status === 'won' ? `
+              <div class="summary-item status">
+                ✓ GANADO: +$${parseFloat(selectedBet.actual_win).toFixed(2)}
+              </div>
+            ` : selectedBet.status === 'lost' ? `
+              <div class="summary-item" style="color: #e74c3c;">
+                ✗ PERDIDO
+              </div>
+            ` : `
+              <div class="summary-item" style="color: #f39c12;">
+                PENDIENTE
+              </div>
+            `}
+          </div>
+          
+          <div class="footer">
+            <div>Fecha: ${new Date(selectedBet.placed_at).toLocaleString('es-ES')}</div>
+            <div style="margin-top: 10px;">----- CONSERVE SU TICKET -----</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 250);
   };
 
   const formatCurrency = (amount) => {
@@ -175,6 +327,13 @@ export default function BetsList({ bettingHouseId }) {
                     {formatDate(bet.placed_at)}
                   </td>
                   <td className="actions-col">
+                    <button
+                      className="details-btn"
+                      onClick={() => setSelectedBet(bet)}
+                      title="Ver detalles e imprimir"
+                    >
+                      👁️ Ver
+                    </button>
                     {bet.status === 'pending' && (
                       <div className="action-buttons">
                         <button
@@ -218,6 +377,123 @@ export default function BetsList({ bettingHouseId }) {
           </span>
         </div>
       </div>
+
+      {/* Modal de Detalles */}
+      {selectedBet && (
+        <div className="bet-details-modal" onClick={() => setSelectedBet(null)}>
+          <div className="bet-details-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setSelectedBet(null)}>✕</button>
+            
+            <div className="modal-header">
+              <h3>📋 Detalles de la Apuesta</h3>
+              <div className="modal-ticket-number">{selectedBet.bet_ticket_number}</div>
+            </div>
+
+            <div className="modal-body">
+              {/* Información General */}
+              <div className="bet-info-section">
+                <div className="info-row">
+                  <span className="info-label">Tipo de Apuesta:</span>
+                  <span className="info-value">
+                    {selectedBet.bet_type === 'parlay' ? '🎯 PARLAY' : '🎲 SIMPLE'}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Estado:</span>
+                  <span 
+                    className="info-value"
+                    style={{ 
+                      color: 'white',
+                      backgroundColor: getStatusColor(selectedBet.status),
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {selectedBet.status.toUpperCase()}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Fecha:</span>
+                  <span className="info-value">{formatDate(selectedBet.placed_at)}</span>
+                </div>
+              </div>
+
+              {/* Selecciones */}
+              <div className="selections-section">
+                <h4>🎮 Selecciones ({selectedBet.selections?.length || 0})</h4>
+                <div className="selections-list">
+                  {selectedBet.selections?.map((sel, idx) => (
+                    <div key={idx} className="selection-detail-item">
+                      <div className="selection-number">{idx + 1}</div>
+                      <div className="selection-content">
+                        <div className="matchup">
+                          <strong>{sel.home_team} vs {sel.away_team}</strong>
+                          <span className="market-badge">{sel.market.toUpperCase()}</span>
+                        </div>
+                        <div className="selection-pick">
+                          <span className="pick">Selección: <strong>{sel.selected_team}</strong></span>
+                          <span className="odds">@ <strong>{parseFloat(sel.selected_odds).toFixed(2)}</strong></span>
+                          {sel.point_spread !== null && (
+                            <span className="spread">
+                              Punto: {sel.point_spread > 0 ? '+' : ''}{sel.point_spread}
+                            </span>
+                          )}
+                        </div>
+                        {sel.league && <div className="league">{sel.league}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Resumen Financiero */}
+              <div className="financial-section">
+                <h4>💰 Resumen</h4>
+                <div className="financial-items">
+                  <div className="financial-item">
+                    <span>Monto Apostado:</span>
+                    <span className="amount">{formatCurrency(selectedBet.total_stake)}</span>
+                  </div>
+                  <div className="financial-item">
+                    <span>Cuota Total:</span>
+                    <span className="amount">{parseFloat(selectedBet.total_odds).toFixed(2)}x</span>
+                  </div>
+                  <div className="financial-item highlight">
+                    <span>Ganancia Potencial:</span>
+                    <span className="amount" style={{ color: '#2ecc71', fontWeight: 'bold' }}>
+                      {formatCurrency(selectedBet.potential_win)}
+                    </span>
+                  </div>
+                  {selectedBet.status === 'won' && (
+                    <div className="financial-item" style={{ borderTop: '2px solid #2ecc71', paddingTop: '10px' }}>
+                      <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>✓ Ganancia Real:</span>
+                      <span className="amount" style={{ color: '#2ecc71', fontWeight: 'bold' }}>
+                        {formatCurrency(selectedBet.actual_win)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="print-btn"
+                onClick={handlePrintTicket}
+              >
+                🖨️ Imprimir Ticket
+              </button>
+              <button 
+                className="close-btn"
+                onClick={() => setSelectedBet(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
