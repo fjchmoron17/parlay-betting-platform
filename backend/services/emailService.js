@@ -1,28 +1,60 @@
 // backend/services/emailService.js
 import nodemailer from 'nodemailer';
 
+const MAIL_SERVICE = (process.env.MAIL_SERVICE || 'gmail').trim();
+const MAIL_HOST = process.env.MAIL_HOST?.trim();
+const MAIL_PORT = process.env.MAIL_PORT ? Number(process.env.MAIL_PORT) : undefined;
+const MAIL_USER = process.env.MAIL_USER;
+const MAIL_PASSWORD = process.env.MAIL_PASSWORD;
+
 // Log de configuración al iniciar
 console.log('📧 Email Service Init:');
-console.log('  SERVICE:', process.env.MAIL_SERVICE || 'NOT SET');
-console.log('  USER:', process.env.MAIL_USER || 'NOT SET');
-console.log('  PASSWORD:', process.env.MAIL_PASSWORD ? 'SET (' + process.env.MAIL_PASSWORD.length + ' chars)' : 'NOT SET');
+console.log('  SERVICE:', MAIL_SERVICE || 'NOT SET');
+console.log('  HOST:', MAIL_HOST || (MAIL_SERVICE?.toLowerCase() === 'sendgrid' ? 'smtp.sendgrid.net' : '—'));
+console.log('  PORT:', MAIL_PORT || (MAIL_SERVICE?.toLowerCase() === 'sendgrid' ? 587 : '—'));
+console.log('  USER:', MAIL_USER || 'NOT SET');
+console.log('  PASSWORD:', MAIL_PASSWORD ? 'SET (' + MAIL_PASSWORD.length + ' chars)' : 'NOT SET');
 
 // Configurar transportador de email
-const transporter = nodemailer.createTransport({
-  service: process.env.MAIL_SERVICE || 'gmail',
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASSWORD
-  }
-});
+const transporter = nodemailer.createTransport(
+  MAIL_SERVICE.toLowerCase() === 'sendgrid'
+    ? {
+        host: 'smtp.sendgrid.net',
+        port: 587,
+        secure: false,
+        auth: {
+          user: MAIL_USER,
+          pass: MAIL_PASSWORD
+        }
+      }
+    : MAIL_HOST
+    ? {
+        host: MAIL_HOST,
+        port: MAIL_PORT || 587,
+        secure: MAIL_PORT === 465,
+        auth: {
+          user: MAIL_USER,
+          pass: MAIL_PASSWORD
+        }
+      }
+    : {
+        service: MAIL_SERVICE || 'gmail',
+        auth: {
+          user: MAIL_USER,
+          pass: MAIL_PASSWORD
+        }
+      }
+);
 
 // Función de prueba para verificar configuración
 export async function testEmailConnection() {
   try {
     console.log('🔍 Testing email config...');
     console.log('MAIL_SERVICE:', process.env.MAIL_SERVICE || 'NOT SET');
+    console.log('MAIL_HOST:', process.env.MAIL_HOST || 'NOT SET');
+    console.log('MAIL_PORT:', process.env.MAIL_PORT || 'NOT SET');
     console.log('MAIL_USER:', process.env.MAIL_USER ? '✓ SET' : 'NOT SET');
-    console.log('MAIL_PASSWORD:', process.env.MAIL_PASSWORD ? '✓ SET' : 'NOT SET');
+    console.log('MAIL_PASSWORD:', process.env.MAIL_PASSWORD ? `✓ SET (${process.env.MAIL_PASSWORD.substring(0, 10)}...)` : 'NOT SET');
     
     if (!process.env.MAIL_USER || !process.env.MAIL_PASSWORD) {
       return { 
@@ -30,28 +62,38 @@ export async function testEmailConnection() {
         message: 'Missing MAIL_USER or MAIL_PASSWORD environment variables',
         config: {
           service: process.env.MAIL_SERVICE || 'gmail',
+          host: process.env.MAIL_HOST || 'auto',
+          port: process.env.MAIL_PORT || 'auto',
           user: process.env.MAIL_USER ? 'SET' : 'NOT SET',
           password: process.env.MAIL_PASSWORD ? 'SET' : 'NOT SET'
         }
       };
     }
     
+    console.log('⏳ Attempting transporter.verify()...');
     await transporter.verify();
+    console.log('✅ Transporter verified successfully');
     return { 
       success: true, 
       message: 'Email service configured correctly',
       config: {
         service: process.env.MAIL_SERVICE || 'gmail',
+        host: process.env.MAIL_HOST || 'auto',
+        port: process.env.MAIL_PORT || 'auto',
         user: process.env.MAIL_USER
       }
     };
   } catch (error) {
+    console.error('❌ Transporter error:', error.code, error.message);
     return { 
       success: false, 
       message: 'Email service configuration error',
       error: error.message,
+      errorCode: error.code,
       config: {
         service: process.env.MAIL_SERVICE || 'gmail',
+        host: process.env.MAIL_HOST || 'auto',
+        port: process.env.MAIL_PORT || 'auto',
         user: process.env.MAIL_USER ? 'SET' : 'NOT SET',
         password: process.env.MAIL_PASSWORD ? 'SET' : 'NOT SET'
       }
