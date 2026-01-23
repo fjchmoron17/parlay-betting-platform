@@ -78,11 +78,9 @@ export const createBettingHouse = async (req, res) => {
       role: 'house_admin'
     });
 
-    // Enviar emails
-    await sendBettingHouseRegistrationEmail(
-      house,
-      { username, password }
-    );
+    // Enviar emails (no blocking - fire and forget)
+    sendBettingHouseRegistrationEmail(house, { username, password })
+      .catch(err => console.error('❌ Email send failed (non-blocking):', err.message));
     
     res.status(201).json({
       success: true,
@@ -95,7 +93,7 @@ export const createBettingHouse = async (req, res) => {
           role: user.role
         }
       },
-      message: 'Betting house created successfully. Emails sent.'
+      message: 'Betting house created successfully.'
     });
   } catch (error) {
     console.error('Error creating betting house:', error);
