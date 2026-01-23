@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import GroupedGameCard from "../components/GroupedGameCard";
 import ParlayPanel from "../components/ParlayPanel";
 import FilterPanel from "../components/FilterPanel";
@@ -46,7 +46,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
     setFilters(newFilters);
   };
 
-  const handleSelect = (gameId, team, odds, gameData = {}) => {
+  const handleSelect = useCallback((gameId, team, odds, gameData = {}) => {
     console.log('🎯 handleSelect called:', { gameId, team, odds, gameData });
     
     // Validar que gameData tenga la información necesaria
@@ -58,7 +58,6 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
 
     // Crear un identificador único del juego basado en home_team + away_team
     const gameMatchId = `${gameData.homeTeam}_vs_${gameData.awayTeam}`;
-    console.log('📌 Checking gameMatchId:', gameMatchId, 'Current parlay:', parlay);
 
     // Si está en modo betting, usar el callback externo
     if (bettingMode && onGameSelect) {
@@ -77,28 +76,32 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
       return;
     }
 
-    // Verificar si este juego ya está en el parlay
-    if (parlay[gameMatchId]) {
-      console.warn('⚠️ DUPLICATE DETECTED:', gameMatchId);
-      alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior (✕) si quieres elegir otra opción de este juego.`);
-      return;
-    }
+    // Verificar si este juego ya está en el parlay usando setParlay con función
+    setParlay((currentParlay) => {
+      console.log('📌 Checking gameMatchId:', gameMatchId, 'Current parlay:', currentParlay);
+      
+      if (currentParlay[gameMatchId]) {
+        console.warn('⚠️ DUPLICATE DETECTED:', gameMatchId);
+        alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior (✕) si quieres elegir otra opción de este juego.`);
+        return currentParlay; // No cambiar el estado
+      }
 
-    console.log('✅ Adding selection:', gameMatchId);
-    // Modo normal con parlay panel
-    setParlay((prev) => ({
-      ...prev,
-      [gameMatchId]: {
-        team,
-        odds,
-        homeTeam: gameData.homeTeam,
-        awayTeam: gameData.awayTeam,
-        league: gameData.league,
-        market: gameData.market,
-        gameId // guardar el gameId original también
-      },
-    }));
-  };
+      console.log('✅ Adding selection:', gameMatchId);
+      // Agregar la nueva selección
+      return {
+        ...currentParlay,
+        [gameMatchId]: {
+          team,
+          odds,
+          homeTeam: gameData.homeTeam,
+          awayTeam: gameData.awayTeam,
+          league: gameData.league,
+          market: gameData.market,
+          gameId
+        },
+      };
+    });
+  }, [bettingMode, onGameSelect]);
 
   const handleRemove = (gameId) => {
     setParlay((prev) => {
