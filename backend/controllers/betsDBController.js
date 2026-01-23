@@ -124,7 +124,7 @@ export const getBetById = async (req, res) => {
 export const settleBet = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, actualWin = 0, commissionPercentage = 2 } = req.body;
+    const { status, actualWin = 0 } = req.body;
     
     if (!['won', 'lost', 'void'].includes(status)) {
       return res.status(400).json({
@@ -133,7 +133,9 @@ export const settleBet = async (req, res) => {
       });
     }
     
-    const commission = actualWin * (commissionPercentage / 100);
+    // actual_win es el monto pagado al ganador (= potential_win)
+    // La comisión se calcula a nivel diario (5% del total apostado), no por apuesta
+    const commission = 0;
     
     const updatedBet = await Bet.updateStatus(id, status, actualWin, commission);
     
