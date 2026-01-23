@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import GroupedGameCard from "../components/GroupedGameCard";
 import ParlayPanel from "../components/ParlayPanel";
 import FilterPanel from "../components/FilterPanel";
@@ -46,7 +46,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
     setFilters(newFilters);
   };
 
-  const handleSelect = useCallback((gameId, team, odds, gameData = {}) => {
+  const handleSelect = (gameId, team, odds, gameData = {}) => {
     console.log('🎯 handleSelect called:', { gameId, team, odds, gameData });
     
     // Validar que gameData tenga la información necesaria
@@ -78,7 +78,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
       return;
     }
 
-    // VALIDACIÓN ANTES DE setParlay - usar el parlay actual del closure
+    // VALIDACIÓN - Verificar si este juego ya está en el parlay
     if (parlay[gameMatchId]) {
       console.warn('⚠️ DUPLICATE DETECTED:', gameMatchId);
       alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior (✕) si quieres elegir otra opción de este juego.`);
@@ -99,7 +99,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
         gameId
       },
     }));
-  }, [parlay, bettingMode, onGameSelect]);
+  };
 
   const handleRemove = (gameId) => {
     setParlay((prev) => {
