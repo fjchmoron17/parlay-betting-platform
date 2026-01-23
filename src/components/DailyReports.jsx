@@ -157,9 +157,9 @@ export default function DailyReports({ bettingHouseId, houseName }) {
         </div>
 
         <div className="summary-card">
-          <div className="card-icon">🏆</div>
+          <div className="card-icon">📉</div>
           <div className="card-content">
-            <span className="card-label">Ganancias Pagadas</span>
+            <span className="card-label">Pérdidas</span>
             <span className="card-value">{formatCurrency(totals.totalWinnings)}</span>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function DailyReports({ bettingHouseId, houseName }) {
                 <th>Apuestas</th>
                 <th>Ganadas/Perdidas</th>
                 <th>Apostado</th>
-                <th>Ganancias</th>
+                <th>Pérdidas</th>
                 <th>Comisiones</th>
                 <th>Balance Neto</th>
                 <th>Balance Cierre</th>
