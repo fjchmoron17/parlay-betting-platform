@@ -5,7 +5,8 @@ import {
   getBettingHouseById,
   createBettingHouse,
   getBettingHouseSummary,
-  deleteBettingHouse
+  deleteBettingHouse,
+  reseedAuthUsers
 } from '../controllers/bettingHousesController.js';
 
 const router = express.Router();
@@ -24,5 +25,8 @@ router.post('/', createBettingHouse);
 
 // DELETE /api/betting-houses/:id - Eliminar casa
 router.delete('/:id', deleteBettingHouse);
+
+// POST /api/betting-houses/admin/reseed - Reseed auth users (admin only)
+router.post('/admin/reseed', reseedAuthUsers);
 
 export default router;

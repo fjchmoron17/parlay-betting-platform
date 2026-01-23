@@ -158,3 +158,72 @@ export const deleteBettingHouse = async (req, res) => {
     });
   }
 };
+
+export const reseedAuthUsers = async (req, res) => {
+  try {
+    // Secret key para proteger este endpoint
+    const secretKey = req.query.secret || req.body.secret;
+    if (secretKey !== process.env.ADMIN_SECRET || !process.env.ADMIN_SECRET) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized'
+      });
+    }
+
+    // Obtener todas las casas
+    const housesResult = await BettingHouse.findAll();
+    const houses = housesResult;
+
+    const users = [
+      {
+        username: 'superadmin',
+        email: 'superadmin@parlay.com',
+        password: 'Super!123',
+        role: 'super_admin',
+        betting_house_id: null
+      },
+      ...houses.map((house) => ({
+        username: `casa${house.id}`,
+        email: `admin${house.id}@parlay.com`,
+        password: `Casa${house.id}!123`,
+        role: 'house_admin',
+        betting_house_id: house.id
+      }))
+    ];
+
+    const inserted = [];
+
+    for (const user of users) {
+      const password_hash = await bcrypt.hash(user.password, 10);
+      
+      const result = await BettingHouseUser.upsert({
+        betting_house_id: user.betting_house_id,
+        username: user.username,
+        email: user.email,
+        password_hash,
+        role: user.role
+      });
+      
+      inserted.push({ 
+        id: result.id, 
+        username: result.username, 
+        role: result.role, 
+        betting_house_id: result.betting_house_id,
+        password: user.password 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: inserted,
+      message: 'Auth users reseeded successfully'
+    });
+  } catch (error) {
+    console.error('Error reseeding users:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reseed users'
+    });
+  }
+};
+
