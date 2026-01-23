@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import GroupedGameCard from "../components/GroupedGameCard";
 import ParlayPanel from "../components/ParlayPanel";
 import FilterPanel from "../components/FilterPanel";
@@ -7,12 +7,19 @@ import { gamesAPI } from "../services/api";
 const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
   const [games, setGames] = useState([]);
   const [parlay, setParlay] = useState({});
+  const parlayRef = useRef({}); // Mantener sincrónico para validaciones inmediatas
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     sport: undefined,
     region: 'us'
   });
+
+  // Sincronizar ref cuando cambia parlay (para remociones)
+  useEffect(() => {
+    parlayRef.current = parlay;
+    console.log('🔄 parlayRef sincronizado:', parlayRef.current);
+  }, [parlay]);
 
   // Cargar juegos cuando cambian los filtros
   useEffect(() => {
@@ -59,7 +66,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
     // Crear un identificador único del juego basado en home_team + away_team
     const gameMatchId = `${gameData.homeTeam}_vs_${gameData.awayTeam}`;
     console.log('📌 gameMatchId:', gameMatchId);
-    console.log('📋 parlay state:', parlay);
+    console.log('📋 parlay state (via ref):', parlayRef.current);
 
     // Si está en modo betting, usar el callback externo
     if (bettingMode && onGameSelect) {
@@ -78,8 +85,8 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
       return;
     }
 
-    // VALIDACIÓN - Verificar si este juego ya está en el parlay
-    if (parlay[gameMatchId]) {
+    // VALIDACIÓN - Verificar si este juego ya está en el parlay USANDO REF SINCRÓNICO
+    if (parlayRef.current[gameMatchId]) {
       console.warn('⚠️ DUPLICATE DETECTED:', gameMatchId);
       alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior (✕) si quieres elegir otra opción de este juego.`);
       return;
@@ -87,8 +94,8 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
 
     console.log('✅ Adding selection:', gameMatchId);
     // Agregar la nueva selección
-    setParlay((prev) => ({
-      ...prev,
+    const newParlay = {
+      ...parlayRef.current,
       [gameMatchId]: {
         team,
         odds,
@@ -98,15 +105,17 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
         market: gameData.market,
         gameId
       },
-    }));
+    };
+    
+    parlayRef.current = newParlay; // Actualizar ref inmediatamente
+    setParlay(newParlay); // Actualizar state para re-render
   };
 
   const handleRemove = (gameId) => {
-    setParlay((prev) => {
-      const copy = { ...prev };
-      delete copy[gameId];
-      return copy;
-    });
+    const copy = { ...parlayRef.current };
+    delete copy[gameId];
+    parlayRef.current = copy; // Actualizar ref primero
+    setParlay(copy); // Luego actualizar state
   };
 
   // Agrupar juegos por serie (home_team vs away_team)
