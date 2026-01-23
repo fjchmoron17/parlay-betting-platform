@@ -1,9 +1,15 @@
 // backend/controllers/betsDBController.js
-import { Bet, DailyReport, Transaction } from '../db/models/index.js';
+import { Bet, BetSelection } from '../db/models/index.js';
 
 export const placeBet = async (req, res) => {
   try {
-    const { bettingHouseId, betTicketNumber, betType, totalStake, totalOdds, selections } = req.body;
+    // Aceptar camelCase y snake_case desde el frontend
+    const bettingHouseId = req.body.bettingHouseId ?? req.body.betting_house_id;
+    const betTicketNumber = req.body.betTicketNumber ?? req.body.bet_ticket_number;
+    const betType = req.body.betType ?? req.body.bet_type;
+    const totalStake = req.body.totalStake ?? req.body.total_stake;
+    const totalOdds = req.body.totalOdds ?? req.body.total_odds;
+    const selections = req.body.selections || [];
     
     if (!bettingHouseId || !betTicketNumber || !betType || !totalStake || !totalOdds) {
       return res.status(400).json({
@@ -21,7 +27,7 @@ export const placeBet = async (req, res) => {
     }
     
     const potentialWin = totalStake * totalOdds;
-    
+
     const bet = await Bet.create(
       bettingHouseId,
       betTicketNumber,
@@ -30,6 +36,11 @@ export const placeBet = async (req, res) => {
       totalOdds,
       potentialWin
     );
+
+    // Guardar selecciones si existen
+    if (selections.length > 0 && bet?.id) {
+      await BetSelection.createMany(bet.id, selections);
+    }
     
     res.status(201).json({
       success: true,

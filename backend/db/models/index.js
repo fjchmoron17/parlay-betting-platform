@@ -224,6 +224,44 @@ export const Transaction = {
   }
 };
 
+// backend/db/models/BetSelection.js
+export const BetSelection = {
+  async createMany(betId, selections = []) {
+    if (!betId || selections.length === 0) return [];
+
+    const values = [];
+    const params = [];
+
+    selections.forEach((sel, idx) => {
+      const baseIndex = idx * 10;
+      values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10})`);
+      params.push(
+        betId,
+        sel.game_id,
+        sel.home_team,
+        sel.away_team,
+        sel.league,
+        sel.market,
+        sel.selected_team,
+        sel.selected_odds,
+        sel.point_spread ?? null,
+        sel.bookmaker ?? null
+      );
+    });
+
+    const sql = `
+      INSERT INTO bet_selections (
+        bet_id, game_id, home_team, away_team, league, market,
+        selected_team, selected_odds, point_spread, bookmaker
+      ) VALUES ${values.join(', ')}
+      RETURNING id, bet_id, game_id, selected_team, selected_odds;
+    `;
+
+    const result = await query(sql, params);
+    return result.rows;
+  }
+};
+
 // backend/db/models/BettingHouseUser.js
 export const BettingHouseUser = {
   async findByUsername(username) {
