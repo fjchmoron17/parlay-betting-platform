@@ -47,8 +47,18 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
   };
 
   const handleSelect = (gameId, team, odds, gameData = {}) => {
+    console.log('🎯 handleSelect called:', { gameId, team, odds, gameData });
+    
+    // Validar que gameData tenga la información necesaria
+    if (!gameData.homeTeam || !gameData.awayTeam) {
+      console.error('❌ ERROR: gameData incompleto', gameData);
+      alert('Error: Datos del juego incompletos. Intenta de nuevo.');
+      return;
+    }
+
     // Crear un identificador único del juego basado en home_team + away_team
     const gameMatchId = `${gameData.homeTeam}_vs_${gameData.awayTeam}`;
+    console.log('📌 Checking gameMatchId:', gameMatchId, 'Current parlay:', parlay);
 
     // Si está en modo betting, usar el callback externo
     if (bettingMode && onGameSelect) {
@@ -69,10 +79,12 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
 
     // Verificar si este juego ya está en el parlay
     if (parlay[gameMatchId]) {
-      alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior si quieres elegir otra opción de este juego.`);
+      console.warn('⚠️ DUPLICATE DETECTED:', gameMatchId);
+      alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior (✕) si quieres elegir otra opción de este juego.`);
       return;
     }
 
+    console.log('✅ Adding selection:', gameMatchId);
     // Modo normal con parlay panel
     setParlay((prev) => ({
       ...prev,
