@@ -3,16 +3,16 @@ import nodemailer from 'nodemailer';
 
 // Log de configuración al iniciar
 console.log('📧 Email Service Init:');
-console.log('  SERVICE:', process.env.EMAIL_SERVICE || 'NOT SET');
-console.log('  USER:', process.env.EMAIL_USER || 'NOT SET');
-console.log('  PASSWORD:', process.env.EMAIL_PASSWORD ? 'SET (' + process.env.EMAIL_PASSWORD.length + ' chars)' : 'NOT SET');
+console.log('  SERVICE:', process.env.MAIL_SERVICE || 'NOT SET');
+console.log('  USER:', process.env.MAIL_USER || 'NOT SET');
+console.log('  PASSWORD:', process.env.MAIL_PASSWORD ? 'SET (' + process.env.MAIL_PASSWORD.length + ' chars)' : 'NOT SET');
 
 // Configurar transportador de email
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail',
+  service: process.env.MAIL_SERVICE || 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASSWORD
   }
 });
 
@@ -20,18 +20,18 @@ const transporter = nodemailer.createTransport({
 export async function testEmailConnection() {
   try {
     console.log('🔍 Testing email config...');
-    console.log('EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'NOT SET');
-    console.log('EMAIL_USER:', process.env.EMAIL_USER ? '✓ SET' : 'NOT SET');
-    console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? '✓ SET' : 'NOT SET');
+    console.log('MAIL_SERVICE:', process.env.MAIL_SERVICE || 'NOT SET');
+    console.log('MAIL_USER:', process.env.MAIL_USER ? '✓ SET' : 'NOT SET');
+    console.log('MAIL_PASSWORD:', process.env.MAIL_PASSWORD ? '✓ SET' : 'NOT SET');
     
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    if (!process.env.MAIL_USER || !process.env.MAIL_PASSWORD) {
       return { 
         success: false, 
-        message: 'Missing EMAIL_USER or EMAIL_PASSWORD environment variables',
+        message: 'Missing MAIL_USER or MAIL_PASSWORD environment variables',
         config: {
-          service: process.env.EMAIL_SERVICE || 'gmail',
-          user: process.env.EMAIL_USER ? 'SET' : 'NOT SET',
-          password: process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'
+          service: process.env.MAIL_SERVICE || 'gmail',
+          user: process.env.MAIL_USER ? 'SET' : 'NOT SET',
+          password: process.env.MAIL_PASSWORD ? 'SET' : 'NOT SET'
         }
       };
     }
@@ -41,8 +41,8 @@ export async function testEmailConnection() {
       success: true, 
       message: 'Email service configured correctly',
       config: {
-        service: process.env.EMAIL_SERVICE || 'gmail',
-        user: process.env.EMAIL_USER
+        service: process.env.MAIL_SERVICE || 'gmail',
+        user: process.env.MAIL_USER
       }
     };
   } catch (error) {
@@ -51,9 +51,9 @@ export async function testEmailConnection() {
       message: 'Email service configuration error',
       error: error.message,
       config: {
-        service: process.env.EMAIL_SERVICE || 'gmail',
-        user: process.env.EMAIL_USER ? 'SET' : 'NOT SET',
-        password: process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'
+        service: process.env.MAIL_SERVICE || 'gmail',
+        user: process.env.MAIL_USER ? 'SET' : 'NOT SET',
+        password: process.env.MAIL_PASSWORD ? 'SET' : 'NOT SET'
       }
     };
   }
@@ -115,7 +115,7 @@ export async function sendBettingHouseRegistrationEmail(
 
     // Enviar email a la casa
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.MAIL_USER,
       to: houseData.email,
       subject: 'Bienvenido a Parlay Bets - Registro Completado',
       html: houseEmailHtml
@@ -123,7 +123,7 @@ export async function sendBettingHouseRegistrationEmail(
 
     // Enviar email al administrador
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.MAIL_USER,
       to: 'fjchmoron@chirinossolutions.com',
       subject: `Nueva Casa de Apuestas: ${houseData.name}`,
       html: adminEmailHtml
