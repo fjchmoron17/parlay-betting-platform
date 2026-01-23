@@ -327,31 +327,33 @@ export default function BetsList({ bettingHouseId }) {
                     {formatDate(bet.placed_at)}
                   </td>
                   <td className="actions-col">
-                    <button
-                      className="details-btn"
-                      onClick={() => setSelectedBet(bet)}
-                      title="Ver detalles e imprimir"
-                    >
-                      👁️ Ver
-                    </button>
-                    {bet.status === 'pending' && (
-                      <div className="action-buttons">
-                        <button
-                          className="settle-btn win-btn"
-                          onClick={() => handleSettleBet(bet.id, 'won', bet.potential_win)}
-                          title="Marcar como ganada"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          className="settle-btn lose-btn"
-                          onClick={() => handleSettleBet(bet.id, 'lost', 0)}
-                          title="Marcar como perdida"
-                        >
-                          ✗
-                        </button>
-                      </div>
-                    )}
+                    <div className="action-buttons">
+                      <button
+                        className="details-btn"
+                        onClick={() => setSelectedBet(bet)}
+                        title="Ver detalles e imprimir"
+                      >
+                        👁️ Ver
+                      </button>
+                      {bet.status === 'pending' && (
+                        <>
+                          <button
+                            className="settle-btn win-btn"
+                            onClick={() => handleSettleBet(bet.id, 'won', bet.potential_win)}
+                            title="Marcar como ganada"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            className="settle-btn lose-btn"
+                            onClick={() => handleSettleBet(bet.id, 'lost', 0)}
+                            title="Marcar como perdida"
+                          >
+                            ✗
+                          </button>
+                        </>
+                      )}
+                    </div>
                     {bet.status === 'won' && (
                       <span className="win-amount">
                         +{formatCurrency(bet.actual_win)}

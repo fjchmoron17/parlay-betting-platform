@@ -73,6 +73,12 @@ export const getBetsForHouse = async (req, res) => {
     if (status) {
       bets = bets.filter(b => b.status === status);
     }
+
+    // Obtener selecciones para cada apuesta
+    for (let bet of bets) {
+      const selections = await BetSelection.findByBetId(bet.id);
+      bet.selections = selections || [];
+    }
     
     res.json({
       success: true,

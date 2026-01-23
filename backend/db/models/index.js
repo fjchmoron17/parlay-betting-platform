@@ -297,6 +297,13 @@ export const Transaction = {
 
 // backend/db/models/BetSelection.js
 export const BetSelection = {
+  async findByBetId(betId) {
+    return getAll(
+      'SELECT * FROM bet_selections WHERE bet_id = $1 ORDER BY id ASC',
+      [betId]
+    );
+  },
+
   async createMany(betId, selections = []) {
     if (!betId || selections.length === 0) return [];
 
