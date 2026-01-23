@@ -13,13 +13,42 @@ const transporter = nodemailer.createTransport({
 // Función de prueba para verificar configuración
 export async function testEmailConnection() {
   try {
+    console.log('🔍 Testing email config...');
+    console.log('EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'NOT SET');
+    console.log('EMAIL_USER:', process.env.EMAIL_USER ? '✓ SET' : 'NOT SET');
+    console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? '✓ SET' : 'NOT SET');
+    
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      return { 
+        success: false, 
+        message: 'Missing EMAIL_USER or EMAIL_PASSWORD environment variables',
+        config: {
+          service: process.env.EMAIL_SERVICE || 'gmail',
+          user: process.env.EMAIL_USER ? 'SET' : 'NOT SET',
+          password: process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'
+        }
+      };
+    }
+    
     await transporter.verify();
-    return { success: true, message: 'Email service configured correctly' };
+    return { 
+      success: true, 
+      message: 'Email service configured correctly',
+      config: {
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        user: process.env.EMAIL_USER
+      }
+    };
   } catch (error) {
     return { 
       success: false, 
       message: 'Email service configuration error',
-      error: error.message 
+      error: error.message,
+      config: {
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        user: process.env.EMAIL_USER ? 'SET' : 'NOT SET',
+        password: process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'
+      }
     };
   }
 }
