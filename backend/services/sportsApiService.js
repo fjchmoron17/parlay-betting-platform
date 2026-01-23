@@ -11,6 +11,10 @@ const cache = {
   stats: { hits: 0, misses: 0, apiCalls: 0, lastRefresh: 0 }
 };
 
+// Track API quota headers
+let lastQuotaRemaining = null;
+let lastQuotaUsed = null;
+
 // Request deduplication: prevent multiple simultaneous requests for the same data
 const pendingRequests = new Map(); // key: requestKey -> Promise
 
@@ -103,7 +107,9 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
             timestamp: new Date().toISOString(),
             source: 'Cache',
             gameCount: cached.data.length,
-            region
+            region,
+            quotaRemaining: lastQuotaRemaining,
+            quotaUsed: lastQuotaUsed
           };
         }
       }
@@ -150,6 +156,12 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
                 timeout: 10000
               }
             );
+
+            // Capture quota headers if present
+            if (response?.headers) {
+              lastQuotaRemaining = response.headers['x-requests-remaining'] ?? lastQuotaRemaining;
+              lastQuotaUsed = response.headers['x-requests-used'] ?? lastQuotaUsed;
+            }
 
             console.log(`✅ Got ${response.data.length} games from ${sport} (${currentMarket})`);
 
@@ -235,14 +247,16 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
         };
       }
 
-      const result = {
-        success: true,
-        data: allGames,
-        timestamp: new Date().toISOString(),
-        source: 'The Odds API',
-        gameCount: allGames.length,
-        region: region
-      };
+          const result = {
+            success: true,
+            data: allGames,
+            timestamp: new Date().toISOString(),
+            source: 'The Odds API',
+            gameCount: allGames.length,
+            region: region,
+            quotaRemaining: lastQuotaRemaining,
+            quotaUsed: lastQuotaUsed
+          };
 
       // Update cache
       if (!league) {

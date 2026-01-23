@@ -88,14 +88,15 @@ export const Bet = {
 
   // Crear una apuesta
   async create(bettingHouseId, betTicketNumber, betType, totalStake, totalOdds, potentialWin) {
+    const commissionAmount = totalStake * 0.05; // 5% comisión de plataforma
     const result = await query(
       `INSERT INTO bets (
         betting_house_id, bet_ticket_number, bet_type, 
-        total_stake, total_odds, potential_win, status
+        total_stake, total_odds, potential_win, status, commission_amount
       )
-       VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
        RETURNING *`,
-      [bettingHouseId, betTicketNumber, betType, totalStake, totalOdds, potentialWin]
+      [bettingHouseId, betTicketNumber, betType, totalStake, totalOdds, potentialWin, commissionAmount]
     );
     return result.rows[0];
   },

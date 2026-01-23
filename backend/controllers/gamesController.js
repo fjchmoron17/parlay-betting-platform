@@ -49,7 +49,9 @@ export const getAllGames = async (req, res) => {
       total: result.data.length,
       timestamp: result.timestamp,
       source: result.source,
-      region: result.region
+      region: result.region,
+      quotaRemaining: result.quotaRemaining,
+      quotaUsed: result.quotaUsed
     });
   } catch (error) {
     console.error('getAllGames error:', error);
