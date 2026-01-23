@@ -47,6 +47,9 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
   };
 
   const handleSelect = (gameId, team, odds, gameData = {}) => {
+    // Crear un identificador único del juego basado en home_team + away_team
+    const gameMatchId = `${gameData.homeTeam}_vs_${gameData.awayTeam}`;
+
     // Si está en modo betting, usar el callback externo
     if (bettingMode && onGameSelect) {
       onGameSelect({
@@ -64,16 +67,23 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
       return;
     }
 
+    // Verificar si este juego ya está en el parlay
+    if (parlay[gameMatchId]) {
+      alert(`⚠️ Ya has seleccionado una opción de este juego:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\nSolo puedes seleccionar una opción por juego en un parlay.`);
+      return;
+    }
+
     // Modo normal con parlay panel
     setParlay((prev) => ({
       ...prev,
-      [gameId]: {
+      [gameMatchId]: {
         team,
         odds,
         homeTeam: gameData.homeTeam,
         awayTeam: gameData.awayTeam,
         league: gameData.league,
         market: gameData.market,
+        gameId // guardar el gameId original también
       },
     }));
   };
