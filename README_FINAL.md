@@ -201,3 +201,4 @@ pkill -9 node
 **Última Actualización**: 18 de Enero, 2026
 **Autor**: Equipo de Desarrollo
 # Force Railway redeploy to inject MAIL_* env vars - Fri Jan 23 19:37:10 CET 2026
+# Force redeploy Fri Jan 23 20:44:07 CET 2026
