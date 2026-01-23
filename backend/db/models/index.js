@@ -217,7 +217,11 @@ export const DailyReport = {
     const dayStats = stats.rows[0];
     const totalWagered = parseFloat(dayStats.total_wagered);
     const totalWinnings = parseFloat(dayStats.total_winnings);
-    const totalCommissions = parseFloat(dayStats.total_commissions);
+
+    // Comisión de plataforma fija 5% sobre monto apostado
+    const platformCommission = totalWagered * 0.05;
+    // Sumar cualquier comisión ya registrada en las apuestas
+    const totalCommissions = parseFloat(dayStats.total_commissions) + platformCommission;
 
     // Pérdidas del operador = monto apostado - premios pagados
     const totalLosses = totalWagered - totalWinnings;
