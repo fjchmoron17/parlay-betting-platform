@@ -8,7 +8,9 @@ export default function CreateBettingHouse({ onSuccess, onCancel }) {
     name: '',
     email: '',
     country: '',
-    currency: 'USD'
+    currency: 'USD',
+    username: '',
+    password: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -48,13 +50,23 @@ export default function CreateBettingHouse({ onSuccess, onCancel }) {
     e.preventDefault();
     
     // Validaciones
-    if (!formData.name || !formData.email || !formData.country) {
+    if (!formData.name || !formData.email || !formData.country || !formData.username || !formData.password) {
       setError('Todos los campos son obligatorios');
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       setError('Email inválido');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    if (formData.username.length < 3) {
+      setError('El nombre de usuario debe tener al menos 3 caracteres');
       return;
     }
 
@@ -67,7 +79,7 @@ export default function CreateBettingHouse({ onSuccess, onCancel }) {
       if (response.success) {
         onSuccess && onSuccess(response.data);
         // Reset form
-        setFormData({ name: '', email: '', country: '', currency: 'USD' });
+        setFormData({ name: '', email: '', country: '', currency: 'USD', username: '', password: '' });
       }
     } catch (err) {
       setError(err.message || 'Error al crear la casa de apuestas');
@@ -164,6 +176,44 @@ export default function CreateBettingHouse({ onSuccess, onCancel }) {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="form-divider">
+          <h3>Datos de Acceso</h3>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="username">
+            Nombre de Usuario <span className="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            placeholder="usuario_casa"
+            disabled={loading}
+            required
+            minLength={3}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="password">
+            Contraseña <span className="required">*</span>
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="••••••••"
+            disabled={loading}
+            required
+            minLength={6}
+          />
         </div>
 
         <div className="form-actions">

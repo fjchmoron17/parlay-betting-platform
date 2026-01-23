@@ -90,14 +90,35 @@
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #e5e7eb;
+  gap: 12px;
+}
+
+.house-header-content {
+  flex: 1;
+  cursor: pointer;
 }
 
 .house-header h3 {
   margin: 0;
   font-size: 18px;
   color: #1f2937;
-  flex: 1;
-  padding-right: 10px;
+}
+
+.delete-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid #fee2e2;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+  border-color: #fecaca;
+}
 }
 
 .status-badge {

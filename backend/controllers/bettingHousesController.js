@@ -1,5 +1,7 @@
 // backend/controllers/bettingHousesController.js
-import { BettingHouse } from '../db/models/index.js';
+import { BettingHouse, BettingHouseUser } from '../db/models/index.js';
+import bcrypt from 'bcrypt';
+import { sendBettingHouseRegistrationEmail } from '../services/emailService.js';
 
 export const getAllBettingHouses = async (req, res) => {
   try {
@@ -45,28 +47,62 @@ export const getBettingHouseById = async (req, res) => {
 
 export const createBettingHouse = async (req, res) => {
   try {
-    const { name, email, country, currency = 'USD' } = req.body;
+    const { name, email, country, currency = 'USD', username, password } = req.body;
     
-    if (!name || !email) {
+    if (!name || !email || !username || !password) {
       return res.status(400).json({
         success: false,
-        error: 'Name and email are required'
+        error: 'Name, email, username and password are required'
       });
     }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters'
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
     
+    // Crear casa de apuestas
     const house = await BettingHouse.create(name, email, country, currency);
+    
+    // Crear usuario para la casa
+    const user = await BettingHouseUser.upsert({
+      betting_house_id: house.id,
+      username,
+      email,
+      password_hash: hashedPassword,
+      role: 'house_admin'
+    });
+
+    // Enviar emails
+    await sendBettingHouseRegistrationEmail(
+      house,
+      { username, password }
+    );
     
     res.status(201).json({
       success: true,
-      data: house,
-      message: 'Betting house created successfully'
+      data: {
+        house,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role
+        }
+      },
+      message: 'Betting house created successfully. Emails sent.'
     });
   } catch (error) {
     console.error('Error creating betting house:', error);
     if (error.code === '23505') { // Unique constraint
       return res.status(409).json({
         success: false,
-        error: 'Betting house with this name or email already exists'
+        error: 'Betting house with this name, email or username already exists'
       });
     }
     res.status(500).json({
@@ -89,6 +125,36 @@ export const getBettingHouseSummary = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch betting house summary'
+    });
+  }
+};
+
+export const deleteBettingHouse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar que existe
+    const house = await BettingHouse.findById(id);
+    if (!house) {
+      return res.status(404).json({
+        success: false,
+        error: 'Betting house not found'
+      });
+    }
+    
+    // Eliminar (cascada elimina usuarios, apuestas, reportes, etc)
+    const deleted = await BettingHouse.delete(id);
+    
+    res.json({
+      success: true,
+      data: deleted,
+      message: `Betting house "${deleted.name}" deleted successfully`
+    });
+  } catch (error) {
+    console.error('Error deleting betting house:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete betting house'
     });
   }
 };

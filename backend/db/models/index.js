@@ -41,6 +41,15 @@ export const BettingHouse = {
     return result.rows[0];
   },
 
+  // Eliminar una casa (con cascada)
+  async delete(id) {
+    const result = await query(
+      `DELETE FROM betting_houses WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    return result.rows[0];
+  },
+
   // Obtener resumen
   async getSummary() {
     return getAll(`

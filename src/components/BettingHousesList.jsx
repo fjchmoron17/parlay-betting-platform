@@ -1,6 +1,6 @@
 // src/components/BettingHousesList.jsx
 import { useState, useEffect } from 'react';
-import { getAllBettingHouses } from '../services/b2bApi';
+import { getAllBettingHouses, deleteBettingHouse } from '../services/b2bApi';
 import './BettingHousesList.css';
 
 export default function BettingHousesList({ onSelectHouse }) {
@@ -23,6 +23,21 @@ export default function BettingHousesList({ onSelectHouse }) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteHouse = async (houseId, houseName) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar "${houseName}" y todos sus datos? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      await deleteBettingHouse(houseId);
+      setHouses(houses.filter(h => h.id !== houseId));
+      alert(`Casa de apuestas "${houseName}" eliminada exitosamente`);
+    } catch (err) {
+      alert('Error al eliminar casa de apuestas: ' + err.message);
+      console.error(err);
     }
   };
 
@@ -71,16 +86,24 @@ export default function BettingHousesList({ onSelectHouse }) {
             <div 
               key={house.id} 
               className="house-card"
-              onClick={() => onSelectHouse && onSelectHouse(house)}
             >
               <div className="house-header">
-                <h3>{house.name}</h3>
-                <span className={`status-badge status-${house.status}`}>
-                  {house.status}
-                </span>
+                <div onClick={() => onSelectHouse && onSelectHouse(house)} className="house-header-content">
+                  <h3>{house.name}</h3>
+                  <span className={`status-badge status-${house.status}`}>
+                    {house.status}
+                  </span>
+                </div>
+                <button 
+                  className="delete-btn"
+                  onClick={() => handleDeleteHouse(house.id, house.name)}
+                  title="Eliminar casa"
+                >
+                  🗑️
+                </button>
               </div>
 
-              <div className="house-info">
+              <div className="house-info" onClick={() => onSelectHouse && onSelectHouse(house)}>
                 <div className="info-row">
                   <span className="info-label">ID:</span>
                   <span className="info-value">#{house.id}</span>

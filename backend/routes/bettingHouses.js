@@ -4,7 +4,8 @@ import {
   getAllBettingHouses,
   getBettingHouseById,
   createBettingHouse,
-  getBettingHouseSummary
+  getBettingHouseSummary,
+  deleteBettingHouse
 } from '../controllers/bettingHousesController.js';
 
 const router = express.Router();
@@ -20,5 +21,8 @@ router.get('/:id', getBettingHouseById);
 
 // POST /api/betting-houses - Crear nueva casa
 router.post('/', createBettingHouse);
+
+// DELETE /api/betting-houses/:id - Eliminar casa
+router.delete('/:id', deleteBettingHouse);
 
 export default router;

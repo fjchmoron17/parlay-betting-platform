@@ -55,6 +55,20 @@ export async function getBettingHousesSummary() {
   }
 }
 
+export async function deleteBettingHouse(id) {
+  try {
+    const response = await fetch(`${API_URL}/betting-houses/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!response.ok) throw new Error('Failed to delete betting house');
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting betting house:', error);
+    throw error;
+  }
+}
+
 // ============================================
 // BETS
 // ============================================

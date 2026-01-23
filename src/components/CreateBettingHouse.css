@@ -102,6 +102,22 @@
   color: #6b7280; /* Placeholder más visible */
 }
 
+.form-divider {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  padding-top: 16px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.form-divider h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;
