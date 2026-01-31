@@ -12,6 +12,7 @@ import reportsRoutes from './routes/reports.js';
 import { getCacheStats } from './services/sportsApiService.js';
 import authRoutes from './routes/auth.js';
 import settlementRoutes from './routes/settlement.js';
+import { startAutoSettlement } from './services/schedulerService.js';
 
 // Load environment variables
 // En Railway, las variables están en el sistema. dotenv solo lee archivos locales.
@@ -116,6 +117,19 @@ app.listen(PORT, '0.0.0.0', () => {
   ║   📦 API: /api/betting-houses      ║
   ║   📦 API: /api/bets-db             ║
   ║   📦 API: /api/reports             ║
+  ║   📦 API: /api/settlement          ║
   ╚════════════════════════════════════╝
   `);
+
+  // Iniciar auto-resolución de apuestas
+  // Se ejecuta cada 2 horas por defecto
+  // Puede configurarse con AUTO_SETTLE_CRON env var
+  const cronExpression = process.env.AUTO_SETTLE_CRON || '0 */2 * * *';
+  const autoSettleEnabled = process.env.AUTO_SETTLE_ENABLED !== 'false';
+  
+  if (autoSettleEnabled) {
+    startAutoSettlement(cronExpression);
+  } else {
+    console.log('⏸️  Auto-resolución deshabilitada (AUTO_SETTLE_ENABLED=false)');
+  }
 });
