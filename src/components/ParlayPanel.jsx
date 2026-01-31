@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import BetTicket from "./BetTicket";
-import { betsAPI } from "../services/api";
+import { placeBet } from "../services/b2bApi";
+import { useAuth } from "../context/AuthContext";
 
 const ParlayPanel = ({ parlay, onRemove }) => {
+  const { house } = useAuth();
   const [betTicket, setBetTicket] = useState(null);
   const [loading, setLoading] = useState(false);
   const [betAmount, setBetAmount] = useState(100);
@@ -22,39 +24,58 @@ const ParlayPanel = ({ parlay, onRemove }) => {
       return;
     }
 
+    if (!house?.id) {
+      alert("No se encontró información de la casa de apuestas");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Crear datos de la apuesta
+      // Generar ticket number único
+      const ticketNumber = `BET-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      
+      // Crear datos de la apuesta para el sistema B2B
       const betData = {
+        bettingHouseId: house.id,
+        betTicketNumber: ticketNumber,
+        betType: 'parlay',
+        totalStake: betAmount,
+        totalOdds: parseFloat(combinedOdds),
         selections: entries.map(([gameId, selection]) => ({
           gameId,
-          team: selection.team,
-          odds: selection.odds,
           homeTeam: selection.homeTeam,
           awayTeam: selection.awayTeam,
-          league: selection.league,
+          league: selection.league || 'OTHER',
           market: selection.market,
-        })),
-        amount: betAmount,
-        combinedOdds: parseFloat(combinedOdds),
-        potentialWinnings: parseFloat(potentialWinnings.toFixed(2)),
-        status: "pending",
-        createdAt: new Date().toISOString(),
+          selectedTeam: selection.team,
+          selectedOdds: selection.odds,
+          pointSpread: selection.point || null,
+          bookmaker: selection.bookmaker || 'Unknown'
+        }))
       };
 
-      // Enviar al backend
-      const response = await betsAPI.create(betData);
+      // Enviar al backend usando la API B2B
+      const response = await placeBet(betData);
 
       if (response.success) {
         // Crear ticket con datos de respuesta
         setBetTicket({
-          id: response.data.id || `TICKET-${Date.now()}`,
-          ...betData,
+          id: response.data.id,
+          betTicketNumber: ticketNumber,
+          selections: betData.selections,
+          amount: betAmount,
+          combinedOdds: parseFloat(combinedOdds),
+          potentialWinnings: parseFloat(potentialWinnings.toFixed(2)),
+          status: "pending",
+          createdAt: new Date().toISOString(),
         });
+        
+        // Limpiar selecciones después de apostar exitosamente
+        alert("¡Apuesta creada exitosamente!");
       }
     } catch (error) {
       console.error("Error creating bet:", error);
-      alert("Error al crear la apuesta. Intenta de nuevo.");
+      alert(error.message || "Error al crear la apuesta. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
