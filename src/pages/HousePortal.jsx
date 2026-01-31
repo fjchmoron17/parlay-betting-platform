@@ -247,6 +247,19 @@ export default function HousePortal() {
       <div className="portal-content">
         {activeView === 'betting' && (
           <div className="betting-view">
+            {error && (
+              <div className="bet-error" role="alert">
+                <div className="bet-error__content">⚠️ {error}</div>
+                <button
+                  type="button"
+                  className="bet-error__close"
+                  onClick={() => setError(null)}
+                  aria-label="Cerrar mensaje"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             {selectedGames.length > 0 && (
               <div className="selection-panel">
                 <div className="selection-header">
@@ -266,20 +279,6 @@ export default function HousePortal() {
                     Vaciar Todo
                   </button>
                 </div>
-
-                {error && (
-                  <div className="bet-error" role="alert">
-                    <div className="bet-error__content">⚠️ {error}</div>
-                    <button
-                      type="button"
-                      className="bet-error__close"
-                      onClick={() => setError(null)}
-                      aria-label="Cerrar mensaje"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
 
                 <div className="selection-list">
                   {selectedGames.map((sel, idx) => (
