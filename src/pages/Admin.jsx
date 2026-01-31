@@ -5,10 +5,11 @@ import CreateBettingHouse from '../components/CreateBettingHouse';
 import BetsList from '../components/BetsList';
 import DailyReports from '../components/DailyReports';
 import ApiQuotaMonitor from '../components/ApiQuotaMonitor';
+import BetSettlement from '../components/BetSettlement';
 import './Admin.css';
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState('houses'); // houses, create, bets, reports, quota
+  const [activeTab, setActiveTab] = useState('houses'); // houses, create, bets, reports, quota, settlement
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -64,6 +65,12 @@ export default function Admin() {
           onClick={() => setActiveTab('quota')}
         >
           ⚡ Cuota API
+        </button>
+        <button
+          className={activeTab === 'settlement' ? 'active' : ''}
+          onClick={() => setActiveTab('settlement')}
+        >
+          🎯 Resolución Auto
         </button>
       </div>
 
@@ -147,6 +154,12 @@ export default function Admin() {
         {activeTab === 'quota' && (
           <div className="tab-content">
             <ApiQuotaMonitor />
+          </div>
+        )}
+
+        {activeTab === 'settlement' && (
+          <div className="tab-content">
+            <BetSettlement />
           </div>
         )}
       </div>

@@ -11,6 +11,7 @@ import betsDBRoutes from './routes/betsDB.js';
 import reportsRoutes from './routes/reports.js';
 import { getCacheStats } from './services/sportsApiService.js';
 import authRoutes from './routes/auth.js';
+import settlementRoutes from './routes/settlement.js';
 
 // Load environment variables
 // En Railway, las variables están en el sistema. dotenv solo lee archivos locales.
@@ -95,6 +96,7 @@ app.use('/api/betting-houses', bettingHousesRoutes);
 app.use('/api/bets-db', betsDBRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/settlement', settlementRoutes);
 
 // 404 Handler
 app.use(notFoundHandler);
