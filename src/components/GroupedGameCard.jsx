@@ -20,17 +20,10 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
   };
 
   const removeSelection = (e, market, team, gameId, odds, pointSpread = null) => {
-    e.stopPropagation(); // Prevenir que se active el botón padre
+    e.preventDefault();
+    e.stopPropagation();
     // Llamar a selectOption para remover (toggle)
-    onSelect(gameId, team, odds, {
-      homeTeam: firstGame.home_team,
-      awayTeam: firstGame.away_team,
-      league: firstGame.league,
-      market: market,
-      pointSpread,
-      bookmaker: firstGame.bookmaker || firstGame.bookmakers?.[0]?.title || 'Desconocido',
-      commenceTime: firstGame.commence_time
-    });
+    selectOption(market, team, odds, gameId, pointSpread);
   };
 
   // Agrupar por mercado
@@ -89,10 +82,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 {isSelected('h2h', marketGroups.h2h.home_team, marketGroups.h2h.id) && (
                   <button 
                     className="remove-x"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSelection(e, 'h2h', marketGroups.h2h.home_team, marketGroups.h2h.id, marketGroups.h2h.odds_home);
-                    }}
+                    onClick={(e) => removeSelection(e, 'h2h', marketGroups.h2h.home_team, marketGroups.h2h.id, marketGroups.h2h.odds_home)}
                   >
                     ✕
                   </button>
@@ -118,10 +108,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                   {isSelected('h2h', 'Draw', marketGroups.h2h.id) && (
                     <button 
                       className="remove-x"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSelection(e, 'h2h', 'Draw', marketGroups.h2h.id, marketGroups.h2h.odds_draw);
-                      }}
+                      onClick={(e) => removeSelection(e, 'h2h', 'Draw', marketGroups.h2h.id, marketGroups.h2h.odds_draw)}
                     >
                       ✕
                     </button>
@@ -149,10 +136,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 {isSelected('h2h', marketGroups.h2h.away_team, marketGroups.h2h.id) && (
                   <button 
                     className="remove-x"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSelection(e, 'h2h', marketGroups.h2h.away_team, marketGroups.h2h.id, marketGroups.h2h.odds_away);
-                    }}
+                    onClick={(e) => removeSelection(e, 'h2h', marketGroups.h2h.away_team, marketGroups.h2h.id, marketGroups.h2h.odds_away)}
                   >
                     ✕
                   </button>
@@ -200,10 +184,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 {isSelected('spreads', marketGroups.spreads.home_team, marketGroups.spreads.id) && (
                   <button 
                     className="remove-x"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSelection(e, 'spreads', marketGroups.spreads.home_team, marketGroups.spreads.id, marketGroups.spreads.odds_home, marketGroups.spreads.point_home);
-                    }}
+                    onClick={(e) => removeSelection(e, 'spreads', marketGroups.spreads.home_team, marketGroups.spreads.id, marketGroups.spreads.odds_home, marketGroups.spreads.point_home)}
                   >
                     ✕
                   </button>
@@ -230,10 +211,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                   {isSelected('spreads', 'Draw', marketGroups.spreads.id) && (
                     <button 
                       className="remove-x"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSelection(e, 'spreads', 'Draw', marketGroups.spreads.id, marketGroups.spreads.odds_draw, 0);
-                      }}
+                      onClick={(e) => removeSelection(e, 'spreads', 'Draw', marketGroups.spreads.id, marketGroups.spreads.odds_draw, 0)}
                     >
                       ✕
                     </button>
@@ -269,10 +247,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 {isSelected('spreads', marketGroups.spreads.away_team, marketGroups.spreads.id) && (
                   <button 
                     className="remove-x"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSelection(e, 'spreads', marketGroups.spreads.away_team, marketGroups.spreads.id, marketGroups.spreads.odds_away, marketGroups.spreads.point_away);
-                    }}
+                    onClick={(e) => removeSelection(e, 'spreads', marketGroups.spreads.away_team, marketGroups.spreads.id, marketGroups.spreads.odds_away, marketGroups.spreads.point_away)}
                   >
                     ✕
                   </button>
@@ -318,10 +293,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 {isSelected('totals', marketGroups.totals.home_team, marketGroups.totals.id) && (
                   <button 
                     className="remove-x"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSelection(e, 'totals', marketGroups.totals.home_team, marketGroups.totals.id, marketGroups.totals.odds_home, marketGroups.totals.point_home);
-                    }}
+                    onClick={(e) => removeSelection(e, 'totals', marketGroups.totals.home_team, marketGroups.totals.id, marketGroups.totals.odds_home, marketGroups.totals.point_home)}
                   >
                     ✕
                   </button>
@@ -348,10 +320,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                   {isSelected('totals', 'Draw', marketGroups.totals.id) && (
                     <button 
                       className="remove-x"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSelection(e, 'totals', 'Draw', marketGroups.totals.id, marketGroups.totals.odds_draw, 0);
-                      }}
+                      onClick={(e) => removeSelection(e, 'totals', 'Draw', marketGroups.totals.id, marketGroups.totals.odds_draw, 0)}
                     >
                       ✕
                     </button>
@@ -385,10 +354,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 {isSelected('totals', marketGroups.totals.away_team, marketGroups.totals.id) && (
                   <button 
                     className="remove-x"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSelection(e, 'totals', marketGroups.totals.away_team, marketGroups.totals.id, marketGroups.totals.odds_away, marketGroups.totals.point_away || null);
-                    }}
+                    onClick={(e) => removeSelection(e, 'totals', marketGroups.totals.away_team, marketGroups.totals.id, marketGroups.totals.odds_away, marketGroups.totals.point_away || null)}
                   >
                     ✕
                   </button>
