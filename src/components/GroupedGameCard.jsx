@@ -70,6 +70,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
               >
                 <span className="team-name">{marketGroups.h2h.home_team}</span>
                 <span className="odds">@{marketGroups.h2h.odds_home}</span>
+                {isSelected('h2h', marketGroups.h2h.home_team, marketGroups.h2h.id) && (
+                  <span className="remove-x">✕</span>
+                )}
               </button>
 
               {marketGroups.h2h.odds_draw && (
@@ -86,6 +89,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 >
                   <span className="team-name">Empate</span>
                   <span className="odds">@{marketGroups.h2h.odds_draw}</span>
+                  {isSelected('h2h', 'Draw', marketGroups.h2h.id) && (
+                    <span className="remove-x">✕</span>
+                  )}
                 </button>
               )}
 
@@ -104,6 +110,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
               >
                 <span className="team-name">{marketGroups.h2h.away_team}</span>
                 <span className="odds">@{marketGroups.h2h.odds_away}</span>
+                {isSelected('h2h', marketGroups.h2h.away_team, marketGroups.h2h.id) && (
+                  <span className="remove-x">✕</span>
+                )}
               </button>
             </div>
           </div>
@@ -142,6 +151,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                   )}
                 </span>
                 <span className="odds">@{marketGroups.spreads.odds_home}</span>
+                {isSelected('spreads', marketGroups.spreads.home_team, marketGroups.spreads.id) && (
+                  <span className="remove-x">✕</span>
+                )}
               </button>
 
               {marketGroups.spreads.odds_draw && (
@@ -159,6 +171,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 >
                   <span className="team-name">Empate</span>
                   <span className="odds">@{marketGroups.spreads.odds_draw}</span>
+                  {isSelected('spreads', 'Draw', marketGroups.spreads.id) && (
+                    <span className="remove-x">✕</span>
+                  )}
                 </button>
               )}
 
@@ -185,6 +200,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                   )}
                 </span>
                 <span className="odds">@{marketGroups.spreads.odds_away}</span>
+                {isSelected('spreads', marketGroups.spreads.away_team, marketGroups.spreads.id) && (
+                  <span className="remove-x">✕</span>
+                )}
               </button>
             </div>
           </div>
@@ -221,6 +239,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                   )}
                 </span>
                 <span className="odds">@{marketGroups.totals.odds_home}</span>
+                {isSelected('totals', marketGroups.totals.home_team, marketGroups.totals.id) && (
+                  <span className="remove-x">✕</span>
+                )}
               </button>
 
               {marketGroups.totals.odds_draw && (
@@ -238,6 +259,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 >
                   <span className="team-name">Empate</span>
                   <span className="odds">@{marketGroups.totals.odds_draw}</span>
+                  {isSelected('totals', 'Draw', marketGroups.totals.id) && (
+                    <span className="remove-x">✕</span>
+                  )}
                 </button>
               )}
 
@@ -262,6 +286,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                   )}
                 </span>
                 <span className="odds">@{marketGroups.totals.odds_away}</span>
+                {isSelected('totals', marketGroups.totals.away_team, marketGroups.totals.id) && (
+                  <span className="remove-x">✕</span>
+                )}
               </button>
             </div>
           </div>

@@ -85,6 +85,8 @@ export default function HousePortal() {
     
     if (!validation.allowed) {
       setError(validation.message);
+      // Auto-limpiar el error después de 5 segundos
+      setTimeout(() => setError(null), 5000);
       return;
     }
 
