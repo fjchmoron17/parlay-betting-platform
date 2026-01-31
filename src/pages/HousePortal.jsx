@@ -24,6 +24,13 @@ export default function HousePortal() {
     setPotentialWin(potential);
   }, [selectedGames, stakeAmount]);
 
+  // Auto-cerrar mensajes de error después de 5 segundos
+  useEffect(() => {
+    if (!error) return;
+    const timeoutId = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timeoutId);
+  }, [error]);
+
   // Validar si se puede agregar una selección según las reglas de combinación de mercados
   const canAddSelection = (newGame, currentSelections) => {
     // Buscar si ya hay selecciones del mismo juego
@@ -85,8 +92,6 @@ export default function HousePortal() {
     
     if (!validation.allowed) {
       setError(validation.message);
-      // Auto-limpiar el error después de 5 segundos
-      setTimeout(() => setError(null), 5000);
       return;
     }
 
@@ -263,15 +268,16 @@ export default function HousePortal() {
                 </div>
 
                 {error && (
-                  <div className="bet-error" style={{
-                    padding: '12px',
-                    backgroundColor: '#fee',
-                    border: '1px solid #fcc',
-                    borderRadius: '8px',
-                    color: '#c33',
-                    marginBottom: '16px'
-                  }}>
-                    ⚠️ {error}
+                  <div className="bet-error" role="alert">
+                    <div className="bet-error__content">⚠️ {error}</div>
+                    <button
+                      type="button"
+                      className="bet-error__close"
+                      onClick={() => setError(null)}
+                      aria-label="Cerrar mensaje"
+                    >
+                      ✕
+                    </button>
                   </div>
                 )}
 

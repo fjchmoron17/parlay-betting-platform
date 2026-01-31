@@ -112,6 +112,41 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
 }
 
+.bet-error {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  margin-bottom: 16px;
+  white-space: pre-line;
+}
+
+.bet-error__content {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.bet-error__close {
+  background: transparent;
+  border: none;
+  color: #991b1b;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.bet-error__close:hover {
+  background: rgba(153, 27, 27, 0.1);
+}
+
 .selection-header {
   display: flex;
   justify-content: space-between;
