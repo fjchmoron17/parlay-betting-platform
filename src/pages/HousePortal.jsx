@@ -24,7 +24,70 @@ export default function HousePortal() {
     setPotentialWin(potential);
   }, [selectedGames, stakeAmount]);
 
+  // Validar si se puede agregar una selección según las reglas de combinación de mercados
+  const canAddSelection = (newGame, currentSelections) => {
+    // Buscar si ya hay selecciones del mismo juego
+    const sameGameSelections = currentSelections.filter(g => g.id === newGame.id);
+    
+    if (sameGameSelections.length === 0) {
+      // No hay selecciones del mismo juego, se puede agregar
+      return { allowed: true, message: '' };
+    }
+
+    // Si ya hay una selección idéntica (mismo juego, equipo y mercado), es para removerla
+    const exactMatch = sameGameSelections.find(g => 
+      g.selectedTeam === newGame.selectedTeam && g.market === newGame.market
+    );
+    if (exactMatch) {
+      return { allowed: true, message: '' };
+    }
+
+    // Verificar combinaciones permitidas
+    const existingMarkets = sameGameSelections.map(g => g.market);
+    const newMarket = newGame.market;
+
+    // Reglas permitidas:
+    // 1. h2h + totals
+    // 2. spreads + totals
+    const allowedCombinations = [
+      ['h2h', 'totals'],
+      ['spreads', 'totals']
+    ];
+
+    // Verificar si la combinación es válida
+    for (const combo of allowedCombinations) {
+      if (combo.includes(newMarket)) {
+        const otherMarket = combo.find(m => m !== newMarket);
+        if (existingMarkets.includes(otherMarket)) {
+          // Si solo hay una selección y es del mercado compatible
+          if (sameGameSelections.length === 1 && existingMarkets[0] === otherMarket) {
+            return { allowed: true, message: '' };
+          }
+        }
+      }
+    }
+
+    // Si llegamos aquí, la combinación no está permitida
+    const marketNames = {
+      'h2h': 'Ganador',
+      'spreads': 'Spread',
+      'totals': 'Totales'
+    };
+    return { 
+      allowed: false, 
+      message: `No puedes combinar ${marketNames[newMarket] || newMarket} con ${existingMarkets.map(m => marketNames[m] || m).join(', ')} del mismo juego.\n\nCombinaciones permitidas:\n• Ganador + Totales\n• Spread + Totales` 
+    };
+  };
+
   const handleGameSelection = (game) => {
+    // Verificar si se puede agregar la selección
+    const validation = canAddSelection(game, selectedGames);
+    
+    if (!validation.allowed) {
+      setError(validation.message);
+      return;
+    }
+
     // Agregar/remover juego de la selección
     setSelectedGames(prev => {
       const exists = prev.find(g => 
@@ -36,6 +99,7 @@ export default function HousePortal() {
           !(g.id === game.id && g.selectedTeam === game.selectedTeam && g.market === game.market)
         );
       } else {
+        setError(null); // Limpiar error al agregar exitosamente
         return [...prev, game];
       }
     });
