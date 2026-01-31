@@ -37,7 +37,7 @@ PRODUCTION_URL=https://parlay-betting-platform-production.up.railway.app
 1. **Environment Variables in Railway Dashboard:**
    - `NODE_ENV=production`
    - `PORT` (Railway asigna automáticamente)
-   - `ODDS_API_KEY=e9b92b60bc4085d52d1d5f8c5b33bd4c`
+   - `ODDS_API_KEY=b033453051de38d16886716c23e1c609`
    - `ODDS_API_BASE_URL=https://api.the-odds-api.com/v4`
 
 2. **Important CORS Updates:**

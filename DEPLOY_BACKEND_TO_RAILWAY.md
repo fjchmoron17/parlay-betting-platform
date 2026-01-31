@@ -23,7 +23,7 @@ En el proyecto de Railway → **Variables**, agrega:
 
 ```env
 NODE_ENV=production
-ODDS_API_KEY=e9b92b60bc4085d52d1d5f8c5b33bd4c
+ODDS_API_KEY=b033453051de38d16886716c23e1c609
 ODDS_API_BASE_URL=https://api.the-odds-api.com/v4
 ```
 
