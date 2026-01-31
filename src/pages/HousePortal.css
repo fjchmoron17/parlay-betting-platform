@@ -103,6 +103,44 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.betting-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.games-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.selection-sidebar {
+  width: 400px;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.selection-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.selection-sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.selection-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+.selection-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
 .selection-panel {
   background: #0f172a;
   color: #e2e8f0;
@@ -339,6 +377,17 @@
   .bets-view,
   .reports-view {
     padding: 16px;
+  }
+
+  .betting-layout {
+    flex-direction: column;
+  }
+
+  .selection-sidebar {
+    width: 100%;
+    position: static;
+    max-height: none;
+    order: -1;
   }
 
   .selection-bar {

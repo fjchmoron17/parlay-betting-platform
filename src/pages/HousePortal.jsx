@@ -260,8 +260,17 @@ export default function HousePortal() {
                 </button>
               </div>
             )}
-            {selectedGames.length > 0 && (
-              <div className="selection-panel">
+            <div className="betting-layout">
+              <div className="games-section">
+                <Home 
+                  onGameSelect={handleGameSelection}
+                  selectedGames={selectedGames}
+                  bettingMode={true}
+                />
+              </div>
+              {selectedGames.length > 0 && (
+                <div className="selection-sidebar">
+                  <div className="selection-panel">
                 <div className="selection-header">
                   <div>
                     <p className="selection-title">Selecciones actuales</p>
@@ -413,12 +422,9 @@ export default function HousePortal() {
                   </button>
                 </div>
               </div>
-            )}
-            <Home 
-              onGameSelect={handleGameSelection}
-              selectedGames={selectedGames}
-              bettingMode={true}
-            />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
