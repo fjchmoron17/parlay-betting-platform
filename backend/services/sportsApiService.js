@@ -164,6 +164,16 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
             }
 
             console.log(`✅ Got ${response.data.length} games from ${sport} (${currentMarket})`);
+            
+            // Log detallado para debugging
+            if (response.data.length > 0) {
+              const sample = response.data[0];
+              console.log(`   📊 Sample game: ${sample.home_team} vs ${sample.away_team}`);
+              console.log(`   📊 Bookmakers count: ${sample.bookmakers?.length || 0}`);
+              if (sample.bookmakers && sample.bookmakers.length > 0) {
+                console.log(`   📊 Sample bookmaker: ${sample.bookmakers[0].key}`);
+              }
+            }
 
             const mappedGames = response.data
               .filter(game => game.bookmakers && game.bookmakers.length > 0) // Solo juegos con bookmakers disponibles
@@ -195,6 +205,13 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
               });
 
             console.log(`✅ Filtered to ${mappedGames.length} games with available bookmakers for region ${region}`);
+            
+            // Si no hay juegos después del filtro, investigar por qué
+            if (response.data.length > 0 && mappedGames.length === 0) {
+              console.warn(`⚠️ WARNING: ${response.data.length} games fetched but 0 games after filtering`);
+              console.warn(`⚠️ This might be due to bookmakers not matching region ${region}`);
+            }
+            
             allGames = [...allGames, ...mappedGames];
           } catch (error) {
             console.error(`❌ Error fetching ${sport} (${currentMarket}):`, error.message);
