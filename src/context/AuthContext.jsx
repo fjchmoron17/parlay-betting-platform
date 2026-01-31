@@ -17,17 +17,47 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [house, setHouse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionTimer, setSessionTimer] = useState(null);
+
+  // Constante de timeout: 2 minutos
+  const SESSION_TIMEOUT = 2 * 60 * 1000; // 2 minutos en milisegundos
 
   useEffect(() => {
     // Verificar si hay sesión guardada
     const savedSession = localStorage.getItem('authSession');
     if (savedSession) {
       const session = JSON.parse(savedSession);
-      setUser(session.user || null);
-      setHouse(session.house || null);
+      const loginTime = session.loginTime || Date.now();
+      const timeElapsed = Date.now() - loginTime;
+      
+      // Si han pasado más de 2 minutos, expirar sesión
+      if (timeElapsed >= SESSION_TIMEOUT) {
+        localStorage.removeItem('authSession');
+        alert('⏱️ Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.');
+      } else {
+        setUser(session.user || null);
+        setHouse(session.house || null);
+        // Iniciar timer para el tiempo restante
+        startSessionTimer(SESSION_TIMEOUT - timeElapsed);
+      }
     }
     setLoading(false);
   }, []);
+
+  const startSessionTimer = (timeout) => {
+    // Limpiar timer anterior si existe
+    if (sessionTimer) {
+      clearTimeout(sessionTimer);
+    }
+
+    // Crear nuevo timer
+    const timer = setTimeout(() => {
+      alert('⏱️ Tu sesión ha expirado por inactividad. Serás redirigido al login.');
+      logout();
+    }, timeout);
+
+    setSessionTimer(timer);
+  };
 
   const login = async ({ role, username, password }) => {
     try {
@@ -45,12 +75,16 @@ export const AuthProvider = ({ children }) => {
 
       const session = {
         user: data.data.user,
-        house: data.data.house || null
+        house: data.data.house || null,
+        loginTime: Date.now() // Guardar timestamp del login
       };
 
       localStorage.setItem('authSession', JSON.stringify(session));
       setUser(data.data.user);
       setHouse(data.data.house || null);
+
+      // Iniciar timer de sesión (2 minutos)
+      startSessionTimer(SESSION_TIMEOUT);
 
       return { success: true };
     } catch (error) {
@@ -60,6 +94,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Limpiar timer
+    if (sessionTimer) {
+      clearTimeout(sessionTimer);
+      setSessionTimer(null);
+    }
     localStorage.removeItem('authSession');
     setUser(null);
     setHouse(null);
@@ -85,6 +124,15 @@ export const AuthProvider = ({ children }) => {
       console.error('Error refreshing house data:', error);
     }
   };
+
+  // Limpiar timer cuando el componente se desmonte
+  useEffect(() => {
+    return () => {
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+      }
+    };
+  }, [sessionTimer]);
 
   const value = {
     user,

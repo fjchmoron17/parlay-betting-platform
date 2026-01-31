@@ -3,11 +3,33 @@
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
 
+// Constante de timeout de sesión (debe coincidir con AuthContext)
+const SESSION_TIMEOUT = 2 * 60 * 1000; // 2 minutos
+
+// Validar que la sesión no haya expirado
+const checkSessionExpired = () => {
+  const savedSession = localStorage.getItem('authSession');
+  if (savedSession) {
+    const session = JSON.parse(savedSession);
+    const loginTime = session.loginTime || Date.now();
+    const timeElapsed = Date.now() - loginTime;
+    
+    if (timeElapsed >= SESSION_TIMEOUT) {
+      localStorage.removeItem('authSession');
+      alert('⏱️ Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      window.location.href = '/';
+      return true;
+    }
+  }
+  return false;
+};
+
 // ============================================
 // BETTING HOUSES
 // ============================================
 
 export async function getAllBettingHouses() {
+  if (checkSessionExpired()) throw new Error('Sesión expirada');
   try {
     const response = await fetch(`${API_URL}/betting-houses`);
     if (!response.ok) throw new Error('Failed to fetch betting houses');
@@ -19,6 +41,7 @@ export async function getAllBettingHouses() {
 }
 
 export async function getBettingHouseById(id) {
+  if (checkSessionExpired()) throw new Error('Sesión expirada');
   try {
     const response = await fetch(`${API_URL}/betting-houses/${id}`);
     if (!response.ok) throw new Error('Failed to fetch betting house');
@@ -30,6 +53,7 @@ export async function getBettingHouseById(id) {
 }
 
 export async function createBettingHouse(data) {
+  if (checkSessionExpired()) throw new Error('Sesión expirada');
   try {
     const response = await fetch(`${API_URL}/betting-houses`, {
       method: 'POST',
@@ -74,6 +98,7 @@ export async function deleteBettingHouse(id) {
 // ============================================
 
 export async function placeBet(betData) {
+  if (checkSessionExpired()) throw new Error('Sesión expirada');
   try {
     const response = await fetch(`${API_URL}/bets-db`, {
       method: 'POST',
@@ -89,6 +114,7 @@ export async function placeBet(betData) {
 }
 
 export async function getBetsForHouse(bettingHouseId, limit = 50, offset = 0) {
+  if (checkSessionExpired()) throw new Error('Sesión expirada');
   try {
     const response = await fetch(
       `${API_URL}/bets-db?betting_house_id=${bettingHouseId}&limit=${limit}&offset=${offset}`
@@ -113,6 +139,7 @@ export async function getBetById(betId) {
 }
 
 export async function settleBet(betId, status, actualWin = 0) {
+  if (checkSessionExpired()) throw new Error('Sesión expirada');
   try {
     console.log(`Settling bet ${betId}: status=${status}, actualWin=${actualWin}`);
     const response = await fetch(`${API_URL}/bets-db/${betId}/settle`, {
@@ -176,6 +203,7 @@ export async function calculateDailyReport(bettingHouseId, reportDate) {
 }
 
 export async function getDailyReportByDate(bettingHouseId, date) {
+  if (checkSessionExpired()) throw new Error('Sesión expirada');
   try {
     const response = await fetch(
       `${API_URL}/reports/daily?betting_house_id=${bettingHouseId}&date=${date}`
@@ -189,6 +217,7 @@ export async function getDailyReportByDate(bettingHouseId, date) {
 }
 
 export async function getReportsByRange(bettingHouseId, fromDate, toDate) {
+  if (checkSessionExpired()) throw new Error('Sesión expirada');
   try {
     const response = await fetch(
       `${API_URL}/reports/range?betting_house_id=${bettingHouseId}&from_date=${fromDate}&to_date=${toDate}`

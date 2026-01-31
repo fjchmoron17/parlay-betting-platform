@@ -2,8 +2,34 @@
 // Detectar entorno
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
 
+// Constante de timeout de sesión (debe coincidir con AuthContext)
+const SESSION_TIMEOUT = 2 * 60 * 1000; // 2 minutos
+
+// Validar que la sesión no haya expirado
+const checkSessionExpired = () => {
+  const savedSession = localStorage.getItem('authSession');
+  if (savedSession) {
+    const session = JSON.parse(savedSession);
+    const loginTime = session.loginTime || Date.now();
+    const timeElapsed = Date.now() - loginTime;
+    
+    if (timeElapsed >= SESSION_TIMEOUT) {
+      localStorage.removeItem('authSession');
+      alert('⏱️ Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      window.location.href = '/';
+      return true;
+    }
+  }
+  return false;
+};
+
 // Función auxiliar para manejar peticiones
 const fetchAPI = async (endpoint, options = {}) => {
+  // Verificar si la sesión ha expirado antes de hacer el request
+  if (checkSessionExpired()) {
+    throw new Error('Sesión expirada');
+  }
+
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     const response = await fetch(url, {
