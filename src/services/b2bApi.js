@@ -4,7 +4,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
 
 // Constante de timeout de sesión (debe coincidir con AuthContext)
-const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutos
 
 // Validar que la sesión no haya expirado
 const checkSessionExpired = () => {

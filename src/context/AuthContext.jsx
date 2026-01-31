@@ -19,8 +19,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [sessionTimer, setSessionTimer] = useState(null);
 
-  // Constante de timeout: 5 minutos
-  const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutos en milisegundos
+  // Constante de timeout: 30 minutos
+  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutos en milisegundos
 
   useEffect(() => {
     // Verificar si hay sesión guardada
