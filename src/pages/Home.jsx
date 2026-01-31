@@ -68,24 +68,45 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
     const gameMatchId = `${gameData.homeTeam}_vs_${gameData.awayTeam}`;
     console.log('📌 gameMatchId:', gameMatchId);
 
-    // VALIDACIÓN DE DUPLICADOS
+    // VALIDACIÓN DE DUPLICADOS Y TOGGLE
     let isDuplicate = false;
+    let existingSelection = null;
     
     if (bettingMode) {
       // En modo betting, verificar en selectedGames
-      isDuplicate = selectedGames.some(game => 
+      existingSelection = selectedGames.find(game => 
         `${game.home_team}_vs_${game.away_team}` === gameMatchId
       );
+      isDuplicate = !!existingSelection;
       console.log('📋 Checking selectedGames for duplicate:', isDuplicate);
     } else {
       // En modo normal, verificar en parlayRef
-      isDuplicate = !!parlayRef.current[gameMatchId];
+      existingSelection = parlayRef.current[gameMatchId];
+      isDuplicate = !!existingSelection;
       console.log('📋 Checking parlayRef for duplicate:', isDuplicate, parlayRef.current);
     }
 
     if (isDuplicate) {
-      console.warn('⚠️ DUPLICATE DETECTED:', gameMatchId);
-      alert(`❌ ERROR: Duplicado de juego\n\nYa has seleccionado una opción de:\n${gameData.homeTeam} vs ${gameData.awayTeam}\n\n✅ SOLUCIÓN: Elimina la selección anterior (✕) si quieres elegir otra opción de este juego.`);
+      console.log('⚠️ DUPLICATE DETECTED - TOGGLING OFF:', gameMatchId);
+      // Si es duplicado, hacer toggle (eliminar)
+      if (bettingMode && onGameSelect) {
+        // En modo betting, enviar la misma selección al padre para que haga toggle
+        onGameSelect({
+          id: gameId,
+          home_team: gameData.homeTeam,
+          away_team: gameData.awayTeam,
+          sport_title: gameData.league,
+          market: gameData.market,
+          selectedTeam: team,
+          selectedOdds: odds,
+          pointSpread: gameData.pointSpread,
+          bookmaker: gameData.bookmaker,
+          commence_time: gameData.commenceTime
+        });
+      } else {
+        // En modo normal, remover de parlayRef
+        handleRemove(gameMatchId);
+      }
       return;
     }
 
