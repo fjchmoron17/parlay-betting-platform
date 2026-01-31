@@ -5,6 +5,7 @@ import { placeBet } from '../services/b2bApi';
 import BetsList from '../components/BetsList';
 import DailyReports from '../components/DailyReports';
 import Home from './Home';
+import FilterPanel from '../components/FilterPanel';
 import './HousePortal.css';
 
 export default function HousePortal() {
@@ -15,6 +16,12 @@ export default function HousePortal() {
   const [potentialWin, setPotentialWin] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Estados para filtros (movidos desde Home.jsx)
+  const [filters, setFilters] = useState({
+    sport: '',
+    region: 'us'
+  });
 
   // Recalcular ganancia potencial automáticamente cuando cambien selecciones o monto
   useEffect(() => {
@@ -191,6 +198,10 @@ export default function HousePortal() {
     }
   };
 
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
@@ -243,29 +254,40 @@ export default function HousePortal() {
         </button>
       </div>
 
+      {/* Sticky Filters and Error Banner */}
+      {activeView === 'betting' && (
+        <div className="sticky-top-bar">
+          <FilterPanel 
+            filters={filters}
+            onFilterChange={handleFilterChange}
+          />
+          {error && (
+            <div className="bet-error-top" role="alert">
+              <div className="bet-error__content">⚠️ {error}</div>
+              <button
+                type="button"
+                className="bet-error__close"
+                onClick={() => setError(null)}
+                aria-label="Cerrar mensaje"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Content */}
       <div className="portal-content">
         {activeView === 'betting' && (
           <div className="betting-view">
-            {error && (
-              <div className="bet-error" role="alert">
-                <div className="bet-error__content">⚠️ {error}</div>
-                <button
-                  type="button"
-                  className="bet-error__close"
-                  onClick={() => setError(null)}
-                  aria-label="Cerrar mensaje"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
             <div className="betting-layout">
               <div className="games-section">
                 <Home 
                   onGameSelect={handleGameSelection}
                   selectedGames={selectedGames}
                   bettingMode={true}
+                  filters={filters}
                 />
               </div>
               {selectedGames.length > 0 && (

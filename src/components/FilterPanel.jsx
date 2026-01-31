@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { sportsAPI } from '../services/api';
 
-const FilterPanel = ({ onFilterChange }) => {
+const FilterPanel = ({ filters, onFilterChange }) => {
   const [sports, setSports] = useState([]);
-  const [selectedSport, setSelectedSport] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState('us');
   const [loading, setLoading] = useState(true);
+
+  // Usar los filtros del padre
+  const selectedSport = filters?.sport || '';
+  const selectedRegion = filters?.region || 'us';
 
   const regions = {
     'us': '🇺🇸 Estados Unidos',
@@ -48,24 +50,20 @@ const FilterPanel = ({ onFilterChange }) => {
     }
   };
 
-  // Notificar cambios de filtros
-  const handleChange = (sport = selectedSport, region = selectedRegion) => {
-    onFilterChange({
-      sport: sport || undefined,
-      region
-    });
-  };
-
   const handleSportChange = (e) => {
     const value = e.target.value;
-    setSelectedSport(value);
-    handleChange(value, selectedRegion);
+    onFilterChange({
+      sport: value || undefined,
+      region: selectedRegion
+    });
   };
 
   const handleRegionChange = (e) => {
     const value = e.target.value;
-    setSelectedRegion(value);
-    handleChange(selectedSport, value);
+    onFilterChange({
+      sport: selectedSport || undefined,
+      region: value
+    });
   };
 
   return (
@@ -123,8 +121,10 @@ const FilterPanel = ({ onFilterChange }) => {
         {selectedSport && (
           <button
             onClick={() => {
-              setSelectedSport('');
-              handleChange('', selectedRegion);
+              onFilterChange({
+                sport: undefined,
+                region: selectedRegion
+              });
             }}
             className="btn btn-secondary"
             title="Limpiar filtro de deporte"

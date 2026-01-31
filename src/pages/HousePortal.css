@@ -88,6 +88,87 @@
   border-bottom-color: #3b82f6;
 }
 
+/* Sticky Top Bar - Filtros y Error Banner */
+.sticky-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* FilterPanel dentro de sticky-top-bar */
+.sticky-top-bar .filter-panel {
+  background: white;
+  border-radius: 0;
+  padding: 16px 32px;
+  box-shadow: none;
+  border-top: none;
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.sticky-top-bar .filter-container {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.sticky-top-bar .filter-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex: 0 1 auto;
+}
+
+.sticky-top-bar .filter-label {
+  margin: 0;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.sticky-top-bar .filter-select {
+  min-width: 200px;
+}
+
+.bet-error-top {
+  background-color: #fee2e2;
+  border-bottom: 2px solid #fca5a5;
+  padding: 12px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #991b1b;
+}
+
+.bet-error-top .bet-error__content {
+  flex: 1;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.bet-error-top .bet-error__close {
+  background: transparent;
+  border: none;
+  color: #991b1b;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.bet-error-top .bet-error__close:hover {
+  background: rgba(153, 27, 27, 0.15);
+}
+
 .portal-content {
   max-width: 1400px;
   margin: 0 auto;
@@ -366,6 +447,30 @@
 
   .portal-nav button {
     padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .sticky-top-bar .filter-panel {
+    padding: 12px 20px;
+  }
+
+  .sticky-top-bar .filter-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sticky-top-bar .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .sticky-top-bar .filter-select {
+    min-width: 100%;
+  }
+
+  .bet-error-top {
+    padding: 12px 20px;
     font-size: 14px;
   }
 

@@ -1,19 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import GroupedGameCard from "../components/GroupedGameCard";
 import ParlayPanel from "../components/ParlayPanel";
-import FilterPanel from "../components/FilterPanel";
 import { gamesAPI } from "../services/api";
 
-const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
+const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters = { sport: undefined, region: 'us' } }) => {
   const [games, setGames] = useState([]);
   const [parlay, setParlay] = useState({});
   const parlayRef = useRef({}); // Mantener sincrónico para validaciones inmediatas
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({
-    sport: undefined,
-    region: 'us'
-  });
 
   // Sincronizar ref cuando cambia parlay (para remociones)
   useEffect(() => {
@@ -47,10 +42,6 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
   };
 
   const handleSelect = (gameId, team, odds, gameData = {}) => {
@@ -181,9 +172,6 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false }) => {
           </p>
         </div>
       )}
-
-      {/* Filtros */}
-      <FilterPanel onFilterChange={handleFilterChange} />
 
       {/* Contenido Principal */}
       <div className="flex gap-6">
