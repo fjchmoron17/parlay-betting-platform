@@ -159,7 +159,6 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                 )}
               </div>
             </div>
-            </div>
           </div>
         ) : (
           <div className="market-column market-column-empty">
@@ -395,9 +394,6 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
                   </button>
                 )}
               </div>
-            </div>
-                <span className="odds">@{marketGroups.totals.odds_away}</span>
-              </button>
             </div>
           </div>
         ) : (
