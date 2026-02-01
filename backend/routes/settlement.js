@@ -9,7 +9,9 @@ import {
 import { 
   resolveManual, 
   getAuditLog, 
-  getPendingManualResolution 
+  getPendingManualResolution,
+  getPendingManualGames,
+  resolveManualGame
 } from '../controllers/settlementController.js';
 
 const router = express.Router();
@@ -126,5 +128,11 @@ router.get('/audit-log', getAuditLog);
 
 // GET /api/settlement/pending-manual - Obtener apuestas pendientes para resolución manual
 router.get('/pending-manual', getPendingManualResolution);
+
+// GET /api/settlement/pending-manual-games - Obtener partidos pendientes para resolución manual
+router.get('/pending-manual-games', getPendingManualGames);
+
+// POST /api/settlement/resolve-manual-game - Resolver partido manualmente (admin)
+router.post('/resolve-manual-game', verifyAdmin, resolveManualGame);
 
 export default router;

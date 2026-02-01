@@ -2,7 +2,6 @@
 // Controlador para resolución manual de apuestas por admin
 
 import { query } from '../db/dbConfig.js';
-import { Bet, BetSelection } from '../db/models/index.js';
 
 /**
  * Resolver una apuesta manualmente (solo admin)
@@ -275,6 +274,241 @@ export const getPendingManualResolution = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get pending bets',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Obtener partidos con jugadas pendientes (agrupado por juego)
+ * Endpoint: GET /api/settlement/pending-manual-games
+ */
+export const getPendingManualGames = async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+
+    const result = await query(
+      `SELECT
+        bs.game_id,
+        bs.home_team,
+        bs.away_team,
+        MIN(bs.game_commence_time) as game_commence_time,
+        COUNT(*) FILTER (WHERE bs.selection_status = 'pending') as pending_count,
+        COUNT(DISTINCT bs.bet_id) as bet_count,
+        SUM(CASE WHEN bs.market = 'h2h' THEN 1 ELSE 0 END) as h2h_count,
+        SUM(CASE WHEN bs.market = 'totals' THEN 1 ELSE 0 END) as totals_count,
+        SUM(CASE WHEN bs.market = 'spreads' THEN 1 ELSE 0 END) as spreads_count
+       FROM bet_selections bs
+       JOIN bets b ON b.id = bs.bet_id
+       WHERE b.status = 'pending'
+         AND bs.selection_status = 'pending'
+         AND bs.game_commence_time IS NOT NULL
+         AND bs.game_commence_time <= NOW() - INTERVAL '1 hour'
+       GROUP BY bs.game_id, bs.home_team, bs.away_team
+       ORDER BY MIN(bs.game_commence_time) ASC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+
+    res.json({
+      success: true,
+      message: 'Games pending manual resolution',
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error getting pending manual games:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get pending games',
+      details: error.message
+    });
+  }
+};
+
+const evaluateSelectionOutcome = (selection, homeScore, awayScore) => {
+  const market = selection.market;
+  const point = selection.point_spread != null ? parseFloat(selection.point_spread) : null;
+  const selectedTeam = selection.selected_team;
+
+  if (market === 'h2h') {
+    if (homeScore === awayScore) return 'void';
+    const winner = homeScore > awayScore ? selection.home_team : selection.away_team;
+    return selectedTeam === winner ? 'won' : 'lost';
+  }
+
+  if (market === 'spreads') {
+    if (point == null) return 'void';
+    const isHome = selectedTeam === selection.home_team;
+    const adjusted = isHome ? homeScore + point : awayScore + point;
+    const opponent = isHome ? awayScore : homeScore;
+    if (adjusted === opponent) return 'void';
+    return adjusted > opponent ? 'won' : 'lost';
+  }
+
+  if (market === 'totals') {
+    if (point == null) return 'void';
+    const total = homeScore + awayScore;
+    if (total === point) return 'void';
+    const isOver = selectedTeam?.toLowerCase().includes('over');
+    if (isOver) return total > point ? 'won' : 'lost';
+    return total < point ? 'won' : 'lost';
+  }
+
+  return 'void';
+};
+
+/**
+ * Resolver manualmente todas las jugadas de un partido
+ * Endpoint: POST /api/settlement/resolve-manual-game
+ * Body: { gameId, homeScore, awayScore, adminId, adminNotes }
+ */
+export const resolveManualGame = async (req, res) => {
+  try {
+    const { gameId, homeScore, awayScore, adminId, adminNotes } = req.body;
+
+    if (!gameId || homeScore == null || awayScore == null) {
+      return res.status(400).json({
+        success: false,
+        error: 'gameId, homeScore and awayScore are required'
+      });
+    }
+
+    if (!adminId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID is required for audit trail'
+      });
+    }
+
+    const selectionResult = await query(
+      `SELECT bs.*, b.potential_win, b.status as bet_status
+       FROM bet_selections bs
+       JOIN bets b ON b.id = bs.bet_id
+       WHERE bs.game_id = $1 AND bs.selection_status = 'pending' AND b.status = 'pending'`,
+      [gameId]
+    );
+
+    const selections = selectionResult.rows;
+    if (selections.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No pending selections found for this game'
+      });
+    }
+
+    const updatePromises = [];
+    const auditPromises = [];
+    const betIds = new Set();
+    const finalScore = `${homeScore}-${awayScore}`;
+
+    for (const sel of selections) {
+      const outcome = evaluateSelectionOutcome(sel, Number(homeScore), Number(awayScore));
+      betIds.add(sel.bet_id);
+
+      updatePromises.push(
+        query('UPDATE bet_selections SET selection_status = $1 WHERE id = $2', [outcome, sel.id])
+      );
+
+      auditPromises.push(
+        query(
+          `INSERT INTO settlement_audit_log
+           (bet_id, selection_id, old_status, new_status, admin_id, admin_notes, ip_address, home_score, away_score, final_score)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            sel.bet_id,
+            sel.id,
+            sel.selection_status,
+            outcome,
+            adminId,
+            adminNotes || `Manual game resolution for ${gameId} (${finalScore})`,
+            req.ip || 'unknown',
+            Number(homeScore),
+            Number(awayScore),
+            finalScore
+          ]
+        )
+      );
+    }
+
+    await Promise.all([...updatePromises, ...auditPromises]);
+
+    const updatedBets = [];
+    for (const betId of betIds) {
+      const betStatusResult = await query(
+        'SELECT status FROM bets WHERE id = $1',
+        [betId]
+      );
+      const oldStatus = betStatusResult.rows[0]?.status || 'pending';
+
+      const selectionsResult = await query(
+        'SELECT selection_status FROM bet_selections WHERE bet_id = $1 ORDER BY id',
+        [betId]
+      );
+      const statuses = selectionsResult.rows.map(s => s.selection_status);
+      const hasLost = statuses.includes('lost');
+      const hasPending = statuses.includes('pending');
+      const allWon = statuses.every(s => s === 'won');
+
+      let newBetStatus = 'pending';
+      let actualWin = '0.00';
+
+      if (hasLost) {
+        newBetStatus = 'lost';
+      } else if (allWon) {
+        const betResult = await query('SELECT potential_win FROM bets WHERE id = $1', [betId]);
+        if (betResult.rows.length > 0) {
+          newBetStatus = 'won';
+          actualWin = betResult.rows[0].potential_win;
+        }
+      } else if (!hasPending && !hasLost) {
+        newBetStatus = 'void';
+      }
+
+      if (newBetStatus !== oldStatus) {
+        if (newBetStatus === 'pending') {
+          await query('UPDATE bets SET status = $1 WHERE id = $2', [newBetStatus, betId]);
+        } else {
+          await query('UPDATE bets SET status = $1, actual_win = $2, settled_at = NOW() WHERE id = $3', [newBetStatus, actualWin, betId]);
+
+          await query(
+            `INSERT INTO settlement_audit_log
+             (bet_id, old_status, new_status, admin_id, admin_notes, ip_address, is_bet_resolution, home_score, away_score, final_score)
+             VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, $9)`,
+            [
+              betId,
+              oldStatus,
+              newBetStatus,
+              adminId,
+              `Bet resolved via manual game resolution (${gameId}) ${adminNotes || ''}`,
+              req.ip || 'unknown',
+              Number(homeScore),
+              Number(awayScore),
+              finalScore
+            ]
+          );
+        }
+      }
+
+      updatedBets.push({ betId, oldStatus, newStatus: newBetStatus });
+    }
+
+    res.json({
+      success: true,
+      message: `Game ${gameId} resolved manually for ${selections.length} selections`,
+      data: {
+        gameId,
+        homeScore: Number(homeScore),
+        awayScore: Number(awayScore),
+        selectionsResolved: selections.length,
+        betsUpdated: updatedBets.length
+      }
+    });
+  } catch (error) {
+    console.error('Error resolving manual game:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to resolve game',
       details: error.message
     });
   }
