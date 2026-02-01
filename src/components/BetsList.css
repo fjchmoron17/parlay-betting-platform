@@ -402,6 +402,11 @@
   color: #111827;
 }
 
+.selection-pick .pick {
+  color: #111827;
+  font-weight: 600;
+}
+
 .selection-pick strong {
   color: #1f2937;
 }
