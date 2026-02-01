@@ -182,6 +182,30 @@
   color: #6b7280;
 }
 
+.winner-toggle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.winner-toggle label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.clear-winner {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
 .selection-score label {
   font-size: 0.8rem;
   color: #6b7280;

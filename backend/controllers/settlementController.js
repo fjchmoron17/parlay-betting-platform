@@ -331,13 +331,16 @@ export const getPendingManualGames = async (req, res) => {
   }
 };
 
-const evaluateSelectionOutcome = (selection, homeScore, awayScore, homeSets = null, awaySets = null) => {
+const evaluateSelectionOutcome = (selection, homeScore, awayScore, homeSets = null, awaySets = null, winnerOverride = null) => {
   const market = selection.market;
   const point = selection.point_spread != null ? parseFloat(selection.point_spread) : null;
   const selectedTeam = selection.selected_team;
   const hasSets = homeSets != null && awaySets != null;
 
   if (market === 'h2h') {
+    if (winnerOverride) {
+      return selectedTeam === winnerOverride ? 'won' : 'lost';
+    }
     if (hasSets) {
       if (homeSets === awaySets) return 'void';
       const winner = homeSets > awaySets ? selection.home_team : selection.away_team;
@@ -404,7 +407,7 @@ const parseTennisSets = (setsScore) => {
  */
 export const resolveManualGame = async (req, res) => {
   try {
-    const { homeTeam, awayTeam, gameCommenceTime, homeScore, awayScore, setsScore, adminId, adminNotes } = req.body;
+    const { homeTeam, awayTeam, gameCommenceTime, homeScore, awayScore, setsScore, winnerOverride, adminId, adminNotes } = req.body;
 
     if (!homeTeam || !awayTeam || !gameCommenceTime) {
       return res.status(400).json({
@@ -418,6 +421,12 @@ export const resolveManualGame = async (req, res) => {
     const resolvedAwayScore = parsedSets ? parsedSets.awayGames : (awayScore == null ? null : Number(awayScore));
     const resolvedHomeSets = parsedSets ? parsedSets.homeSets : null;
     const resolvedAwaySets = parsedSets ? parsedSets.awaySets : null;
+
+    const normalizedWinner = winnerOverride === 'home'
+      ? homeTeam
+      : winnerOverride === 'away'
+        ? awayTeam
+        : winnerOverride;
 
     if (resolvedHomeScore == null || resolvedAwayScore == null) {
       return res.status(400).json({
@@ -464,7 +473,8 @@ export const resolveManualGame = async (req, res) => {
         resolvedHomeScore,
         resolvedAwayScore,
         resolvedHomeSets,
-        resolvedAwaySets
+        resolvedAwaySets,
+        normalizedWinner
       );
       betIds.add(sel.bet_id);
 
@@ -565,6 +575,7 @@ export const resolveManualGame = async (req, res) => {
         homeScore: resolvedHomeScore,
         awayScore: resolvedAwayScore,
         setsScore: setsScore || null,
+        winnerOverride: normalizedWinner || null,
         selectionsResolved: selections.length,
         betsUpdated: updatedBets.length
       }

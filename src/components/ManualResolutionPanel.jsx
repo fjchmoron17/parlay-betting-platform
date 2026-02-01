@@ -28,6 +28,7 @@ export default function ManualResolutionPanel() {
   const [adminNotes, setAdminNotes] = useState('');
   const [actionResult, setActionResult] = useState(null);
   const [onlyOverdue, setOnlyOverdue] = useState(true);
+  const [winnerOverrides, setWinnerOverrides] = useState({});
 
   const hasPending = pendingGames.length > 0;
 
@@ -96,6 +97,10 @@ export default function ManualResolutionPanel() {
     });
   };
 
+  const handleWinnerOverride = (gameKey, winner) => {
+    setWinnerOverrides((prev) => ({ ...prev, [gameKey]: winner }));
+  };
+
   const handleResolveGame = async (game) => {
     setActionResult(null);
     setError(null);
@@ -122,6 +127,7 @@ export default function ManualResolutionPanel() {
       homeScore: scores.homeScore,
       awayScore: scores.awayScore,
       setsScore: scores.setsScore,
+      winnerOverride: winnerOverrides[game.game_key] || null,
       adminId,
       adminNotes: adminNotes || '',
     };
@@ -142,6 +148,11 @@ export default function ManualResolutionPanel() {
         setAdminNotes('');
         setExpandedGameKey(null);
         setScoreInputs((prev) => {
+          const next = { ...prev };
+          delete next[game.game_key];
+          return next;
+        });
+        setWinnerOverrides((prev) => {
           const next = { ...prev };
           delete next[game.game_key];
           return next;
@@ -273,6 +284,40 @@ export default function ManualResolutionPanel() {
                       />
                       <div className="score-hint">
                         Juegos totales: {scoreInputs[game.game_key]?.totalGames ?? '-'} • Sets: {scoreInputs[game.game_key]?.setsSummary ?? '-'}
+                      </div>
+                    </div>
+
+                    <div className="selection-score">
+                      <label>Ganador H2H (opcional)</label>
+                      <div className="winner-toggle">
+                        <label>
+                          <input
+                            type="radio"
+                            name={`winner-${game.game_key}`}
+                            checked={winnerOverrides[game.game_key] === 'home'}
+                            onChange={() => handleWinnerOverride(game.game_key, 'home')}
+                          />
+                          {game.home_team}
+                        </label>
+                        <label>
+                          <input
+                            type="radio"
+                            name={`winner-${game.game_key}`}
+                            checked={winnerOverrides[game.game_key] === 'away'}
+                            onChange={() => handleWinnerOverride(game.game_key, 'away')}
+                          />
+                          {game.away_team}
+                        </label>
+                        <button
+                          type="button"
+                          className="clear-winner"
+                          onClick={() => handleWinnerOverride(game.game_key, null)}
+                        >
+                          Limpiar
+                        </button>
+                      </div>
+                      <div className="score-hint">
+                        Si seleccionas ganador, se usa solo para H2H.
                       </div>
                     </div>
 
