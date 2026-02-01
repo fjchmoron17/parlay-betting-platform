@@ -216,3 +216,81 @@ export const getBetsByDate = async (req, res) => {
     });
   }
 };
+
+export const updateSelections = async (req, res) => {
+  try {
+    const { updates } = req.body; // Array de { selectionId, gameCommenceTime, selectionStatus }
+    
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'updates array is required'
+      });
+    }
+
+    let successCount = 0;
+    const results = [];
+
+    for (const update of updates) {
+      const { selectionId, gameCommenceTime, selectionStatus } = update;
+      
+      try {
+        // Usar query directo para actualizar
+        const { query } = await import('../db/index.js');
+        
+        let sql = 'UPDATE bet_selections SET ';
+        const params = [];
+        let paramIndex = 1;
+
+        if (gameCommenceTime) {
+          sql += `game_commence_time = $${paramIndex++}`;
+          params.push(gameCommenceTime);
+        }
+
+        if (selectionStatus) {
+          if (params.length > 0) sql += ', ';
+          sql += `selection_status = $${paramIndex++}`;
+          params.push(selectionStatus);
+        }
+
+        sql += ` WHERE id = $${paramIndex} RETURNING *`;
+        params.push(selectionId);
+
+        const result = await query(sql, params);
+        
+        if (result.rows.length > 0) {
+          successCount++;
+          results.push({
+            selectionId,
+            success: true,
+            data: result.rows[0]
+          });
+        } else {
+          results.push({
+            selectionId,
+            success: false,
+            error: 'Selection not found'
+          });
+        }
+      } catch (error) {
+        results.push({
+          selectionId,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Updated ${successCount}/${updates.length} selections`,
+      results
+    });
+  } catch (error) {
+    console.error('Error updating selections:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update selections'
+    });
+  }
+};
