@@ -441,7 +441,7 @@ export const resolveSelection = async (req, res) => {
 
     // Actualizar la selección
     await query(
-      'UPDATE bet_selections SET selection_status = $1, updated_at = NOW() WHERE id = $2',
+      'UPDATE bet_selections SET selection_status = $1 WHERE id = $2',
       [status, selectionId]
     );
 
