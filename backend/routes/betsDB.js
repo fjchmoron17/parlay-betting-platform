@@ -8,7 +8,9 @@ import {
   getBetStats,
   getBetsByDate,
   updateSelections,
-  validateAndFixBets
+  validateAndFixBets,
+  resolveSelection,
+  getPendingSelections
 } from '../controllers/betsDBController.js';
 
 const router = express.Router();
@@ -25,6 +27,9 @@ router.get('/stats', getBetStats);
 // GET /api/bets-db/by-date?betting_house_id=X&date=Y - Obtener apuestas por fecha
 router.get('/by-date', getBetsByDate);
 
+// GET /api/bets-db/pending - Obtener todas las selecciones pendientes
+router.get('/pending', getPendingSelections);
+
 // GET /api/bets-db/detail/:id - Obtener una apuesta por ID
 router.get('/detail/:id', getBetById);
 
@@ -33,6 +38,9 @@ router.post('/update-selections', updateSelections);
 
 // POST /api/bets-db/validate-all - Validar y corregir todas las apuestas
 router.post('/validate-all', validateAndFixBets);
+
+// POST /api/bets-db/resolve-selection - Resolver una selección manualmente
+router.post('/resolve-selection', resolveSelection);
 
 // PUT /api/bets-db/:id/settle - Resolver una apuesta
 router.put('/:id/settle', settleBet);

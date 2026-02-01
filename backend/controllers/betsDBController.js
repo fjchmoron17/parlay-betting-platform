@@ -402,3 +402,156 @@ export const validateAndFixBets = async (req, res) => {
     });
   }
 };
+
+// Resolver una selección individual manualmente
+export const resolveSelection = async (req, res) => {
+  try {
+    const { selectionId, status } = req.body;
+
+    // Validar parámetros
+    if (!selectionId || !status) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: selectionId, status'
+      });
+    }
+
+    if (!['won', 'lost', 'void'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status. Must be: won, lost, or void'
+      });
+    }
+
+    // Obtener la selección actual
+    const currentResult = await query(
+      'SELECT id, bet_id, selection_status FROM bet_selections WHERE id = $1',
+      [selectionId]
+    );
+
+    if (currentResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Selection not found'
+      });
+    }
+
+    const selection = currentResult.rows[0];
+    const oldStatus = selection.selection_status;
+
+    // Actualizar la selección
+    await query(
+      'UPDATE bet_selections SET selection_status = $1, updated_at = NOW() WHERE id = $2',
+      [status, selectionId]
+    );
+
+    // Obtener todas las selecciones de la apuesta para recalcular su estado
+    const allSelectionsResult = await query(
+      'SELECT id, selection_status FROM bet_selections WHERE bet_id = $1 ORDER BY id',
+      [selection.bet_id]
+    );
+
+    const selections = allSelectionsResult.rows;
+    const statuses = selections.map(s => s.selection_status);
+    const hasLost = statuses.includes('lost');
+    const hasPending = statuses.includes('pending');
+    const allWon = statuses.every(s => s === 'won');
+
+    // Calcular nuevo estado de la apuesta
+    let newBetStatus = 'pending';
+    let newActualWin = '0.00';
+
+    if (hasLost) {
+      newBetStatus = 'lost';
+      newActualWin = '0.00';
+    } else if (allWon) {
+      // Obtener potential_win
+      const betResult = await query(
+        'SELECT potential_win FROM bets WHERE id = $1',
+        [selection.bet_id]
+      );
+      if (betResult.rows.length > 0) {
+        newBetStatus = 'won';
+        newActualWin = betResult.rows[0].potential_win;
+      }
+    }
+
+    // Actualizar la apuesta si cambió el estado
+    await query(
+      'UPDATE bets SET status = $1, actual_win = $2, settled_at = NOW() WHERE id = $3',
+      [newBetStatus, newActualWin, selection.bet_id]
+    );
+
+    res.json({
+      success: true,
+      selection: {
+        id: selectionId,
+        old_status: oldStatus,
+        new_status: status
+      },
+      bet: {
+        id: selection.bet_id,
+        new_status: newBetStatus,
+        actual_win: newActualWin,
+        all_selections_status: statuses
+      },
+      message: `Selection resolved from ${oldStatus} to ${status}. Bet updated to ${newBetStatus}`
+    });
+  } catch (error) {
+    console.error('Error resolving selection:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to resolve selection',
+      details: error.message
+    });
+  }
+};
+
+// Obtener todas las apuestas con selecciones pendientes
+export const getPendingSelections = async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT 
+        b.id as bet_id,
+        b.bet_ticket_number,
+        b.bet_type,
+        b.status as bet_status,
+        b.total_stake,
+        b.potential_win,
+        b.placed_at,
+        b.placed_date,
+        count(bs.id) FILTER (WHERE bs.selection_status = 'pending') as pending_count,
+        count(bs.id) as total_selections,
+        json_agg(json_build_object(
+          'id', bs.id,
+          'home_team', bs.home_team,
+          'away_team', bs.away_team,
+          'market', bs.market,
+          'selected_team', bs.selected_team,
+          'selection_status', bs.selection_status,
+          'game_commence_time', bs.game_commence_time,
+          'point_spread', bs.point_spread
+        )) as selections
+      FROM bets b
+      LEFT JOIN bet_selections bs ON b.id = bs.bet_id
+      WHERE bs.selection_status = 'pending'
+      GROUP BY b.id
+      ORDER BY b.placed_at DESC`,
+      []
+    );
+
+    res.json({
+      success: true,
+      total_bets_with_pending: result.rows.length,
+      total_pending_selections: result.rows.reduce((sum, r) => sum + r.pending_count, 0),
+      bets: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching pending selections:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch pending selections',
+      details: error.message
+    });
+  }
+};
