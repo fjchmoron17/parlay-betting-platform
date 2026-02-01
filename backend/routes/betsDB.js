@@ -7,7 +7,8 @@ import {
   settleBet,
   getBetStats,
   getBetsByDate,
-  updateSelections
+  updateSelections,
+  validateAndFixBets
 } from '../controllers/betsDBController.js';
 
 const router = express.Router();
@@ -29,6 +30,9 @@ router.get('/detail/:id', getBetById);
 
 // POST /api/bets-db/update-selections - Actualizar campos en selecciones
 router.post('/update-selections', updateSelections);
+
+// POST /api/bets-db/validate-all - Validar y corregir todas las apuestas
+router.post('/validate-all', validateAndFixBets);
 
 // PUT /api/bets-db/:id/settle - Resolver una apuesta
 router.put('/:id/settle', settleBet);

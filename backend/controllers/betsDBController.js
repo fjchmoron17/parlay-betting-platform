@@ -292,3 +292,113 @@ export const updateSelections = async (req, res) => {
     });
   }
 };
+
+// Validar y corregir estado de TODAS las apuestas basado en sus selecciones
+export const validateAndFixBets = async (req, res) => {
+  try {
+    // 1. Obtener todas las apuestas
+    const allBetsResult = await query(
+      'SELECT id, status, potential_win FROM bets ORDER BY id'
+    );
+    
+    const bets = allBetsResult.rows;
+    console.log(`Found ${bets.length} bets to validate`);
+    
+    let fixed = 0;
+    let errors = [];
+    const results = [];
+    
+    // 2. Para cada apuesta, obtener sus selecciones y calcular estado correcto
+    for (const bet of bets) {
+      try {
+        // Obtener selecciones
+        const selectionsResult = await query(
+          'SELECT id, selection_status FROM bet_selections WHERE bet_id = $1 ORDER BY id',
+          [bet.id]
+        );
+        
+        const selections = selectionsResult.rows;
+        
+        if (selections.length === 0) {
+          // Sin selecciones = estado inválido
+          results.push({
+            bet_id: bet.id,
+            status: 'error',
+            message: 'No selections found'
+          });
+          continue;
+        }
+        
+        // Calcular estado correcto basado en selecciones
+        let correctStatus = 'pending';
+        let correctActualWin = '0.00';
+        
+        const statuses = selections.map(s => s.selection_status);
+        const hasLost = statuses.includes('lost');
+        const hasPending = statuses.includes('pending');
+        const allWon = statuses.every(s => s === 'won');
+        
+        if (hasLost) {
+          // Si hay al menos una perdida = apuesta perdida
+          correctStatus = 'lost';
+          correctActualWin = '0.00';
+        } else if (allWon) {
+          // Si todas ganaron = apuesta ganada
+          correctStatus = 'won';
+          correctActualWin = bet.potential_win; // El ganador obtiene el potential_win
+        } else if (hasPending) {
+          // Si hay pendientes y no hay perdidas = pendiente
+          correctStatus = 'pending';
+          correctActualWin = '0.00';
+        }
+        
+        // Si el estado es diferente, actualizar
+        if (bet.status !== correctStatus) {
+          await query(
+            'UPDATE bets SET status = $1, actual_win = $2 WHERE id = $3',
+            [correctStatus, correctActualWin, bet.id]
+          );
+          
+          fixed++;
+          results.push({
+            bet_id: bet.id,
+            old_status: bet.status,
+            new_status: correctStatus,
+            selections_count: selections.length,
+            selection_statuses: statuses,
+            action: 'FIXED'
+          });
+        } else {
+          results.push({
+            bet_id: bet.id,
+            status: correctStatus,
+            selections_count: selections.length,
+            selection_statuses: statuses,
+            action: 'OK'
+          });
+        }
+      } catch (error) {
+        errors.push({
+          bet_id: bet.id,
+          error: error.message
+        });
+      }
+    }
+    
+    res.json({
+      success: true,
+      total_bets: bets.length,
+      fixed_count: fixed,
+      errors_count: errors.length,
+      results,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (error) {
+    console.error('Error validating and fixing bets:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to validate and fix bets',
+      details: error.message
+    });
+  }
+};
