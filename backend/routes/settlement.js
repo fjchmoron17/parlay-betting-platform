@@ -6,8 +6,26 @@ import {
   startAutoSettlement, 
   stopAutoSettlement 
 } from '../services/schedulerService.js';
+import { 
+  resolveManual, 
+  getAuditLog, 
+  getPendingManualResolution 
+} from '../controllers/settlementController.js';
 
 const router = express.Router();
+
+// Middleware para verificar admin (simple por ahora)
+const verifyAdmin = (req, res, next) => {
+  const adminToken = req.headers['x-admin-token'];
+  // TODO: Reemplazar con validación real de DB
+  if (!adminToken || adminToken !== process.env.ADMIN_TOKEN) {
+    return res.status(403).json({
+      success: false,
+      error: 'Unauthorized: Admin token required'
+    });
+  }
+  next();
+};
 
 // POST /api/settlement/process - Procesar apuestas pendientes manualmente
 router.post('/process', async (req, res) => {
@@ -97,5 +115,16 @@ router.post('/stop', (req, res) => {
     });
   }
 });
+
+// ====== MANUAL RESOLUTION ENDPOINTS ======
+
+// POST /api/settlement/resolve-manual - Resolver apuesta manualmente (admin)
+router.post('/resolve-manual', verifyAdmin, resolveManual);
+
+// GET /api/settlement/audit-log - Obtener historial de resoluciones
+router.get('/audit-log', getAuditLog);
+
+// GET /api/settlement/pending-manual - Obtener apuestas pendientes para resolución manual
+router.get('/pending-manual', getPendingManualResolution);
 
 export default router;
