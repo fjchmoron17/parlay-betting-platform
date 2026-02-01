@@ -107,6 +107,10 @@ export const getBetById = async (req, res) => {
         error: 'Bet not found'
       });
     }
+
+    // Cargar selecciones para esta apuesta
+    const selections = await BetSelection.findByBetId(bet.id);
+    bet.selections = selections || [];
     
     res.json({
       success: true,
