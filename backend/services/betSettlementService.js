@@ -168,6 +168,16 @@ async function settleParlayBet(bet, completedGames) {
       return null;
     }
 
+    if (matchedGame.commence_time && selection.game_commence_time !== matchedGame.commence_time) {
+      try {
+        await BetSelection.updateCommenceTime(selection.id, matchedGame.commence_time);
+        selection.game_commence_time = matchedGame.commence_time;
+        console.log(`      🕒 Selección ${selection.id}: actualizada hora de evento ${matchedGame.commence_time}`);
+      } catch (error) {
+        console.error(`      ⚠️  No se pudo actualizar hora de evento para selección ${selection.id}:`, error.message);
+      }
+    }
+
     const selectionWon = evaluateBet(selection, matchedGame);
     
     if (selectionWon === null) {

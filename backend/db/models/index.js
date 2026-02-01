@@ -368,6 +368,13 @@ export const BetSelection = {
     );
   },
 
+  async updateCommenceTime(selectionId, commenceTime) {
+    return getOne(
+      'UPDATE bet_selections SET game_commence_time = $1 WHERE id = $2 RETURNING *',
+      [commenceTime, selectionId]
+    );
+  },
+
   async createMany(betId, selections = []) {
     if (!betId || selections.length === 0) return [];
 
