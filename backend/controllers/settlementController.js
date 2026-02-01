@@ -285,7 +285,12 @@ export const getPendingManualResolution = async (req, res) => {
  */
 export const getPendingManualGames = async (req, res) => {
   try {
-    const { limit = 50, offset = 0 } = req.query;
+    const { limit = 50, offset = 0, onlyOverdue = 'false' } = req.query;
+    const onlyOverdueFilter = String(onlyOverdue).toLowerCase() === 'true';
+
+    const overdueClause = onlyOverdueFilter
+      ? ' AND bs.game_commence_time <= NOW() - INTERVAL \'1 hour\''
+      : '';
 
     const result = await query(
       `SELECT
@@ -303,9 +308,9 @@ export const getPendingManualGames = async (req, res) => {
        WHERE b.status = 'pending'
          AND bs.selection_status = 'pending'
          AND bs.game_commence_time IS NOT NULL
-         AND bs.game_commence_time <= NOW() - INTERVAL '1 hour'
+       ${overdueClause}
        GROUP BY bs.home_team, bs.away_team, bs.game_commence_time
-       ORDER BY bs.game_commence_time ASC
+      ORDER BY bs.game_commence_time ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );

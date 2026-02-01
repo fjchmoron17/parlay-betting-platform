@@ -21,43 +21,41 @@ export default function ManualResolutionPanel() {
   const [loading, setLoading] = useState(false);
   const [pendingGames, setPendingGames] = useState([]);
   const [error, setError] = useState(null);
-  const [expandedGameId, setExpandedGameId] = useState(null);
+  const [expandedGameKey, setExpandedGameKey] = useState(null);
   const [scoreInputs, setScoreInputs] = useState({});
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem('adminToken') || '');
   const [adminId, setAdminId] = useState(() => localStorage.getItem('adminId') || '');
   const [adminNotes, setAdminNotes] = useState('');
   const [actionResult, setActionResult] = useState(null);
+  const [onlyOverdue, setOnlyOverdue] = useState(true);
 
   const hasPending = pendingGames.length > 0;
 
   useEffect(() => {
-    loadPendingBets();
-  }, []);
-
-  const loadPendingBets = async () => {
     loadPendingGames();
+  }, [onlyOverdue]);
+
+  const loadPendingGames = async () => {
+    setLoading(true);
     setError(null);
     setActionResult(null);
-  const loadPendingGames = async () => {
-      const res = await fetch(`${API_URL}/settlement/pending-manual?limit=50`);
+    try {
+      const res = await fetch(`${API_URL}/settlement/pending-manual-games?limit=50&onlyOverdue=${onlyOverdue}`);
       const data = await res.json();
       if (data.success) {
-        setPendingBets(data.data || []);
-      const res = await fetch(`${API_URL}/settlement/pending-manual-games?limit=50`);
+        setPendingGames(data.data || []);
+      } else {
         setError(data.error || 'No se pudieron cargar las apuestas pendientes');
       }
-        setPendingGames(data.data || []);
+    } catch (err) {
       setError(err.message || 'Error de conexión con el servidor');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadBetDetails = async (betId) => {
-    if (betDetails[betId]) return;
-    setLoading(true);
-  const toggleGame = (gameId) => {
-    setExpandedGameId((prev) => (prev === gameId ? null : gameId));
+  const toggleGame = (gameKey) => {
+    setExpandedGameKey((prev) => (prev === gameKey ? null : gameKey));
   };
 
   const parseSets = (value) => {
@@ -85,38 +83,20 @@ export default function ManualResolutionPanel() {
     return { homeGames, awayGames, homeSets, awaySets };
   };
 
-  const handleScoreChange = (gameId, field, value) => {
+  const handleScoreChange = (gameKey, value) => {
     setScoreInputs((prev) => {
-      const current = prev[gameId] || { homeScore: null, awayScore: null, setsScore: '' };
-      const next = { ...current, [field]: value };
-
-      if (field === 'setsScore') {
-        const parsed = parseSets(value);
-        next.homeScore = parsed ? parsed.homeGames : null;
-        next.awayScore = parsed ? parsed.awayGames : null;
-        next.setsSummary = parsed ? `${parsed.homeSets}-${parsed.awaySets}` : null;
-        next.totalGames = parsed ? parsed.homeGames + parsed.awayGames : null;
-      }
-
-      return { ...prev, [gameId]: next };
+      const current = prev[gameKey] || { homeScore: null, awayScore: null, setsScore: '' };
+      const next = { ...current, setsScore: value };
+      const parsed = parseSets(value);
+      next.homeScore = parsed ? parsed.homeGames : null;
+      next.awayScore = parsed ? parsed.awayGames : null;
+      next.setsSummary = parsed ? `${parsed.homeSets}-${parsed.awaySets}` : null;
+      next.totalGames = parsed ? parsed.homeGames + parsed.awayGames : null;
+      return { ...prev, [gameKey]: next };
     });
   };
 
   const handleResolveGame = async (game) => {
-        groups.set(key, {
-          key,
-          homeTeam: sel.home_team,
-          awayTeam: sel.away_team,
-          commenceTime: sel.game_commence_time,
-          markets: [],
-        });
-      }
-      groups.get(key).markets.push(sel);
-    });
-    return Array.from(groups.values());
-  };
-
-  const handleResolve = async (betId) => {
     setActionResult(null);
     setError(null);
 
@@ -160,7 +140,7 @@ export default function ManualResolutionPanel() {
       if (data.success) {
         setActionResult(data.message || 'Apuesta resuelta manualmente');
         setAdminNotes('');
-        setExpandedGameId(null);
+        setExpandedGameKey(null);
         setScoreInputs((prev) => {
           const next = { ...prev };
           delete next[game.game_key];
@@ -187,14 +167,24 @@ export default function ManualResolutionPanel() {
     <div className="manual-resolution">
       <div className="content-header">
         <div>
-          <h2>🛠️ Resolución Manual por Partido (1h post-partido)</h2>
+          <h2>🛠️ Resolución Manual por Partido</h2>
           <p className="subtitle">
-            El sistema agrupa jugadas pendientes por partido 1 hora después del inicio del juego.
+            El sistema agrupa cualquier jugada pendiente por partido cuando la API no resuelve.
           </p>
         </div>
-        <button className="secondary-btn" onClick={loadPendingGames} disabled={loading}>
-          🔄 Recargar
-        </button>
+        <div className="header-actions">
+          <label className="toggle-filter">
+            <input
+              type="checkbox"
+              checked={onlyOverdue}
+              onChange={(e) => setOnlyOverdue(e.target.checked)}
+            />
+            Solo &gt; 1h desde inicio
+          </label>
+          <button className="secondary-btn" onClick={loadPendingGames} disabled={loading}>
+            🔄 Recargar
+          </button>
+        </div>
       </div>
 
       <div className="admin-credentials">
@@ -249,11 +239,11 @@ export default function ManualResolutionPanel() {
                   </p>
                 </div>
                 <button className="secondary-btn" onClick={() => toggleGame(game.game_key)}>
-                  {expandedGameId === game.game_key ? 'Cerrar' : 'Resolver'}
+                  {expandedGameKey === game.game_key ? 'Cerrar' : 'Resolver'}
                 </button>
               </div>
 
-              {expandedGameId === game.game_key && (
+              {expandedGameKey === game.game_key && (
                 <div className="pending-body">
                   <div className="notes">
                     <label>Notas del admin</label>
@@ -279,7 +269,7 @@ export default function ManualResolutionPanel() {
                         type="text"
                         placeholder="6-4, 3-6, 7-6"
                         value={scoreInputs[game.game_key]?.setsScore ?? ''}
-                        onChange={(e) => handleScoreChange(game.game_key, 'setsScore', e.target.value)}
+                        onChange={(e) => handleScoreChange(game.game_key, e.target.value)}
                       />
                       <div className="score-hint">
                         Juegos totales: {scoreInputs[game.game_key]?.totalGames ?? '-'} • Sets: {scoreInputs[game.game_key]?.setsSummary ?? '-'}
