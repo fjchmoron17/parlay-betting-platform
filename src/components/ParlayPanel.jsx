@@ -50,7 +50,8 @@ const ParlayPanel = ({ parlay, onRemove }) => {
           selectedTeam: selection.team,
           selectedOdds: selection.odds,
           pointSpread: selection.point || null,
-          bookmaker: selection.bookmaker || 'Unknown'
+          bookmaker: selection.bookmaker || 'Unknown',
+          gameCommenceTime: selection.gameCommenceTime || selection.gameTime
         }))
       };
 
