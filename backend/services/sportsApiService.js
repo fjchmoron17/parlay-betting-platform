@@ -190,6 +190,7 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
                   home_team: game.home_team,
                   away_team: game.away_team,
                   game_time: game.commence_time,
+                  game_commence_time: game.commence_time,
                   odds_home: homeOdds.price,
                   odds_away: awayOdds.price,
                   odds_draw: drawOdds.price,
