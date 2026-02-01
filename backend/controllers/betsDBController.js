@@ -394,7 +394,7 @@ export const validateAndFixBets = async (req, res) => {
           // Si hay al menos una perdida = apuesta perdida
           correctStatus = 'lost';
           correctActualWin = '0.00';
-        } else if (allWon) {
+        } else if (allWon || (!hasPending && !hasLost)) {
           // Si todas ganaron = apuesta ganada
           correctStatus = 'won';
           correctActualWin = bet.potential_win; // El ganador obtiene el potential_win
@@ -516,7 +516,7 @@ export const resolveSelection = async (req, res) => {
     if (hasLost) {
       newBetStatus = 'lost';
       newActualWin = '0.00';
-    } else if (allWon) {
+    } else if (allWon || (!hasPending && !hasLost)) {
       // Obtener potential_win
       const betResult = await query(
         'SELECT potential_win FROM bets WHERE id = $1',
