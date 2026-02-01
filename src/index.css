@@ -1488,3 +1488,40 @@ tbody tr:last-child td {
     width: 100%;
   }
 }
+
+/* ========================================
+   ESTILOS PARA ESTADOS DE SELECCIONES
+   ======================================== */
+.selection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.status-won {
+  color: var(--success);
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.status-lost {
+  color: var(--danger);
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.status-void {
+  color: var(--gray-500);
+  background-color: rgba(107, 114, 128, 0.1);
+  text-decoration: line-through;
+}
+
+.game-date {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 2px;
+  display: block;
+}

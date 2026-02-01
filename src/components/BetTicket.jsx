@@ -47,23 +47,44 @@ const BetTicket = ({ bet, onClose }) => {
         <div className="ticket-selections">
           <h3 className="ticket-section-title">Selecciones ({bet.selections.length})</h3>
           
-          {bet.selections.map((selection, index) => (
-            <div key={index} className="ticket-selection-item">
-              <div className="selection-number">#{index + 1}</div>
-              <div className="selection-details">
-                <p className="selection-match">
-                  {selection.homeTeam} vs {selection.awayTeam}
-                </p>
-                <p className="selection-meta">
-                  {selection.league} • {selection.market}
-                </p>
+          {bet.selections.map((selection, index) => {
+            // Determinar el estado de la selección si está disponible
+            const selectionStatus = selection.selection_status || selection.selectionStatus;
+            const gameTime = selection.game_commence_time || selection.gameCommenceTime;
+            
+            return (
+              <div key={index} className={`ticket-selection-item ${selectionStatus ? `status-${selectionStatus}` : ''}`}>
+                <div className="selection-number">#{index + 1}</div>
+                <div className="selection-details">
+                  <p className="selection-match">
+                    {selection.homeTeam || selection.home_team} vs {selection.awayTeam || selection.away_team}
+                  </p>
+                  <p className="selection-meta">
+                    {selection.league} • {selection.market}
+                    {gameTime && (
+                      <span className="game-time"> • {new Date(gameTime).toLocaleDateString('es-ES', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}</span>
+                    )}
+                  </p>
+                  {selectionStatus && selectionStatus !== 'pending' && (
+                    <p className="selection-result">
+                      {selectionStatus === 'won' && <span className="result-won">✓ Ganó</span>}
+                      {selectionStatus === 'lost' && <span className="result-lost">✗ Perdió</span>}
+                      {selectionStatus === 'void' && <span className="result-void">⊘ Anulada</span>}
+                    </p>
+                  )}
+                </div>
+                <div className="selection-bet">
+                  <p className="selection-team">{selection.team || selection.selected_team}</p>
+                  <p className="selection-odds">@{selection.odds || selection.selected_odds}</p>
+                </div>
               </div>
-              <div className="selection-bet">
-                <p className="selection-team">{selection.team}</p>
-                <p className="selection-odds">@{selection.odds}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Summary */}
