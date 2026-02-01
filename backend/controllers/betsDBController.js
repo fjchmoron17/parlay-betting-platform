@@ -606,6 +606,9 @@ export const revertIncorrectResolutions = async (req, res) => {
     });
   }
 };
+
+// Obtener todas las apuestas con selecciones pendientes
+export const getPendingSelections = async (req, res) => {
   try {
     const result = await query(
       `SELECT 
