@@ -425,27 +425,56 @@ export default function BetsList({ bettingHouseId }) {
               <div className="selections-section">
                 <h4>🎮 Selecciones ({selectedBet.selections?.length || 0})</h4>
                 <div className="selections-list">
-                  {selectedBet.selections?.map((sel, idx) => (
-                    <div key={idx} className="selection-detail-item">
-                      <div className="selection-number">{idx + 1}</div>
-                      <div className="selection-content">
-                        <div className="matchup">
-                          <strong>{sel.home_team} vs {sel.away_team}</strong>
-                          <span className="market-badge">{sel.market.toUpperCase()}</span>
-                        </div>
-                        <div className="selection-pick">
-                          <span className="pick">Selección: <strong>{sel.selected_team}</strong></span>
-                          <span className="odds">@ <strong>{parseFloat(sel.selected_odds).toFixed(2)}</strong></span>
-                          {sel.point_spread !== null && (
-                            <span className="spread">
-                              Punto: {sel.point_spread > 0 ? '+' : ''}{sel.point_spread}
-                            </span>
+                  {selectedBet.selections?.map((sel, idx) => {
+                    const gameTime = sel.game_commence_time || sel.gameCommenceTime;
+                    const selectionStatus = sel.selection_status || sel.selectionStatus;
+                    
+                    return (
+                      <div key={idx} className="selection-detail-item">
+                        <div className="selection-number">{idx + 1}</div>
+                        <div className="selection-content">
+                          <div className="matchup">
+                            <strong>{sel.home_team} vs {sel.away_team}</strong>
+                            <span className="market-badge">{sel.market.toUpperCase()}</span>
+                          </div>
+                          
+                          {/* Fecha del evento */}
+                          {gameTime && (
+                            <div className="game-date">
+                              🗓️ {new Date(gameTime).toLocaleDateString('es-ES', {
+                                weekday: 'short',
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
                           )}
+                          
+                          <div className="selection-pick">
+                            <span className="pick">Selección: <strong>{sel.selected_team}</strong></span>
+                            <span className="odds">@ <strong>{parseFloat(sel.selected_odds).toFixed(2)}</strong></span>
+                            {sel.point_spread !== null && (
+                              <span className="spread">
+                                Punto: {sel.point_spread > 0 ? '+' : ''}{sel.point_spread}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Estado de la selección */}
+                          {selectionStatus && selectionStatus !== 'pending' && (
+                            <div className={`selection-status status-${selectionStatus}`}>
+                              {selectionStatus === 'won' && '✓ Ganó'}
+                              {selectionStatus === 'lost' && '✗ Perdió'}
+                              {selectionStatus === 'void' && '⊘ Anulada'}
+                            </div>
+                          )}
+                          
+                          {sel.league && <div className="league">{sel.league}</div>}
                         </div>
-                        {sel.league && <div className="league">{sel.league}</div>}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
