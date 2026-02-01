@@ -1,5 +1,6 @@
 // backend/controllers/betsDBController.js
 import { Bet, BetSelection } from '../db/models/index.js';
+import { query } from '../db/dbConfig.js';
 
 export const placeBet = async (req, res) => {
   try {
@@ -235,9 +236,6 @@ export const updateSelections = async (req, res) => {
       const { selectionId, gameCommenceTime, selectionStatus } = update;
       
       try {
-        // Usar query directo para actualizar
-        const { query } = await import('../db/index.js');
-        
         let sql = 'UPDATE bet_selections SET ';
         const params = [];
         let paramIndex = 1;
