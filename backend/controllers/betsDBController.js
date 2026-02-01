@@ -507,8 +507,91 @@ export const resolveSelection = async (req, res) => {
   }
 };
 
-// Obtener todas las apuestas con selecciones pendientes
-export const getPendingSelections = async (req, res) => {
+// Revertir selecciones resueltas incorrectamente a pending si el partido aún no ha pasado
+export const revertIncorrectResolutions = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Obtener todas las selecciones que fueron resueltas como 'lost' pero cuyo partido aún no ha pasado
+    const result = await query(
+      `SELECT 
+        bs.id,
+        bs.bet_id,
+        bs.home_team,
+        bs.away_team,
+        bs.market,
+        bs.game_commence_time,
+        bs.selection_status,
+        b.bet_ticket_number
+      FROM bet_selections bs
+      JOIN bets b ON bs.bet_id = b.id
+      WHERE bs.selection_status IN ('lost', 'void')
+      AND bs.game_commence_time > NOW()
+      ORDER BY bs.game_commence_time ASC`,
+      []
+    );
+
+    const selectionsToRevert = result.rows;
+    let reverted = 0;
+
+    for (const sel of selectionsToRevert) {
+      // Revertir a pending
+      await query(
+        'UPDATE bet_selections SET selection_status = $1 WHERE id = $2',
+        ['pending', sel.id]
+      );
+
+      // Recalcular estado de la apuesta
+      const allSelectionsResult = await query(
+        'SELECT id, selection_status FROM bet_selections WHERE bet_id = $1 ORDER BY id',
+        [sel.bet_id]
+      );
+
+      const selections = allSelectionsResult.rows;
+      const statuses = selections.map(s => s.selection_status);
+      const hasLost = statuses.includes('lost');
+      const allWon = statuses.every(s => s === 'won');
+
+      let newBetStatus = 'pending';
+      let newActualWin = '0.00';
+
+      if (hasLost) {
+        newBetStatus = 'lost';
+        newActualWin = '0.00';
+      } else if (allWon) {
+        const betResult = await query(
+          'SELECT potential_win FROM bets WHERE id = $1',
+          [sel.bet_id]
+        );
+        if (betResult.rows.length > 0) {
+          newBetStatus = 'won';
+          newActualWin = betResult.rows[0].potential_win;
+        }
+      }
+
+      await query(
+        'UPDATE bets SET status = $1, actual_win = $2 WHERE id = $3',
+        [newBetStatus, newActualWin, sel.bet_id]
+      );
+
+      reverted++;
+    }
+
+    res.json({
+      success: true,
+      message: `Reverted ${reverted} incorrectly resolved selections back to pending`,
+      reverted_count: reverted,
+      reverted_selections: selectionsToRevert
+    });
+  } catch (error) {
+    console.error('Error reverting incorrect resolutions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to revert incorrect resolutions',
+      details: error.message
+    });
+  }
+};
   try {
     const result = await query(
       `SELECT 

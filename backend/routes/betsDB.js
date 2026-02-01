@@ -10,7 +10,8 @@ import {
   updateSelections,
   validateAndFixBets,
   resolveSelection,
-  getPendingSelections
+  getPendingSelections,
+  revertIncorrectResolutions
 } from '../controllers/betsDBController.js';
 
 const router = express.Router();
@@ -41,6 +42,9 @@ router.post('/validate-all', validateAndFixBets);
 
 // POST /api/bets-db/resolve-selection - Resolver una selección manualmente
 router.post('/resolve-selection', resolveSelection);
+
+// POST /api/bets-db/revert-incorrect - Revertir resoluciones incorrectas (partidos futuros)
+router.post('/revert-incorrect', revertIncorrectResolutions);
 
 // PUT /api/bets-db/:id/settle - Resolver una apuesta
 router.put('/:id/settle', settleBet);
