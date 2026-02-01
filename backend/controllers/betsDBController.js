@@ -297,7 +297,7 @@ export const updateSelections = async (req, res) => {
 // Corrige selecciones con game_commence_time anterior a placed_date o nulo
 export const normalizeSelectionDates = async (req, res) => {
   try {
-    const { betTicketNumber, bettingHouseId, placedDate } = req.body;
+    const { betTicketNumber, bettingHouseId, placedDate, force } = req.body;
 
     if (!betTicketNumber && (!bettingHouseId || !placedDate)) {
       return res.status(400).json({
@@ -323,7 +323,7 @@ export const normalizeSelectionDates = async (req, res) => {
       FROM bets b
       WHERE bs.bet_id = b.id
         AND ${whereSql}
-        AND (bs.game_commence_time IS NULL OR bs.game_commence_time < b.placed_date)
+        AND (${force ? 'TRUE' : '(bs.game_commence_time IS NULL OR bs.game_commence_time < b.placed_date)'} )
       RETURNING bs.id, bs.bet_id, bs.game_commence_time, b.bet_ticket_number, b.placed_date
     `;
 
@@ -332,7 +332,8 @@ export const normalizeSelectionDates = async (req, res) => {
     res.json({
       success: true,
       updated_count: result.rows.length,
-      updated: result.rows
+      updated: result.rows,
+      force: !!force
     });
   } catch (error) {
     console.error('Error normalizing selection dates:', error);
