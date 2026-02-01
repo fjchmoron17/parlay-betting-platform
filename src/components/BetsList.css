@@ -157,42 +157,6 @@
   justify-content: center;
 }
 
-.settle-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.win-btn {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.win-btn:hover {
-  background: #10b981;
-  color: white;
-  transform: scale(1.1);
-}
-
-.lose-btn {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.lose-btn:hover {
-  background: #ef4444;
-  color: white;
-  transform: scale(1.1);
-}
-
 .win-amount {
   color: #10b981;
   font-weight: 600;

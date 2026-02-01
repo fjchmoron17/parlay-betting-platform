@@ -1,7 +1,7 @@
 // src/components/BetsList.jsx
 // v2.1 - Mostrar fecha de evento y estado de selecciones
 import { useState, useEffect } from 'react';
-import { getBetsForHouse, settleBet } from '../services/b2bApi';
+import { getBetsForHouse } from '../services/b2bApi';
 import './BetsList.css';
 
 export default function BetsList({ bettingHouseId }) {
@@ -34,16 +34,6 @@ export default function BetsList({ bettingHouseId }) {
       console.error(err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSettleBet = async (betId, status, actualWin) => {
-    try {
-      await settleBet(betId, status, actualWin);
-      loadBets(); // Reload bets after settling
-    } catch (err) {
-      console.error('Error settling bet:', err);
-      alert('Error al liquidar la apuesta');
     }
   };
 
@@ -336,24 +326,6 @@ export default function BetsList({ bettingHouseId }) {
                       >
                         👁️ Ver
                       </button>
-                      {bet.status === 'pending' && (
-                        <>
-                          <button
-                            className="settle-btn win-btn"
-                            onClick={() => handleSettleBet(bet.id, 'won', bet.potential_win)}
-                            title="Marcar como ganada"
-                          >
-                            ✓
-                          </button>
-                          <button
-                            className="settle-btn lose-btn"
-                            onClick={() => handleSettleBet(bet.id, 'lost', 0)}
-                            title="Marcar como perdida"
-                          >
-                            ✗
-                          </button>
-                        </>
-                      )}
                     </div>
                     {bet.status === 'won' && (
                       <span className="win-amount">
