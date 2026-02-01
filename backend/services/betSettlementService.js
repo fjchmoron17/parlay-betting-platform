@@ -7,6 +7,11 @@ import { Bet, BetSelection } from '../db/models/index.js';
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4';
 
+function toUTCDateOnly(value) {
+  const d = value instanceof Date ? value : new Date(value);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
 /**
  * Obtener scores de juegos completados en los últimos días
  * @param {string} sportKey - Clave del deporte (ej: 'basketball_nba')
@@ -133,6 +138,24 @@ async function settleParlayBet(bet, completedGames) {
   let evaluatedCount = 0;
 
   for (const selection of selections) {
+    const betDate = toUTCDateOnly(bet.placed_date || bet.placed_at);
+    const eventDate = toUTCDateOnly(selection.game_commence_time);
+
+    if (!eventDate) {
+      console.log(`      ⏸️  Selección ${selection.id}: sin game_commence_time válido`);
+      return null;
+    }
+
+    if (betDate && eventDate !== betDate) {
+      console.log(`      ⏸️  Selección ${selection.id}: fecha evento ${eventDate} no coincide con apuesta ${betDate}`);
+      return null;
+    }
+
+    if (new Date(selection.game_commence_time) > new Date()) {
+      console.log(`      ⏸️  Selección ${selection.id}: evento aún no inicia (${selection.game_commence_time})`);
+      return null;
+    }
+
     // Buscar el juego completado que coincida con esta selección
     const matchedGame = completedGames.find(game => 
       (game.home_team === selection.home_team && game.away_team === selection.away_team) ||
