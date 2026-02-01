@@ -122,8 +122,15 @@ function evaluateBet(bet, game) {
  */
 async function settleParlayBet(bet, completedGames) {
   const selections = bet.selections;
+  
+  if (!selections || selections.length === 0) {
+    console.log(`      ⚠️  Apuesta ${bet.id} sin selecciones`);
+    return null;
+  }
+
   let allWon = true;
   let anyLost = false;
+  let evaluatedCount = 0;
 
   for (const selection of selections) {
     // Buscar el juego completado que coincida con esta selección
@@ -133,6 +140,7 @@ async function settleParlayBet(bet, completedGames) {
     );
 
     if (!matchedGame) {
+      console.log(`      ⏸️  Selección ${selection.id}: juego no completado (${selection.home_team} vs ${selection.away_team})`);
       // No se encontró el resultado, la apuesta no se puede resolver aún
       return null;
     }
@@ -140,9 +148,13 @@ async function settleParlayBet(bet, completedGames) {
     const selectionWon = evaluateBet(selection, matchedGame);
     
     if (selectionWon === null) {
+      console.log(`      ⏸️  Selección ${selection.id}: no se pudo evaluar`);
       // No se pudo evaluar, mantener pendiente
       return null;
     }
+
+    evaluatedCount++;
+    console.log(`      ${selectionWon ? '✅' : '❌'} Selección ${selection.id}: ${selection.selected_team} - ${selectionWon ? 'GANÓ' : 'PERDIÓ'}`);
 
     if (selectionWon === false) {
       anyLost = true;
@@ -150,6 +162,8 @@ async function settleParlayBet(bet, completedGames) {
       break; // Si una pierde, toda la parlay pierde
     }
   }
+
+  console.log(`      📊 Evaluadas ${evaluatedCount}/${selections.length} selecciones`);
 
   if (anyLost) {
     // Parlay perdida
@@ -159,9 +173,9 @@ async function settleParlayBet(bet, completedGames) {
     };
   }
 
-  if (allWon) {
+  if (allWon && evaluatedCount === selections.length) {
     // Parlay ganada - calcular ganancia
-    const potentialWin = bet.potential_win || (bet.stake_amount * bet.total_odds);
+    const potentialWin = parseFloat(bet.potential_win) || (parseFloat(bet.total_stake) * parseFloat(bet.total_odds));
     return {
       status: 'won',
       actual_win: potentialWin
@@ -229,23 +243,30 @@ async function processUnsettledBets() {
         const sportKey = bet.selections[0]?.league?.toLowerCase().replace(/\s+/g, '_') || 'unknown';
         const completedGames = allCompletedGames[sportKey] || [];
 
-        if (completedGames.length === 0) continue;
+        console.log(`   🔍 Apuesta ${bet.id}: ${bet.selections?.length || 0} selecciones, liga: ${sportKey}`);
+
+        if (completedGames.length === 0) {
+          console.log(`   ⏭️  Sin juegos completados para ${sportKey}`);
+          continue;
+        }
 
         const result = await settleParlayBet(bet, completedGames);
 
         if (result) {
-          // Actualizar la apuesta
-          await bet.update({
+          // Actualizar la apuesta usando el método estático
+          await Bet.update(bet.id, {
             status: result.status,
             actual_win: result.actual_win,
             settled_at: new Date()
           });
 
           settledCount++;
-          console.log(`✅ Apuesta ${bet.ticket_number} resuelta: ${result.status.toUpperCase()}`);
+          console.log(`   ✅ Apuesta ${bet.bet_ticket_number} resuelta: ${result.status.toUpperCase()}, win: $${result.actual_win}`);
+        } else {
+          console.log(`   ⏸️  Apuesta ${bet.id}: juegos aún no completados`);
         }
       } catch (error) {
-        console.error(`Error procesando apuesta ${bet.id}:`, error.message);
+        console.error(`   ❌ Error procesando apuesta ${bet.id}:`, error.message);
       }
     }
 
