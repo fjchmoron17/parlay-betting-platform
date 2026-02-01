@@ -154,6 +154,11 @@ async function settleParlayBet(bet, completedGames) {
     }
 
     evaluatedCount++;
+    
+    // Actualizar el estado de la selección
+    const selectionStatus = selectionWon ? 'won' : 'lost';
+    await BetSelection.updateStatus(selection.id, selectionStatus);
+    
     console.log(`      ${selectionWon ? '✅' : '❌'} Selección ${selection.id}: ${selection.selected_team} - ${selectionWon ? 'GANÓ' : 'PERDIÓ'}`);
 
     if (selectionWon === false) {

@@ -361,6 +361,13 @@ export const BetSelection = {
     );
   },
 
+  async updateStatus(selectionId, status) {
+    return getOne(
+      'UPDATE bet_selections SET selection_status = $1 WHERE id = $2 RETURNING *',
+      [status, selectionId]
+    );
+  },
+
   async createMany(betId, selections = []) {
     if (!betId || selections.length === 0) return [];
 
@@ -368,8 +375,8 @@ export const BetSelection = {
     const params = [];
 
     selections.forEach((sel, idx) => {
-      const baseIndex = idx * 10;
-      values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10})`);
+      const baseIndex = idx * 11;
+      values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10}, $${baseIndex + 11})`);
       params.push(
         betId,
         sel.game_id,
@@ -380,16 +387,17 @@ export const BetSelection = {
         sel.selected_team,
         sel.selected_odds,
         sel.point_spread ?? null,
-        sel.bookmaker ?? null
+        sel.bookmaker ?? null,
+        sel.game_commence_time ?? null
       );
     });
 
     const sql = `
       INSERT INTO bet_selections (
         bet_id, game_id, home_team, away_team, league, market,
-        selected_team, selected_odds, point_spread, bookmaker
+        selected_team, selected_odds, point_spread, bookmaker, game_commence_time
       ) VALUES ${values.join(', ')}
-      RETURNING id, bet_id, game_id, selected_team, selected_odds;
+      RETURNING id, bet_id, game_id, home_team, away_team, league, market, selected_team, selected_odds, point_spread, game_commence_time, selection_status;
     `;
 
     const result = await query(sql, params);
