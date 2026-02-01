@@ -1,6 +1,6 @@
 // backend/routes/settlement.js
 import express from 'express';
-import { processUnsettledBets } from '../services/betSettlementService.js';
+import { processUnsettledBets, forceResolveOverdueStuckBets } from '../services/betSettlementService.js';
 import { 
   getSchedulerStatus, 
   startAutoSettlement, 
@@ -20,6 +20,24 @@ router.post('/process', async (req, res) => {
     });
   } catch (error) {
     console.error('Error in settlement process:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// POST /api/settlement/force-resolve-overdue - Forzar resolución de apuestas atrasadas
+router.post('/force-resolve-overdue', async (req, res) => {
+  try {
+    const result = await forceResolveOverdueStuckBets();
+    res.json({
+      success: true,
+      message: `${result.forced} apuestas resueltas por timeout (>24h)`,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error forcing resolution:', error);
     res.status(500).json({
       success: false,
       error: error.message

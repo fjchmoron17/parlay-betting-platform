@@ -3,6 +3,7 @@
 
 import axios from 'axios';
 import { Bet, BetSelection } from '../db/models/index.js';
+import { query } from '../db/dbConfig.js';
 
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4';
@@ -14,6 +15,7 @@ function toUTCDateOnly(value) {
 
 /**
  * Obtener scores de juegos completados en los últimos días
+ * También intenta obtener datos de la API de eventos activos para detectar juegos que desaparecieron
  * @param {string} sportKey - Clave del deporte (ej: 'basketball_nba')
  * @param {number} daysFrom - Días hacia atrás para buscar (1-3)
  */
@@ -28,9 +30,61 @@ async function getCompletedGames(sportKey, daysFrom = 3) {
     });
 
     // Filtrar solo juegos completados
-    return response.data.filter(game => game.completed === true);
+    const completedGames = response.data.filter(game => game.completed === true);
+    
+    // Si no hay scores completados, intentar obtener eventos activos para detectar desapariciones
+    if (completedGames.length === 0) {
+      console.log(`   📡 No hay scores de ${sportKey}, intentando detectar juegos finalizados por desaparición...`);
+      try {
+        const activeUrl = `${ODDS_API_BASE}/sports/${sportKey}/odds`;
+        const activeResponse = await axios.get(activeUrl, {
+          params: {
+            apiKey: ODDS_API_KEY,
+            regions: 'us',
+            markets: 'h2h',
+            oddsFormat: 'decimal'
+          }
+        });
+        
+        // Los juegos que no están en activos pero tienen commence_time > now probablemente terminaron
+        const activeGames = activeResponse.data.map(g => ({
+          home_team: g.home_team,
+          away_team: g.away_team,
+          commence_time: g.commence_time
+        }));
+        
+        console.log(`   📡 Encontrados ${activeGames.length} eventos activos`);
+      } catch (e) {
+        console.log(`   ⚠️  No se pudieron obtener eventos activos: ${e.message}`);
+      }
+    }
+    
+    return completedGames;
   } catch (error) {
     console.error(`Error fetching scores for ${sportKey}:`, error.message);
+    return [];
+  }
+}
+
+/**
+ * Obtener eventos activos para un deporte
+ * Ayuda a detectar cuándo un juego ha desaparecido (probablemente terminó)
+ */
+async function getActiveGames(sportKey) {
+  try {
+    const url = `${ODDS_API_BASE}/sports/${sportKey}/odds`;
+    const response = await axios.get(url, {
+      params: {
+        apiKey: ODDS_API_KEY,
+        regions: 'us',
+        markets: 'h2h',
+        oddsFormat: 'decimal'
+      }
+    });
+
+    return response.data || [];
+  } catch (error) {
+    console.error(`Error fetching active games for ${sportKey}:`, error.message);
     return [];
   }
 }
@@ -125,7 +179,7 @@ function evaluateBet(bet, game) {
 /**
  * Resolver una apuesta parlay
  */
-async function settleParlayBet(bet, completedGames) {
+async function settleParlayBet(bet, completedGames, activeGames = []) {
   const selections = bet.selections;
   
   if (!selections || selections.length === 0) {
@@ -136,6 +190,7 @@ async function settleParlayBet(bet, completedGames) {
   let allWon = true;
   let anyLost = false;
   let evaluatedCount = 0;
+  let hasNoScores = false;
 
   for (const selection of selections) {
     const betDate = toUTCDateOnly(bet.placed_date || bet.placed_at);
@@ -157,15 +212,29 @@ async function settleParlayBet(bet, completedGames) {
     }
 
     // Buscar el juego completado que coincida con esta selección
-    const matchedGame = completedGames.find(game => 
+    let matchedGame = completedGames.find(game => 
       (game.home_team === selection.home_team && game.away_team === selection.away_team) ||
       (game.id === selection.game_id)
     );
 
     if (!matchedGame) {
-      console.log(`      ⏸️  Selección ${selection.id}: juego no completado (${selection.home_team} vs ${selection.away_team})`);
-      // No se encontró el resultado, la apuesta no se puede resolver aún
-      return null;
+      // Si no hay scores, verificar si el juego desapareció de eventos activos
+      const isInActiveGames = activeGames.some(game =>
+        (game.home_team === selection.home_team && game.away_team === selection.away_team) ||
+        (game.id === selection.game_id)
+      );
+
+      if (isInActiveGames) {
+        console.log(`      ⏸️  Selección ${selection.id}: juego aún activo (${selection.home_team} vs ${selection.away_team})`);
+        return null; // Juego aún está en eventos activos, no se puede resolver
+      }
+
+      // Si el juego desapareció de eventos activos y ya pasó su hora de inicio, probablemente terminó
+      // pero sin scores disponibles, marcar como void (empate)
+      console.log(`      ⚠️  Selección ${selection.id}: juego no está en activos, sin scores disponibles - VOID`);
+      hasNoScores = true;
+      // Marcar como void (sin resolver automáticamente)
+      return null; // Por ahora, esperar a que la API entregue scores
     }
 
     if (matchedGame.commence_time && selection.game_commence_time !== matchedGame.commence_time) {
@@ -258,10 +327,14 @@ async function processUnsettledBets() {
       'mlb': 'baseball_mlb',
       'nhl': 'icehockey_nhl',
       'ncaaf': 'americanfootball_ncaaf',
-      'ncaab': 'basketball_ncaab'
+      'ncaab': 'basketball_ncaab',
+      'other': 'other',
+      'atp': 'tennis_atp_aus_open_singles',
+      'tennis': 'tennis_atp_aus_open_singles'
     };
 
     const allCompletedGames = {};
+    const allActiveGames = {};
 
     // Obtener scores de cada deporte
     for (const sportKey of sportKeys) {
@@ -270,6 +343,11 @@ async function processUnsettledBets() {
         const games = await getCompletedGames(mappedKey, 3);
         allCompletedGames[sportKey] = games;
         console.log(`📥 Obtenidos ${games.length} juegos completados de ${mappedKey}`);
+        
+        // También obtener eventos activos para detectar desapariciones
+        const activeGames = await getActiveGames(mappedKey);
+        allActiveGames[sportKey] = activeGames;
+        console.log(`📡 Obtenidos ${activeGames.length} eventos activos de ${mappedKey}`);
       }
     }
 
@@ -280,15 +358,11 @@ async function processUnsettledBets() {
       try {
         const sportKey = bet.selections[0]?.league?.toLowerCase().replace(/\s+/g, '_') || 'unknown';
         const completedGames = allCompletedGames[sportKey] || [];
+        const activeGames = allActiveGames[sportKey] || [];
 
         console.log(`   🔍 Apuesta ${bet.id}: ${bet.selections?.length || 0} selecciones, liga: ${sportKey}`);
 
-        if (completedGames.length === 0) {
-          console.log(`   ⏭️  Sin juegos completados para ${sportKey}`);
-          continue;
-        }
-
-        const result = await settleParlayBet(bet, completedGames);
+        const result = await settleParlayBet(bet, completedGames, activeGames);
 
         if (result) {
           // Actualizar la apuesta usando el método estático
@@ -320,8 +394,93 @@ async function processUnsettledBets() {
   }
 }
 
+/**
+ * Forzar resolución de apuestas que han estado pendientes más de 24 horas
+ * sin que haya scores disponibles. Esto es un fallback para deportes donde
+ * la API no actualiza rápidamente (como tenis)
+ */
+async function forceResolveOverdueStuckBets() {
+  try {
+    console.log('🔄 Verificando apuestas atrasadas para resolución forzada...');
+    
+    const overdueResult = await query(
+      `SELECT b.id, b.bet_ticket_number, b.placed_at 
+       FROM bets b 
+       WHERE b.status = 'pending' 
+       AND b.placed_at < NOW() - INTERVAL '24 hours'
+       ORDER BY b.placed_at ASC 
+       LIMIT 50`
+    );
+    
+    const overdueBets = overdueResult.rows;
+    
+    if (overdueBets.length === 0) {
+      console.log('✅ No hay apuestas atrasadas pendientes');
+      return { forced: 0 };
+    }
+    
+    console.log(`⏰ Encontradas ${overdueBets.length} apuestas pendientes > 24h`);
+    
+    let forcedCount = 0;
+    
+    for (const bet of overdueBets) {
+      try {
+        const selectionsResult = await query(
+          'SELECT id, selection_status FROM bet_selections WHERE bet_id = $1',
+          [bet.id]
+        );
+        
+        const selections = selectionsResult.rows;
+        const hasAllCompleted = selections.length > 0 && 
+                                selections.every(s => s.selection_status !== 'pending');
+        
+        if (hasAllCompleted) {
+          // La apuesta ya tiene todas sus selecciones resueltas, solo actualizar estado
+          const hasLost = selections.some(s => s.selection_status === 'lost');
+          const allWon = selections.every(s => s.selection_status === 'won');
+          
+          let newStatus = 'pending';
+          let actualWin = '0.00';
+          
+          if (hasLost) {
+            newStatus = 'lost';
+          } else if (allWon) {
+            const betDataResult = await query(
+              'SELECT potential_win FROM bets WHERE id = $1',
+              [bet.id]
+            );
+            newStatus = 'won';
+            actualWin = betDataResult.rows[0]?.potential_win || '0.00';
+          }
+          
+          if (newStatus !== 'pending') {
+            await query(
+              'UPDATE bets SET status = $1, actual_win = $2, settled_at = NOW() WHERE id = $3',
+              [newStatus, actualWin, bet.id]
+            );
+            forcedCount++;
+            console.log(`   ✅ Apuesta ${bet.bet_ticket_number} resuelta por timeout: ${newStatus.toUpperCase()}`);
+          }
+        } else {
+          console.log(`   ⚠️  Apuesta ${bet.bet_ticket_number} aún tiene selecciones sin resolver - esperando API`);
+        }
+      } catch (error) {
+        console.error(`   ❌ Error procesando apuesta atrasada ${bet.id}:`, error.message);
+      }
+    }
+    
+    console.log(`🎯 Resolución forzada completada: ${forcedCount} apuestas`);
+    return { forced: forcedCount };
+  } catch (error) {
+    console.error('Error en forceResolveOverdueStuckBets:', error);
+    throw error;
+  }
+}
+
 export {
   processUnsettledBets,
+  forceResolveOverdueStuckBets,
   getCompletedGames,
+  getActiveGames,
   evaluateBet
 };

@@ -2,9 +2,10 @@
 // Servicio para programar tareas automáticas
 
 import cron from 'node-cron';
-import { processUnsettledBets } from './betSettlementService.js';
+import { processUnsettledBets, forceResolveOverdueStuckBets } from './betSettlementService.js';
 
 let settlementJob = null;
+let forceResolveJob = null;
 let isRunning = false;
 
 /**
@@ -35,6 +36,26 @@ async function runSettlementProcess() {
 }
 
 /**
+ * Ejecutar resolución forzada de apuestas atrasadas (> 24h)
+ */
+async function runForceResolveProcess() {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`\n⏰ [${timestamp}] Ejecutando resolución forzada de apuestas atrasadas...`);
+    
+    const result = await forceResolveOverdueStuckBets();
+    
+    if (result.forced > 0) {
+      console.log(`✅ [${timestamp}] Resolución forzada: ${result.forced} apuestas resueltas\n`);
+    } else {
+      console.log(`✅ [${timestamp}] Sin apuestas atrasadas para resolver\n`);
+    }
+  } catch (error) {
+    console.error('❌ Error en resolución forzada:', error.message);
+  }
+}
+
+/**
  * Iniciar el scheduler de resolución automática
  * Por defecto se ejecuta cada 2 horas
  */
@@ -59,6 +80,17 @@ export function startAutoSettlement(cronExpression = '0 */2 * * *') {
     await runSettlementProcess();
   });
 
+  // Iniciar también un job de resolución forzada cada 30 minutos
+  if (!forceResolveJob) {
+    console.log(`\n⏰ Iniciando verificación de apuestas atrasadas`);
+    console.log(`   📅 Programación: */30 * * * * (cada 30 minutos)`);
+    console.log(`   🎯 Función: Resolver apuestas pendientes > 24h\n`);
+    
+    forceResolveJob = cron.schedule('*/30 * * * *', async () => {
+      await runForceResolveProcess();
+    });
+  }
+
   // Ejecutar inmediatamente al iniciar (opcional)
   const runOnStartup = process.env.AUTO_SETTLE_ON_STARTUP === 'true';
   if (runOnStartup) {
@@ -75,6 +107,12 @@ export function stopAutoSettlement() {
     settlementJob.stop();
     settlementJob = null;
     console.log('🛑 Auto-Resolución detenida');
+  }
+  
+  if (forceResolveJob) {
+    forceResolveJob.stop();
+    forceResolveJob = null;
+    console.log('🛑 Resolución forzada detenida');
   }
 }
 
