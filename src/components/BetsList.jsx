@@ -1,4 +1,5 @@
 // src/components/BetsList.jsx
+// v2.1 - Mostrar fecha de evento y estado de selecciones
 import { useState, useEffect } from 'react';
 import { getBetsForHouse, settleBet } from '../services/b2bApi';
 import './BetsList.css';
