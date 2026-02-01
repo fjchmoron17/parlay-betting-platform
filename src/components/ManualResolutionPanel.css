@@ -157,6 +157,16 @@
   flex-direction: column;
   gap: 6px;
 }
+.selection-score input[type='text'] {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.score-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
 
 .selection-score label {
   font-size: 0.8rem;

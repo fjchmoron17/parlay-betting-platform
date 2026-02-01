@@ -289,10 +289,10 @@ export const getPendingManualGames = async (req, res) => {
 
     const result = await query(
       `SELECT
-        bs.game_id,
         bs.home_team,
         bs.away_team,
-        MIN(bs.game_commence_time) as game_commence_time,
+        bs.game_commence_time,
+        (bs.home_team || ' vs ' || bs.away_team || ' @ ' || bs.game_commence_time) as game_key,
         COUNT(*) FILTER (WHERE bs.selection_status = 'pending') as pending_count,
         COUNT(DISTINCT bs.bet_id) as bet_count,
         SUM(CASE WHEN bs.market = 'h2h' THEN 1 ELSE 0 END) as h2h_count,
@@ -304,8 +304,8 @@ export const getPendingManualGames = async (req, res) => {
          AND bs.selection_status = 'pending'
          AND bs.game_commence_time IS NOT NULL
          AND bs.game_commence_time <= NOW() - INTERVAL '1 hour'
-       GROUP BY bs.game_id, bs.home_team, bs.away_team
-       ORDER BY MIN(bs.game_commence_time) ASC
+       GROUP BY bs.home_team, bs.away_team, bs.game_commence_time
+       ORDER BY bs.game_commence_time ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
@@ -326,12 +326,18 @@ export const getPendingManualGames = async (req, res) => {
   }
 };
 
-const evaluateSelectionOutcome = (selection, homeScore, awayScore) => {
+const evaluateSelectionOutcome = (selection, homeScore, awayScore, homeSets = null, awaySets = null) => {
   const market = selection.market;
   const point = selection.point_spread != null ? parseFloat(selection.point_spread) : null;
   const selectedTeam = selection.selected_team;
+  const hasSets = homeSets != null && awaySets != null;
 
   if (market === 'h2h') {
+    if (hasSets) {
+      if (homeSets === awaySets) return 'void';
+      const winner = homeSets > awaySets ? selection.home_team : selection.away_team;
+      return selectedTeam === winner ? 'won' : 'lost';
+    }
     if (homeScore === awayScore) return 'void';
     const winner = homeScore > awayScore ? selection.home_team : selection.away_team;
     return selectedTeam === winner ? 'won' : 'lost';
@@ -358,19 +364,60 @@ const evaluateSelectionOutcome = (selection, homeScore, awayScore) => {
   return 'void';
 };
 
+const parseTennisSets = (setsScore) => {
+  if (!setsScore || typeof setsScore !== 'string') return null;
+  const sets = setsScore
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (sets.length === 0) return null;
+
+  let homeGames = 0;
+  let awayGames = 0;
+  let homeSets = 0;
+  let awaySets = 0;
+
+  for (const set of sets) {
+    const parts = set.split(/[-:]/).map(p => p.trim());
+    if (parts.length !== 2) return null;
+    const home = Number(parts[0]);
+    const away = Number(parts[1]);
+    if (Number.isNaN(home) || Number.isNaN(away)) return null;
+    homeGames += home;
+    awayGames += away;
+    if (home > away) homeSets += 1;
+    if (away > home) awaySets += 1;
+  }
+
+  return { homeGames, awayGames, homeSets, awaySets };
+};
+
 /**
  * Resolver manualmente todas las jugadas de un partido
  * Endpoint: POST /api/settlement/resolve-manual-game
- * Body: { gameId, homeScore, awayScore, adminId, adminNotes }
+ * Body: { homeTeam, awayTeam, gameCommenceTime, homeScore?, awayScore?, setsScore?, adminId, adminNotes }
  */
 export const resolveManualGame = async (req, res) => {
   try {
-    const { gameId, homeScore, awayScore, adminId, adminNotes } = req.body;
+    const { homeTeam, awayTeam, gameCommenceTime, homeScore, awayScore, setsScore, adminId, adminNotes } = req.body;
 
-    if (!gameId || homeScore == null || awayScore == null) {
+    if (!homeTeam || !awayTeam || !gameCommenceTime) {
       return res.status(400).json({
         success: false,
-        error: 'gameId, homeScore and awayScore are required'
+        error: 'homeTeam, awayTeam and gameCommenceTime are required'
+      });
+    }
+
+    const parsedSets = parseTennisSets(setsScore);
+    const resolvedHomeScore = parsedSets ? parsedSets.homeGames : (homeScore == null ? null : Number(homeScore));
+    const resolvedAwayScore = parsedSets ? parsedSets.awayGames : (awayScore == null ? null : Number(awayScore));
+    const resolvedHomeSets = parsedSets ? parsedSets.homeSets : null;
+    const resolvedAwaySets = parsedSets ? parsedSets.awaySets : null;
+
+    if (resolvedHomeScore == null || resolvedAwayScore == null) {
+      return res.status(400).json({
+        success: false,
+        error: 'Final score is required (homeScore/awayScore or setsScore)'
       });
     }
 
@@ -385,8 +432,12 @@ export const resolveManualGame = async (req, res) => {
       `SELECT bs.*, b.potential_win, b.status as bet_status
        FROM bet_selections bs
        JOIN bets b ON b.id = bs.bet_id
-       WHERE bs.game_id = $1 AND bs.selection_status = 'pending' AND b.status = 'pending'`,
-      [gameId]
+       WHERE bs.home_team = $1
+         AND bs.away_team = $2
+         AND bs.game_commence_time = $3
+         AND bs.selection_status = 'pending'
+         AND b.status = 'pending'`,
+      [homeTeam, awayTeam, gameCommenceTime]
     );
 
     const selections = selectionResult.rows;
@@ -400,10 +451,16 @@ export const resolveManualGame = async (req, res) => {
     const updatePromises = [];
     const auditPromises = [];
     const betIds = new Set();
-    const finalScore = `${homeScore}-${awayScore}`;
+    const finalScore = setsScore || `${resolvedHomeScore}-${resolvedAwayScore}`;
 
     for (const sel of selections) {
-      const outcome = evaluateSelectionOutcome(sel, Number(homeScore), Number(awayScore));
+      const outcome = evaluateSelectionOutcome(
+        sel,
+        resolvedHomeScore,
+        resolvedAwayScore,
+        resolvedHomeSets,
+        resolvedAwaySets
+      );
       betIds.add(sel.bet_id);
 
       updatePromises.push(
@@ -421,10 +478,10 @@ export const resolveManualGame = async (req, res) => {
             sel.selection_status,
             outcome,
             adminId,
-            adminNotes || `Manual game resolution for ${gameId} (${finalScore})`,
+            adminNotes || `Manual game resolution for ${homeTeam} vs ${awayTeam} (${finalScore})`,
             req.ip || 'unknown',
-            Number(homeScore),
-            Number(awayScore),
+            resolvedHomeScore,
+            resolvedAwayScore,
             finalScore
           ]
         )
@@ -480,10 +537,10 @@ export const resolveManualGame = async (req, res) => {
               oldStatus,
               newBetStatus,
               adminId,
-              `Bet resolved via manual game resolution (${gameId}) ${adminNotes || ''}`,
+              `Bet resolved via manual game resolution (${homeTeam} vs ${awayTeam}) ${adminNotes || ''}`,
               req.ip || 'unknown',
-              Number(homeScore),
-              Number(awayScore),
+              resolvedHomeScore,
+              resolvedAwayScore,
               finalScore
             ]
           );
@@ -495,11 +552,14 @@ export const resolveManualGame = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Game ${gameId} resolved manually for ${selections.length} selections`,
+      message: `Game ${homeTeam} vs ${awayTeam} resolved manually for ${selections.length} selections`,
       data: {
-        gameId,
-        homeScore: Number(homeScore),
-        awayScore: Number(awayScore),
+        homeTeam,
+        awayTeam,
+        gameCommenceTime,
+        homeScore: resolvedHomeScore,
+        awayScore: resolvedAwayScore,
+        setsScore: setsScore || null,
         selectionsResolved: selections.length,
         betsUpdated: updatedBets.length
       }

@@ -60,11 +60,44 @@ export default function ManualResolutionPanel() {
     setExpandedGameId((prev) => (prev === gameId ? null : gameId));
   };
 
+  const parseSets = (value) => {
+    if (!value) return null;
+    const sets = value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (sets.length === 0) return null;
+    let homeGames = 0;
+    let awayGames = 0;
+    let homeSets = 0;
+    let awaySets = 0;
+    for (const set of sets) {
+      const parts = set.split(/[-:]/).map((p) => p.trim());
+      if (parts.length !== 2) return null;
+      const home = Number(parts[0]);
+      const away = Number(parts[1]);
+      if (Number.isNaN(home) || Number.isNaN(away)) return null;
+      homeGames += home;
+      awayGames += away;
+      if (home > away) homeSets += 1;
+      if (away > home) awaySets += 1;
+    }
+    return { homeGames, awayGames, homeSets, awaySets };
+  };
+
   const handleScoreChange = (gameId, field, value) => {
-    const numericValue = value === '' ? null : Number(value);
     setScoreInputs((prev) => {
-      const current = prev[gameId] || { homeScore: null, awayScore: null };
-      const next = { ...current, [field]: Number.isNaN(numericValue) ? null : numericValue };
+      const current = prev[gameId] || { homeScore: null, awayScore: null, setsScore: '' };
+      const next = { ...current, [field]: value };
+
+      if (field === 'setsScore') {
+        const parsed = parseSets(value);
+        next.homeScore = parsed ? parsed.homeGames : null;
+        next.awayScore = parsed ? parsed.awayGames : null;
+        next.setsSummary = parsed ? `${parsed.homeSets}-${parsed.awaySets}` : null;
+        next.totalGames = parsed ? parsed.homeGames + parsed.awayGames : null;
+      }
+
       return { ...prev, [gameId]: next };
     });
   };
@@ -96,16 +129,19 @@ export default function ManualResolutionPanel() {
       return;
     }
 
-    const scores = scoreInputs[game.game_id];
-    if (!scores || scores.homeScore == null || scores.awayScore == null) {
-      setError('Debes ingresar el marcador final');
+    const scores = scoreInputs[game.game_key];
+    if (!scores || !scores.setsScore) {
+      setError('Debes ingresar el marcador por sets (ej: 6-4, 3-6, 7-6)');
       return;
     }
 
     const payload = {
-      gameId: game.game_id,
+      homeTeam: game.home_team,
+      awayTeam: game.away_team,
+      gameCommenceTime: game.game_commence_time,
       homeScore: scores.homeScore,
       awayScore: scores.awayScore,
+      setsScore: scores.setsScore,
       adminId,
       adminNotes: adminNotes || '',
     };
@@ -127,7 +163,7 @@ export default function ManualResolutionPanel() {
         setExpandedGameId(null);
         setScoreInputs((prev) => {
           const next = { ...prev };
-          delete next[game.game_id];
+          delete next[game.game_key];
           return next;
         });
         await loadPendingGames();
@@ -204,7 +240,7 @@ export default function ManualResolutionPanel() {
       {hasPending && (
         <div className="pending-list">
           {pendingGames.map((game) => (
-            <div key={game.game_id} className="pending-card">
+            <div key={game.game_key} className="pending-card">
               <div className="pending-header">
                 <div>
                   <h3>{game.home_team} vs {game.away_team}</h3>
@@ -212,12 +248,12 @@ export default function ManualResolutionPanel() {
                     Inicio: {formatDateTime(game.game_commence_time)} • Jugadas pendientes: {game.pending_count} • Tickets afectados: {game.bet_count}
                   </p>
                 </div>
-                <button className="secondary-btn" onClick={() => toggleGame(game.game_id)}>
-                  {expandedGameId === game.game_id ? 'Cerrar' : 'Resolver'}
+                <button className="secondary-btn" onClick={() => toggleGame(game.game_key)}>
+                  {expandedGameId === game.game_key ? 'Cerrar' : 'Resolver'}
                 </button>
               </div>
 
-              {expandedGameId === game.game_id && (
+              {expandedGameId === game.game_key && (
                 <div className="pending-body">
                   <div className="notes">
                     <label>Notas del admin</label>
@@ -238,20 +274,33 @@ export default function ManualResolutionPanel() {
                     </div>
 
                     <div className="selection-score">
-                      <label>Marcador final</label>
+                      <label>Marcador por sets (tenis)</label>
+                      <input
+                        type="text"
+                        placeholder="6-4, 3-6, 7-6"
+                        value={scoreInputs[game.game_key]?.setsScore ?? ''}
+                        onChange={(e) => handleScoreChange(game.game_key, 'setsScore', e.target.value)}
+                      />
+                      <div className="score-hint">
+                        Juegos totales: {scoreInputs[game.game_key]?.totalGames ?? '-'} • Sets: {scoreInputs[game.game_key]?.setsSummary ?? '-'}
+                      </div>
+                    </div>
+
+                    <div className="selection-score">
+                      <label>Marcador final (games)</label>
                       <div className="score-inputs">
                         <input
                           type="number"
                           placeholder={game.home_team}
-                          value={scoreInputs[game.game_id]?.homeScore ?? ''}
-                          onChange={(e) => handleScoreChange(game.game_id, 'homeScore', e.target.value)}
+                          value={scoreInputs[game.game_key]?.homeScore ?? ''}
+                          readOnly
                         />
                         <span>-</span>
                         <input
                           type="number"
                           placeholder={game.away_team}
-                          value={scoreInputs[game.game_id]?.awayScore ?? ''}
-                          onChange={(e) => handleScoreChange(game.game_id, 'awayScore', e.target.value)}
+                          value={scoreInputs[game.game_key]?.awayScore ?? ''}
+                          readOnly
                         />
                       </div>
                     </div>
