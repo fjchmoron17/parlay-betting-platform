@@ -125,7 +125,7 @@ export const Bet = {
     );
   },
 
-  // Obtener apuestas pendientes
+  // Obtener apuestas pendientes de una casa específica
   async findPending(bettingHouseId) {
     return getAll(
       `SELECT * FROM bets 
@@ -133,6 +133,45 @@ export const Bet = {
        ORDER BY placed_at DESC`,
       [bettingHouseId]
     );
+  },
+
+  // Obtener TODAS las apuestas pendientes (para auto-resolución)
+  async findAllPending() {
+    return getAll(
+      `SELECT * FROM bets 
+       WHERE status = 'pending'
+       ORDER BY placed_at DESC`
+    );
+  },
+
+  // Actualizar apuesta (para auto-resolución)
+  async update(id, updates) {
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+
+    // Construir campos dinámicamente
+    if (updates.status !== undefined) {
+      fields.push(`status = $${paramIndex++}`);
+      values.push(updates.status);
+    }
+    if (updates.actual_win !== undefined) {
+      fields.push(`actual_win = $${paramIndex++}`);
+      values.push(updates.actual_win);
+    }
+    if (updates.settled_at !== undefined) {
+      fields.push(`settled_at = $${paramIndex++}`);
+      values.push(updates.settled_at);
+    }
+
+    if (fields.length === 0) return null;
+
+    values.push(id); // ID va al final
+    const result = await query(
+      `UPDATE bets SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+      values
+    );
+    return result.rows[0];
   },
 
   // Estadísticas de apuestas

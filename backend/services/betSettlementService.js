@@ -2,7 +2,7 @@
 // Servicio para resolver automáticamente las apuestas usando scores de The Odds API
 
 import axios from 'axios';
-import { Bet } from '../db/models/index.js';
+import { Bet, BetSelection } from '../db/models/index.js';
 
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4';
@@ -179,9 +179,7 @@ async function processUnsettledBets() {
     console.log('🔄 Iniciando proceso de resolución automática de apuestas...');
 
     // Obtener todas las apuestas pendientes
-    const pendingBets = await Bet.findAll({
-      where: { status: 'pending' }
-    });
+    const pendingBets = await Bet.findAllPending();
 
     if (pendingBets.length === 0) {
       console.log('✅ No hay apuestas pendientes para procesar');
@@ -190,10 +188,16 @@ async function processUnsettledBets() {
 
     console.log(`📊 Encontradas ${pendingBets.length} apuestas pendientes`);
 
+    // Cargar selecciones para cada apuesta
+    for (const bet of pendingBets) {
+      bet.selections = await BetSelection.findByBetId(bet.id);
+    }
+
     // Agrupar por deporte para minimizar llamadas a la API
-    const sportKeys = [...new Set(pendingBets.map(bet => 
-      bet.selections[0]?.league?.toLowerCase().replace(/\s+/g, '_') || 'unknown'
-    ))];
+    const sportKeys = [...new Set(pendingBets
+      .filter(bet => bet.selections && bet.selections.length > 0)
+      .map(bet => bet.selections[0]?.league?.toLowerCase().replace(/\s+/g, '_') || 'unknown')
+    )];
 
     // Mapeo de ligas a sport keys de The Odds API
     const leagueToSportKey = {
