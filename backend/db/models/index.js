@@ -384,6 +384,13 @@ export const BetSelection = {
     selections.forEach((sel, idx) => {
       const baseIndex = idx * 11;
       values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10}, $${baseIndex + 11})`);
+      const commenceTime =
+        sel.game_commence_time ??
+        sel.gameCommenceTime ??
+        sel.commence_time ??
+        sel.game_time ??
+        null;
+
       params.push(
         betId,
         sel.game_id,
@@ -395,7 +402,7 @@ export const BetSelection = {
         sel.selected_odds,
         sel.point_spread ?? null,
         sel.bookmaker ?? null,
-        sel.game_commence_time ?? null
+        commenceTime
       );
     });
 
