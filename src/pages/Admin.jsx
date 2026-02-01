@@ -6,10 +6,11 @@ import BetsList from '../components/BetsList';
 import DailyReports from '../components/DailyReports';
 import ApiQuotaMonitor from '../components/ApiQuotaMonitor';
 import BetSettlement from '../components/BetSettlement';
+import ManualResolutionPanel from '../components/ManualResolutionPanel';
 import './Admin.css';
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState('houses'); // houses, create, bets, reports, quota, settlement
+  const [activeTab, setActiveTab] = useState('houses'); // houses, create, bets, reports, quota, settlement, manual
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -71,6 +72,12 @@ export default function Admin() {
           onClick={() => setActiveTab('settlement')}
         >
           🎯 Resolución Auto
+        </button>
+        <button
+          className={activeTab === 'manual' ? 'active' : ''}
+          onClick={() => setActiveTab('manual')}
+        >
+          🛠️ Resolución Manual
         </button>
       </div>
 
@@ -160,6 +167,12 @@ export default function Admin() {
         {activeTab === 'settlement' && (
           <div className="tab-content">
             <BetSettlement />
+          </div>
+        )}
+
+        {activeTab === 'manual' && (
+          <div className="tab-content">
+            <ManualResolutionPanel />
           </div>
         )}
       </div>

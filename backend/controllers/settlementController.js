@@ -12,7 +12,7 @@ import { Bet, BetSelection } from '../db/models/index.js';
  * {
  *   betId: number,
  *   selections: [
- *     { selectionId: number, result: 'won' | 'lost' | 'void' }
+ *     { selectionId: number, result: 'won' | 'lost' | 'void', homeScore?: number, awayScore?: number, finalScore?: string }
  *   ],
  *   adminNotes: string,
  *   adminId: string
@@ -74,10 +74,11 @@ export const resolveManual = async (req, res) => {
     const auditPromises = [];
     
     for (const sel of selections) {
+      const { selectionId, result, homeScore = null, awayScore = null, finalScore = null } = sel;
       // Obtener selección actual
       const selResult = await query(
         'SELECT * FROM bet_selections WHERE id = $1 AND bet_id = $2',
-        [sel.selectionId, betId]
+        [selectionId, betId]
       );
       
       if (selResult.rows.length === 0) {
@@ -93,7 +94,7 @@ export const resolveManual = async (req, res) => {
       updatePromises.push(
         query(
           'UPDATE bet_selections SET selection_status = $1 WHERE id = $2',
-          [sel.result, sel.selectionId]
+          [result, selectionId]
         )
       );
       
@@ -101,16 +102,19 @@ export const resolveManual = async (req, res) => {
       auditPromises.push(
         query(
           `INSERT INTO settlement_audit_log 
-           (bet_id, selection_id, old_status, new_status, admin_id, admin_notes, ip_address)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+           (bet_id, selection_id, old_status, new_status, admin_id, admin_notes, ip_address, home_score, away_score, final_score)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
           [
             betId,
-            sel.selectionId,
+            selectionId,
             currentSelection.selection_status,
-            sel.result,
+            result,
             adminId,
             adminNotes || '',
-            req.ip || 'unknown'
+            req.ip || 'unknown',
+            homeScore,
+            awayScore,
+            finalScore
           ]
         )
       );
@@ -247,11 +251,13 @@ export const getPendingManualResolution = async (req, res) => {
        FROM bets b
        LEFT JOIN bet_selections bs ON b.id = bs.bet_id
        WHERE b.status = 'pending'
-       AND (
-         SELECT COUNT(*) FROM bet_selections bs2 
-         WHERE bs2.bet_id = b.id 
-         AND bs2.game_commence_time < NOW()
-       ) > 0
+       AND EXISTS (
+         SELECT 1 FROM bet_selections bs2
+         WHERE bs2.bet_id = b.id
+           AND bs2.selection_status = 'pending'
+           AND bs2.game_commence_time IS NOT NULL
+           AND bs2.game_commence_time <= NOW() - INTERVAL '1 hour'
+       )
        GROUP BY b.id
        ORDER BY b.placed_at ASC
        LIMIT $1 OFFSET $2`,
