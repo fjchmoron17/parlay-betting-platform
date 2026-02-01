@@ -510,23 +510,30 @@ export const resolveSelection = async (req, res) => {
 // Revertir selecciones resueltas incorrectamente a pending si el partido aún no ha pasado
 export const revertIncorrectResolutions = async (req, res) => {
   try {
-    // Obtener todas las selecciones que fueron resueltas pero cuyo partido aún no ha pasado
+    // Obtener TODAS las selecciones que fueron resueltas como 'lost' o 'void'
+    // pero cuyo game_commence_time es hoy o futuro (juego no ha pasado o está en curso)
     const result = await query(
       `SELECT 
         bs.id,
         bs.bet_id,
+        bs.home_team,
+        bs.away_team,
         bs.selection_status,
-        bs.game_commence_time
+        bs.game_commence_time,
+        b.bet_ticket_number
       FROM bet_selections bs
-      WHERE (bs.selection_status = 'lost' OR bs.selection_status = 'void')
-      AND bs.game_commence_time > NOW()`,
+      JOIN bets b ON bs.bet_id = b.id
+      WHERE bs.selection_status IN ('lost', 'void')
+      AND bs.game_commence_time >= CURRENT_DATE
+      ORDER BY bs.game_commence_time ASC`,
       []
     );
 
     const selectionsToRevert = result.rows;
-    let reverted = 0;
+    console.log(`Found ${selectionsToRevert.length} selections with today/future dates that were incorrectly resolved`);
 
-    console.log(`Found ${selectionsToRevert.length} selections with future dates that were incorrectly resolved`);
+    let reverted = 0;
+    const reverted_list = [];
 
     for (const sel of selectionsToRevert) {
       try {
@@ -570,6 +577,14 @@ export const revertIncorrectResolutions = async (req, res) => {
         );
 
         reverted++;
+        reverted_list.push({
+          selection_id: sel.id,
+          bet_id: sel.bet_id,
+          ticket: sel.bet_ticket_number,
+          game: `${sel.home_team} vs ${sel.away_team}`,
+          game_commence_time: sel.game_commence_time,
+          new_bet_status: newBetStatus
+        });
       } catch (error) {
         console.error(`Error reverting selection ${sel.id}:`, error);
       }
@@ -577,9 +592,10 @@ export const revertIncorrectResolutions = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Reverted ${reverted} incorrectly resolved selections back to pending`,
+      message: `Reverted ${reverted} incorrectly resolved selections (today/future games) back to pending`,
       reverted_count: reverted,
-      total_found: selectionsToRevert.length
+      total_found: selectionsToRevert.length,
+      reverted_selections: reverted_list
     });
   } catch (error) {
     console.error('Error reverting incorrect resolutions:', error);
