@@ -293,6 +293,57 @@ export const updateSelections = async (req, res) => {
   }
 };
 
+// Normalizar fechas de selecciones para apuestas creadas en una fecha específica
+// Corrige selecciones con game_commence_time anterior a placed_date o nulo
+export const normalizeSelectionDates = async (req, res) => {
+  try {
+    const { betTicketNumber, bettingHouseId, placedDate } = req.body;
+
+    if (!betTicketNumber && (!bettingHouseId || !placedDate)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Provide betTicketNumber OR (bettingHouseId and placedDate)'
+      });
+    }
+
+    const params = [];
+    let whereSql = '';
+
+    if (betTicketNumber) {
+      params.push(betTicketNumber);
+      whereSql = 'b.bet_ticket_number = $1';
+    } else {
+      params.push(bettingHouseId, placedDate);
+      whereSql = 'b.betting_house_id = $1 AND b.placed_date = $2';
+    }
+
+    const updateSql = `
+      UPDATE bet_selections bs
+      SET game_commence_time = b.placed_date
+      FROM bets b
+      WHERE bs.bet_id = b.id
+        AND ${whereSql}
+        AND (bs.game_commence_time IS NULL OR bs.game_commence_time < b.placed_date)
+      RETURNING bs.id, bs.bet_id, bs.game_commence_time, b.bet_ticket_number, b.placed_date
+    `;
+
+    const result = await query(updateSql, params);
+
+    res.json({
+      success: true,
+      updated_count: result.rows.length,
+      updated: result.rows
+    });
+  } catch (error) {
+    console.error('Error normalizing selection dates:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to normalize selection dates',
+      details: error.message
+    });
+  }
+};
+
 // Validar y corregir estado de TODAS las apuestas basado en sus selecciones
 export const validateAndFixBets = async (req, res) => {
   try {

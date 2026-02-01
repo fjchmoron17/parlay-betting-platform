@@ -8,6 +8,7 @@ import {
   getBetStats,
   getBetsByDate,
   updateSelections,
+  normalizeSelectionDates,
   validateAndFixBets,
   resolveSelection,
   getPendingSelections,
@@ -36,6 +37,9 @@ router.get('/detail/:id', getBetById);
 
 // POST /api/bets-db/update-selections - Actualizar campos en selecciones
 router.post('/update-selections', updateSelections);
+
+// POST /api/bets-db/normalize-selection-dates - Normalizar fechas corruptas
+router.post('/normalize-selection-dates', normalizeSelectionDates);
 
 // POST /api/bets-db/validate-all - Validar y corregir todas las apuestas
 router.post('/validate-all', validateAndFixBets);
