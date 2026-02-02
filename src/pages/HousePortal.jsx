@@ -167,7 +167,7 @@ export default function HousePortal() {
           game_id: game.id,
           home_team: game.home_team,
           away_team: game.away_team,
-          league: game.sport_title,
+          league: game.sport_key || game.sport_title || game.sportTitle || game.league || 'OTHER',
           market: game.market,
           selected_team: game.selectedTeam,
           selected_odds: game.selectedOdds,

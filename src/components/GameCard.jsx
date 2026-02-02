@@ -9,6 +9,8 @@ const GameCard = ({ game, onSelect, index }) => {
       homeTeam: game.home_team,
       awayTeam: game.away_team,
       league: game.league,
+      sportTitle: game.sportTitle,
+      sportKey: game.sportKey,
       market: game.market,
       pointSpread: null,
       bookmaker: 'Desconocido',

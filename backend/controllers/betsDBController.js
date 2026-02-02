@@ -220,7 +220,7 @@ export const getBetsByDate = async (req, res) => {
 
 export const updateSelections = async (req, res) => {
   try {
-    const { updates } = req.body; // Array de { selectionId, gameCommenceTime, selectionStatus }
+    const { updates } = req.body; // Array de { selectionId, gameCommenceTime, selectionStatus, league }
     
     if (!Array.isArray(updates) || updates.length === 0) {
       return res.status(400).json({
@@ -233,7 +233,7 @@ export const updateSelections = async (req, res) => {
     const results = [];
 
     for (const update of updates) {
-      const { selectionId, gameCommenceTime, selectionStatus } = update;
+      const { selectionId, gameCommenceTime, selectionStatus, league } = update;
       
       try {
         let sql = 'UPDATE bet_selections SET ';
@@ -249,6 +249,12 @@ export const updateSelections = async (req, res) => {
           if (params.length > 0) sql += ', ';
           sql += `selection_status = $${paramIndex++}`;
           params.push(selectionStatus);
+        }
+
+        if (league) {
+          if (params.length > 0) sql += ', ';
+          sql += `league = $${paramIndex++}`;
+          params.push(league);
         }
 
         sql += ` WHERE id = $${paramIndex} RETURNING *`;
