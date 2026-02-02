@@ -8,6 +8,45 @@ import { query } from '../db/dbConfig.js';
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4';
 
+const normalizeKey = (value) => (value || '').toString().toLowerCase().trim();
+
+async function getSportsTitleToKeyMap() {
+  if (!ODDS_API_KEY) return {};
+
+  try {
+    const response = await axios.get(`${ODDS_API_BASE}/sports`, {
+      params: { apiKey: ODDS_API_KEY },
+      timeout: 10000
+    });
+
+    const map = {};
+    (response.data || []).forEach((sport) => {
+      const title = normalizeKey(sport?.title);
+      const key = normalizeKey(sport?.key);
+      if (title && key) {
+        map[title] = sport.key;
+        map[`key:${key}`] = sport.key;
+      }
+    });
+
+    return map;
+  } catch (error) {
+    console.error('⚠️ Error fetching sports map:', error.message);
+    return {};
+  }
+}
+
+function resolveSportKey(league, sportsMap, leagueFallbacks) {
+  const normalized = normalizeKey(league);
+  if (!normalized) return 'unknown';
+
+  if (sportsMap[normalized]) return sportsMap[normalized];
+  if (sportsMap[`key:${normalized}`]) return sportsMap[`key:${normalized}`];
+  if (leagueFallbacks[normalized]) return leagueFallbacks[normalized];
+
+  return normalized;
+}
+
 function toUTCDateOnly(value) {
   const d = value instanceof Date ? value : new Date(value);
   return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
@@ -314,13 +353,7 @@ async function processUnsettledBets() {
       bet.selections = await BetSelection.findByBetId(bet.id);
     }
 
-    // Agrupar por deporte para minimizar llamadas a la API
-    const sportKeys = [...new Set(pendingBets
-      .filter(bet => bet.selections && bet.selections.length > 0)
-      .map(bet => bet.selections[0]?.league?.toLowerCase().replace(/\s+/g, '_') || 'unknown')
-    )];
-
-    // Mapeo de ligas a sport keys de The Odds API
+    // Mapeo de ligas a sport keys de The Odds API (fallbacks)
     const leagueToSportKey = {
       'nfl': 'americanfootball_nfl',
       'nba': 'basketball_nba',
@@ -333,21 +366,30 @@ async function processUnsettledBets() {
       'tennis': 'tennis_atp_aus_open_singles'
     };
 
+    // Resolver sport keys dinámicamente desde la API de deportes
+    const sportsMap = await getSportsTitleToKeyMap();
+
+    // Agrupar por deporte para minimizar llamadas a la API
+    const sportKeys = [...new Set(pendingBets
+      .filter(bet => bet.selections && bet.selections.length > 0)
+      .flatMap(bet => bet.selections.map(sel => resolveSportKey(sel.league, sportsMap, leagueToSportKey)))
+      .filter(key => key && key !== 'unknown')
+    )];
+
     const allCompletedGames = {};
     const allActiveGames = {};
 
     // Obtener scores de cada deporte
     for (const sportKey of sportKeys) {
-      const mappedKey = leagueToSportKey[sportKey] || sportKey;
-      if (mappedKey !== 'unknown') {
-        const games = await getCompletedGames(mappedKey, 3);
+      if (sportKey !== 'unknown') {
+        const games = await getCompletedGames(sportKey, 3);
         allCompletedGames[sportKey] = games;
-        console.log(`📥 Obtenidos ${games.length} juegos completados de ${mappedKey}`);
+        console.log(`📥 Obtenidos ${games.length} juegos completados de ${sportKey}`);
         
         // También obtener eventos activos para detectar desapariciones
-        const activeGames = await getActiveGames(mappedKey);
+        const activeGames = await getActiveGames(sportKey);
         allActiveGames[sportKey] = activeGames;
-        console.log(`📡 Obtenidos ${activeGames.length} eventos activos de ${mappedKey}`);
+        console.log(`📡 Obtenidos ${activeGames.length} eventos activos de ${sportKey}`);
       }
     }
 
@@ -356,11 +398,14 @@ async function processUnsettledBets() {
     // Procesar cada apuesta
     for (const bet of pendingBets) {
       try {
-        const sportKey = bet.selections[0]?.league?.toLowerCase().replace(/\s+/g, '_') || 'unknown';
-        const completedGames = allCompletedGames[sportKey] || [];
-        const activeGames = allActiveGames[sportKey] || [];
+        const betSportKeys = (bet.selections || [])
+          .map(sel => resolveSportKey(sel.league, sportsMap, leagueToSportKey))
+          .filter(key => key && key !== 'unknown');
 
-        console.log(`   🔍 Apuesta ${bet.id}: ${bet.selections?.length || 0} selecciones, liga: ${sportKey}`);
+        const completedGames = betSportKeys.flatMap(key => allCompletedGames[key] || []);
+        const activeGames = betSportKeys.flatMap(key => allActiveGames[key] || []);
+
+        console.log(`   🔍 Apuesta ${bet.id}: ${bet.selections?.length || 0} selecciones, ligas: ${[...new Set(betSportKeys)].join(', ') || 'unknown'}`);
 
         const result = await settleParlayBet(bet, completedGames, activeGames);
 
