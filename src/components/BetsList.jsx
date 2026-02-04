@@ -413,7 +413,7 @@ export default function BetsList({ bettingHouseId }) {
                 <h4>🎮 Selecciones ({selectedBet.selections?.length || 0})</h4>
                 <div className="selections-list">
                   {selectedBet.selections?.map((sel, idx) => {
-                    const gameTime = sel.game_commence_time || sel.gameCommenceTime;
+                    const gameTime = sel.game_commence_time || sel.gameCommenceTime || sel.game_time || sel.commence_time || sel.commenceTime;
                     const selectionStatus = sel.selection_status || sel.selectionStatus;
                     
                     return (

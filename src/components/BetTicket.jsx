@@ -50,7 +50,7 @@ const BetTicket = ({ bet, onClose }) => {
           {bet.selections.map((selection, index) => {
             // Determinar el estado de la selección si está disponible
             const selectionStatus = selection.selection_status || selection.selectionStatus;
-            const gameTime = selection.game_commence_time || selection.gameCommenceTime;
+            const gameTime = selection.game_commence_time || selection.gameCommenceTime || selection.game_time || selection.commence_time || selection.commenceTime;
             
             return (
               <div key={index} className={`ticket-selection-item ${selectionStatus ? `status-${selectionStatus}` : ''}`}>

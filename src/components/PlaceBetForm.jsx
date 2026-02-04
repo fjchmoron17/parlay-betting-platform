@@ -67,7 +67,7 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
           selected_odds: game.selectedOdds,
           point_spread: game.pointSpread || null,
           bookmaker: game.bookmaker,
-          game_commence_time: game.commence_time
+          game_commence_time: game.game_commence_time || game.game_time || game.commence_time || game.commenceTime
         }))
       };
 
