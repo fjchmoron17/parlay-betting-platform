@@ -136,15 +136,29 @@ export default function BetsList({ bettingHouseId }) {
             <strong>SELECCIONES:</strong>
           </div>
           
-          ${selectedBet.selections?.map((sel, idx) => `
+          ${selectedBet.selections?.map((sel, idx) => {
+            const gameTime = sel.game_commence_time || sel.gameCommenceTime;
+            const gameDate = gameTime
+              ? new Date(gameTime).toLocaleString('es-ES', {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
+              : 'Fecha N/D';
+
+            return `
             <div class="selection">
               <div class="selection-title">${idx + 1}. ${sel.home_team} vs ${sel.away_team}</div>
               <div>Mercado: ${sel.market.toUpperCase()}</div>
+              <div>Fecha: ${gameDate}</div>
               <div>Selección: <strong>${sel.selected_team}</strong></div>
               <div>Cuota: <strong>${parseFloat(sel.selected_odds).toFixed(2)}</strong></div>
               ${sel.point_spread !== null ? `<div>Punto: ${sel.point_spread > 0 ? '+' : ''}${sel.point_spread}</div>` : ''}
             </div>
-          `).join('')}
+          `;
+          }).join('')}
           
           <div class="divider"></div>
           
@@ -412,17 +426,17 @@ export default function BetsList({ bettingHouseId }) {
                           </div>
                           
                           {/* Fecha del evento */}
-                          {gameTime && (
-                            <div className="game-date">
-                              🗓️ {new Date(gameTime).toLocaleDateString('es-ES', {
-                                weekday: 'short',
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </div>
-                          )}
+                          <div className="game-date">
+                            🗓️ {gameTime
+                              ? new Date(gameTime).toLocaleDateString('es-ES', {
+                                  weekday: 'short',
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : 'Fecha N/D'}
+                          </div>
                           
                           <div className="selection-pick">
                             <span className="pick">Selección: <strong>{sel.selected_team}</strong></span>

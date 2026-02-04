@@ -61,14 +61,15 @@ const BetTicket = ({ bet, onClose }) => {
                   </p>
                   <p className="selection-meta">
                     {selection.league} • {selection.market}
-                    {gameTime && (
-                      <span className="game-time"> • {new Date(gameTime).toLocaleDateString('es-ES', { 
-                        month: 'short', 
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}</span>
-                    )}
+                    <span className="game-time"> • {gameTime
+                      ? new Date(gameTime).toLocaleDateString('es-ES', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : 'Fecha N/D'}
+                    </span>
                   </p>
                   {selectionStatus && selectionStatus !== 'pending' && (
                     <p className="selection-result">
