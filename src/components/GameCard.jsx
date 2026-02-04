@@ -14,7 +14,7 @@ const GameCard = ({ game, onSelect, index }) => {
       market: game.market,
       pointSpread: null,
       bookmaker: 'Desconocido',
-      commenceTime: game.game_time
+      commenceTime: game.game_commence_time || game.game_time || game.commence_time
     });
   };
 
