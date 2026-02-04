@@ -319,6 +319,20 @@ export default function HousePortal() {
                           <span className="selection-teams">{sel.home_team} vs {sel.away_team}</span>
                           <span className="selection-market">{sel.market.toUpperCase()}</span>
                         </div>
+                        <div className="selection-date">
+                          🗓️ {(() => {
+                            const gameTime = sel.game_commence_time || sel.game_time || sel.commence_time || sel.commenceTime;
+                            return gameTime
+                              ? new Date(gameTime).toLocaleDateString('es-ES', {
+                                  weekday: 'short',
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : 'Fecha N/D';
+                          })()}
+                        </div>
                         <div className="selection-pick">
                           <span className="selection-team">{sel.selectedTeam}</span>
                           {sel.pointSpread !== null && sel.pointSpread !== undefined && (
