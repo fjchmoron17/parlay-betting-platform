@@ -21,14 +21,12 @@
   margin: 0 0 8px 0;
   font-size: 32px;
   font-weight: 700;
-  color: #00c853;
 }
 
 .subtitle {
   margin: 0;
   font-size: 16px;
   opacity: 0.9;
-  color: #00c853;
 }
 
 .admin-nav {
@@ -47,7 +45,7 @@
   padding: 16px 24px;
   border: none;
   background: transparent;
-  color: #e53935;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -57,13 +55,13 @@
 }
 
 .admin-nav button:hover:not(:disabled) {
-  color: #ff6b6b;
-  background: rgba(229, 57, 53, 0.15);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .admin-nav button.active {
-  color: #00c853;
-  border-bottom-color: #00c853;
+  color: #ffffff;
+  border-bottom-color: #fbc02d;
 }
 
 .admin-nav button:disabled {
