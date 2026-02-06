@@ -19,7 +19,11 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at top, #12233b 0%, #0f172a 55%, #0b1220 100%);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(0, 200, 83, 0.18) 0%, rgba(0, 200, 83, 0) 45%),
+    radial-gradient(circle at 85% 15%, rgba(30, 136, 229, 0.2) 0%, rgba(30, 136, 229, 0) 50%),
+    radial-gradient(circle at 50% 90%, rgba(251, 192, 45, 0.08) 0%, rgba(251, 192, 45, 0) 55%),
+    linear-gradient(180deg, #0b0f14 0%, #0f172a 60%, #0b1220 100%);
   color: var(--text-primary);
   padding: 24px;
 }
@@ -100,9 +104,9 @@
 
 .login-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-  gap: 36px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.75fr) minmax(0, 0.7fr);
+  gap: 28px;
+  align-items: start;
   flex: 1;
 }
 
@@ -178,8 +182,8 @@
 }
 
 .hero-cta .secondary {
-  background: rgba(30, 136, 229, 0.15);
-  border: 1px solid rgba(30, 136, 229, 0.45);
+  background: rgba(30, 136, 229, 0.18);
+  border: 1px solid rgba(30, 136, 229, 0.55);
   color: #e2e8f0;
 }
 
@@ -254,11 +258,11 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-top: -10px;
+  margin-top: 0;
 }
 
 .login-card {
-  background: var(--dark-card);
+  background: rgba(15, 23, 42, 0.92);
   border-radius: 18px;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(148, 163, 184, 0.2);
@@ -455,7 +459,7 @@
 }
 
 .quick-panel {
-  background: rgba(30, 41, 59, 0.65);
+  background: rgba(15, 23, 42, 0.7);
   border-radius: 16px;
   padding: 20px;
   border: 1px solid rgba(148, 163, 184, 0.2);
