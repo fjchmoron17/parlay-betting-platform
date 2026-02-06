@@ -143,6 +143,19 @@
   line-height: 1.8;
 }
 
+.hero-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 8px;
+}
+
+.hero-legend p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
 .hero-cta {
   display: flex;
   gap: 12px;
@@ -241,6 +254,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  margin-top: -10px;
 }
 
 .login-card {
@@ -255,24 +269,24 @@
 .login-header {
   background: linear-gradient(135deg, rgba(13, 71, 161, 0.9) 0%, rgba(30, 136, 229, 0.85) 100%);
   color: white;
-  padding: 28px 28px 24px;
+  padding: 18px 20px 16px;
   text-align: left;
 }
 
 .login-header h3 {
   margin: 0 0 6px 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .login-header p {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   opacity: 0.85;
 }
 
 .login-form {
-  padding: 24px 28px 28px;
+  padding: 18px 20px 20px;
 }
 
 .login-error {

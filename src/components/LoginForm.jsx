@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import heroBanner from '../images/parlaybtes1.png';
 import brandLogo from '../images/logo_parlay.png';
 import promoOne from '../images/publicidd1.png';
+import promoTwo from '../images/paises_bet.jpeg';
 import './LoginForm.css';
 
 export default function LoginForm({ onSuccess }) {
@@ -97,19 +98,25 @@ export default function LoginForm({ onSuccess }) {
             Integra deportes, mercados y reglas personalizadas para ofrecer combinaciones
             seguras, claras y auditables. Tu casa decide qué se habilita, nosotros lo ejecutamos.
           </p>
-          <ul>
-            <li>Normalización de eventos y mercados</li>
-            <li>Control de correlación y combinaciones inválidas</li>
-            <li>Flujo B2B con auditoría por ticket</li>
-          </ul>
-          <div className="hero-cta">
-            <a className="primary" href="/afilia">Crear cuenta</a>
-            <a className="secondary" href="/consulta-ticket">Consultar ticket</a>
-          </div>
-          <div className="support">
-            <span>Soporte: 10:00 AM a 8:00 PM</span>
-            <span className="dot">•</span>
-            <span>WhatsApp: +58 412 625 7738</span>
+          <div className="hero-legend">
+            <p>
+              Integra deportes, mercados y reglas personalizadas para ofrecer combinaciones seguras,
+              claras y auditables. Tu casa decide qué se habilita, nosotros lo ejecutamos.
+            </p>
+            <ul>
+              <li>Normalización de eventos y mercados</li>
+              <li>Control de correlación y combinaciones inválidas</li>
+              <li>Flujo B2B con auditoría por ticket</li>
+            </ul>
+            <div className="hero-cta">
+              <a className="primary" href="/afilia">Crear cuenta</a>
+              <a className="secondary" href="/consulta-ticket">Consultar ticket</a>
+            </div>
+            <div className="support">
+              <span>Soporte: 10:00 AM a 8:00 PM</span>
+              <span className="dot">•</span>
+              <span>WhatsApp: +58 412 625 XXXX</span>
+            </div>
           </div>
         </div>
 
@@ -121,7 +128,9 @@ export default function LoginForm({ onSuccess }) {
             <div className="hero-image-slot hero-promo">
               <img src={promoOne} alt="Promo 1" />
             </div>
-            <div className="hero-image-slot">Espacio para promo 2</div>
+            <div className="hero-image-slot hero-promo">
+              <img src={promoTwo} alt="Promo 2" />
+            </div>
           </div>
         </div>
 
