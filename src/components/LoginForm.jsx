@@ -132,6 +132,19 @@ export default function LoginForm({ onSuccess }) {
               <img src={promoTwo} alt="Promo 2" />
             </div>
           </div>
+          <div className="quick-panel">
+            <h4>Consulta tu ticket</h4>
+            <form onSubmit={handleTicketLookup} className="ticket-form">
+              <input
+                type="text"
+                placeholder="Ej: BET-1769..."
+                value={ticketQuery}
+                onChange={(e) => setTicketQuery(e.target.value)}
+              />
+              <button type="submit">Buscar</button>
+            </form>
+            <p className="quick-note">Usa este acceso rápido para validar estado y fecha del evento.</p>
+          </div>
         </div>
 
         <div className="login-panel">
@@ -216,19 +229,6 @@ export default function LoginForm({ onSuccess }) {
             </div>
           </div>
 
-          <div className="quick-panel">
-            <h4>Consulta tu ticket</h4>
-            <form onSubmit={handleTicketLookup} className="ticket-form">
-              <input
-                type="text"
-                placeholder="Ej: BET-1769..."
-                value={ticketQuery}
-                onChange={(e) => setTicketQuery(e.target.value)}
-              />
-              <button type="submit">Buscar</button>
-            </form>
-            <p className="quick-note">Usa este acceso rápido para validar estado y fecha del evento.</p>
-          </div>
         </div>
       </div>
     </div>
