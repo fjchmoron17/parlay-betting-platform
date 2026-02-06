@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import heroBanner from '../images/parlaybtes1.png';
 import brandLogo from '../images/logo_parlay.png';
+import promoOne from '../images/publicidd1.png';
 import './LoginForm.css';
 
 export default function LoginForm({ onSuccess }) {
@@ -117,7 +118,9 @@ export default function LoginForm({ onSuccess }) {
             <img src={heroBanner} alt="Parlay Bets banner" />
           </div>
           <div className="hero-image-grid">
-            <div className="hero-image-slot">Espacio para promo 1</div>
+            <div className="hero-image-slot hero-promo">
+              <img src={promoOne} alt="Promo 1" />
+            </div>
             <div className="hero-image-slot">Espacio para promo 2</div>
           </div>
         </div>
