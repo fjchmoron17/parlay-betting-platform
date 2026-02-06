@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import heroBanner from '../images/parlaybtes1.png';
+import brandLogo from '../images/logo_parlay.png';
 import './LoginForm.css';
 
 export default function LoginForm({ onSuccess }) {
@@ -68,7 +69,9 @@ export default function LoginForm({ onSuccess }) {
     <div className="login-container">
       <header className="login-topbar">
         <div className="brand">
-          <span className="brand-mark">◆</span>
+          <span className="brand-mark">
+            <img src={brandLogo} alt="Parlay Bets" />
+          </span>
           <div>
             <h1>Parlay Bets</h1>
             <p>Motor B2B de parlays</p>
