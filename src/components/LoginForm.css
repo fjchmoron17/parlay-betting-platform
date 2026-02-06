@@ -194,6 +194,20 @@
   padding: 16px;
 }
 
+.hero-banner {
+  padding: 0;
+  overflow: hidden;
+  border-style: solid;
+  border-color: rgba(251, 192, 45, 0.25);
+}
+
+.hero-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .hero-image-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

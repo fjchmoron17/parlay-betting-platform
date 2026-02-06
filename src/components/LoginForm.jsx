@@ -1,6 +1,7 @@
 // src/components/LoginForm.jsx
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import heroBanner from '../images/parlaybtes1.png';
 import './LoginForm.css';
 
 export default function LoginForm({ onSuccess }) {
@@ -109,8 +110,8 @@ export default function LoginForm({ onSuccess }) {
         </div>
 
         <div className="hero-media">
-          <div className="hero-image-slot">
-            <span>Espacio para banner principal</span>
+          <div className="hero-image-slot hero-banner">
+            <img src={heroBanner} alt="Parlay Bets banner" />
           </div>
           <div className="hero-image-grid">
             <div className="hero-image-slot">Espacio para promo 1</div>
