@@ -6,7 +6,7 @@
 }
 
 .admin-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e88e5 0%, #0d47a1 100%);
   color: white;
   padding: 32px 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -30,21 +30,22 @@
 }
 
 .admin-nav {
-  background: white;
-  border-bottom: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #1e88e5 0%, #0d47a1 100%);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
   padding: 0 24px;
   display: flex;
   gap: 8px;
   overflow-x: auto;
   max-width: 1400px;
   margin: 0 auto;
+  border-radius: 0 0 16px 16px;
 }
 
 .admin-nav button {
   padding: 16px 24px;
   border: none;
   background: transparent;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -54,13 +55,13 @@
 }
 
 .admin-nav button:hover:not(:disabled) {
-  color: #1f2937;
-  background: #f9fafb;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .admin-nav button.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
+  color: #ffffff;
+  border-bottom-color: #fbc02d;
 }
 
 .admin-nav button:disabled {
@@ -116,23 +117,24 @@
 }
 
 .primary-btn {
-  background: #3b82f6;
-  color: white;
+  background: linear-gradient(135deg, #00c853 0%, #009624 100%);
+  color: #0f172a;
 }
 
 .primary-btn:hover {
-  background: #2563eb;
+  background: linear-gradient(135deg, #00d25f 0%, #00a032 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
 }
 
 .secondary-btn {
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(0, 200, 83, 0.12);
+  color: #0f172a;
+  border: 1px solid rgba(0, 200, 83, 0.35);
 }
 
 .secondary-btn:hover {
-  background: #e5e7eb;
+  background: rgba(0, 200, 83, 0.2);
 }
 
 .empty-selection {
