@@ -98,13 +98,23 @@ export default function LoginForm({ onSuccess }) {
             <li>Flujo B2B con auditoría por ticket</li>
           </ul>
           <div className="hero-cta">
-            <a className="primary" href="/afilia">Solicitar demo</a>
+            <a className="primary" href="/afilia">Crear cuenta</a>
             <a className="secondary" href="/consulta-ticket">Consultar ticket</a>
           </div>
           <div className="support">
             <span>Soporte: 10:00 AM a 8:00 PM</span>
             <span className="dot">•</span>
             <span>WhatsApp: +58 412 625 7738</span>
+          </div>
+        </div>
+
+        <div className="hero-media">
+          <div className="hero-image-slot">
+            <span>Espacio para banner principal</span>
+          </div>
+          <div className="hero-image-grid">
+            <div className="hero-image-slot">Espacio para promo 1</div>
+            <div className="hero-image-slot">Espacio para promo 2</div>
           </div>
         </div>
 
