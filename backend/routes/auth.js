@@ -1,6 +1,10 @@
 import express from 'express';
 import { login } from '../controllers/authController.js';
-import { testEmailConnection } from '../services/emailService.js';
+import { 
+  testEmailConnection,
+  sendAccountCreatedEmail,
+  sendPasswordResetEmail
+} from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -16,6 +20,73 @@ router.get('/test-email', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error testing email',
+      error: error.message
+    });
+  }
+});
+
+const requireAdminToken = (req, res, next) => {
+  const adminToken = req.headers['x-admin-token'];
+  if (!process.env.ADMIN_TOKEN) {
+    return res.status(500).json({
+      success: false,
+      error: 'ADMIN_TOKEN not configured'
+    });
+  }
+  if (!adminToken || adminToken !== process.env.ADMIN_TOKEN) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Admin token required'
+    });
+  }
+  next();
+};
+
+// POST /api/auth/test-email/welcome - Enviar email de creación de cuenta
+router.post('/test-email/welcome', requireAdminToken, async (req, res) => {
+  try {
+    const { to, username, tempPassword, houseName } = req.body || {};
+
+    if (!to || !username || !tempPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'to, username, tempPassword are required'
+      });
+    }
+
+    const result = await sendAccountCreatedEmail({
+      to,
+      username,
+      tempPassword,
+      houseName
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// POST /api/auth/test-email/reset - Enviar email de reset de contraseña
+router.post('/test-email/reset', requireAdminToken, async (req, res) => {
+  try {
+    const { to, resetUrl } = req.body || {};
+
+    if (!to || !resetUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'to and resetUrl are required'
+      });
+    }
+
+    const result = await sendPasswordResetEmail({ to, resetUrl });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
       error: error.message
     });
   }

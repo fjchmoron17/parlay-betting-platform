@@ -179,3 +179,54 @@ export async function sendBettingHouseRegistrationEmail(
     return { success: false, error: error.message };
   }
 }
+
+export async function sendAccountCreatedEmail({ to, username, tempPassword, houseName }) {
+  try {
+    const emailHtml = `
+      <h2>Bienvenido a Parlay Bets</h2>
+      <p>Tu cuenta ha sido creada correctamente.</p>
+      <ul>
+        <li><strong>Casa:</strong> ${houseName || 'Parlay Bets'}</li>
+        <li><strong>Usuario:</strong> ${username}</li>
+        <li><strong>Contraseña temporal:</strong> ${tempPassword}</li>
+      </ul>
+      <p>Por seguridad, cambia tu contraseña en el primer acceso.</p>
+      <p><a href="https://parlay-betting-platform-production.up.railway.app">Ir al Portal</a></p>
+    `;
+
+    await transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to,
+      subject: 'Tu cuenta Parlay Bets está lista',
+      html: emailHtml
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error enviando email de cuenta:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function sendPasswordResetEmail({ to, resetUrl }) {
+  try {
+    const emailHtml = `
+      <h2>Restablecer contraseña</h2>
+      <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+      <p><a href="${resetUrl}">Restablecer contraseña</a></p>
+      <p>Si no solicitaste este cambio, ignora este mensaje.</p>
+    `;
+
+    await transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to,
+      subject: 'Restablecer contraseña - Parlay Bets',
+      html: emailHtml
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error enviando email de reset:', error);
+    return { success: false, error: error.message };
+  }
+}
