@@ -93,6 +93,12 @@
   gap: 12px;
 }
 
+.house-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .house-header-content {
   flex: 1;
   cursor: pointer;
@@ -118,6 +124,53 @@
 .delete-btn:hover {
   background: #fee2e2;
   border-color: #fecaca;
+}
+
+.status-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+}
+
+.status-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e7eb;
+  border-radius: 999px;
+  transition: 0.2s ease;
+}
+
+.toggle-slider::before {
+  position: absolute;
+  content: '';
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: 0.2s ease;
+}
+
+.status-toggle input:checked + .toggle-slider {
+  background-color: #22c55e;
+}
+
+.status-toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
 }
 
 .status-badge {

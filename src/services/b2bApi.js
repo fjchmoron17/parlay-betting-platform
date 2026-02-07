@@ -6,6 +6,17 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
 // Constante de timeout de sesión (debe coincidir con AuthContext)
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutos
 
+const getSessionUserRole = () => {
+  try {
+    const savedSession = localStorage.getItem('authSession');
+    if (!savedSession) return null;
+    const session = JSON.parse(savedSession);
+    return session?.user?.role || null;
+  } catch {
+    return null;
+  }
+};
+
 // Validar que la sesión no haya expirado
 const checkSessionExpired = () => {
   const savedSession = localStorage.getItem('authSession');
@@ -108,6 +119,25 @@ export async function deleteBettingHouse(id) {
     return await response.json();
   } catch (error) {
     console.error('Error deleting betting house:', error);
+    throw error;
+  }
+}
+
+export async function updateBettingHouseStatus(id, status) {
+  try {
+    const userRole = getSessionUserRole();
+    const response = await fetch(`${API_URL}/betting-houses/${id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(userRole ? { 'x-user-role': userRole } : {})
+      },
+      body: JSON.stringify({ status })
+    });
+    if (!response.ok) throw new Error('Failed to update betting house status');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating betting house status:', error);
     throw error;
   }
 }

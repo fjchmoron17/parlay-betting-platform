@@ -19,12 +19,12 @@ export const BettingHouse = {
   },
 
   // Crear una casa
-  async create(name, email, country, currency = 'USD') {
+  async create(name, email, country, currency = 'USD', status = 'active') {
     const result = await query(
-      `INSERT INTO betting_houses (name, email, country, currency, account_balance)
-       VALUES ($1, $2, $3, $4, 0)
+      `INSERT INTO betting_houses (name, email, country, currency, account_balance, status)
+       VALUES ($1, $2, $3, $4, 0, $5)
        RETURNING *`,
-      [name, email, country, currency]
+      [name, email, country, currency, status]
     );
     return result.rows[0];
   },
@@ -37,6 +37,18 @@ export const BettingHouse = {
        WHERE id = $2
        RETURNING *`,
       [newBalance, id]
+    );
+    return result.rows[0];
+  },
+
+  // Actualizar estado (active/inactive)
+  async updateStatus(id, status) {
+    const result = await query(
+      `UPDATE betting_houses
+       SET status = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING *`,
+      [status, id]
     );
     return result.rows[0];
   },

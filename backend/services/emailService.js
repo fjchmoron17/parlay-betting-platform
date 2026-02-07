@@ -12,6 +12,7 @@ const GRAPH_CLIENT_ID = process.env.GRAPH_CLIENT_ID;
 const GRAPH_CLIENT_SECRET = process.env.GRAPH_CLIENT_SECRET;
 const GRAPH_SENDER = process.env.GRAPH_SENDER || process.env.MAIL_USER;
 const USE_GRAPH = MAIL_SERVICE.toLowerCase() === 'graph' || process.env.USE_GRAPH_EMAIL === 'true';
+const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || 'fjchmoron@chirinossolutions.com';
 
 // Log de configuración al iniciar
 console.log('📧 Email Service Init:');
@@ -92,7 +93,7 @@ const transporter = nodemailer.createTransport(
     return token;
   };
 
-  const sendGraphEmail = async ({ to, subject, html }) => {
+  const sendGraphEmail = async ({ to, subject, html, text }) => {
     if (!GRAPH_SENDER) {
       throw new Error('Graph sender is not configured');
     }
@@ -100,14 +101,17 @@ const transporter = nodemailer.createTransport(
     const accessToken = await getGraphToken();
     const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(GRAPH_SENDER)}/sendMail`;
 
+    const content = text || html || '';
+    const contentType = text ? 'Text' : 'HTML';
+
     await axios.post(
       url,
       {
         message: {
           subject,
           body: {
-            contentType: 'HTML',
-            content: html
+            contentType,
+            content
           },
           toRecipients: [
             {
@@ -123,9 +127,9 @@ const transporter = nodemailer.createTransport(
     );
   };
 
-  const sendEmail = async ({ to, subject, html }) => {
+  const sendEmail = async ({ to, subject, html, text }) => {
     if (USE_GRAPH) {
-      await sendGraphEmail({ to, subject, html });
+      await sendGraphEmail({ to, subject, html, text });
       return;
     }
 
@@ -133,7 +137,8 @@ const transporter = nodemailer.createTransport(
       from: process.env.MAIL_USER,
       to,
       subject,
-      html
+      ...(html ? { html } : {}),
+      ...(text ? { text } : {})
     });
   };
 
@@ -227,70 +232,72 @@ export async function testEmailConnection() {
 
 export async function sendBettingHouseRegistrationEmail(
   houseData,
-  userData
+  userData,
+  options = {}
 ) {
   try {
+    const approvalRequired = options?.approvalRequired === true;
+    const activationUrl = options?.activationUrl;
+
     // Email para la casa de apuestas
-    const houseEmailHtml = `
-      <h2>Bienvenido a Parlay Bets</h2>
-      <p>Tu casa de apuestas ha sido registrada exitosamente.</p>
-      
-      <h3>Detalles de Registro:</h3>
-      <ul>
-        <li><strong>Nombre de Casa:</strong> ${houseData.name}</li>
-        <li><strong>Email:</strong> ${houseData.email}</li>
-        <li><strong>País:</strong> ${houseData.country}</li>
-        <li><strong>Moneda:</strong> ${houseData.currency}</li>
-        <li><strong>ID de Casa:</strong> ${houseData.id}</li>
-      </ul>
-      
-      <h3>Datos de Acceso:</h3>
-      <ul>
-        <li><strong>Usuario:</strong> ${userData.username}</li>
-        <li><strong>Contraseña:</strong> ${userData.password}</li>
-      </ul>
-      
-      <p><strong>⚠️ IMPORTANTE:</strong> Guarda tus credenciales en un lugar seguro. Cambia tu contraseña al primer acceso.</p>
-      
-      <p><a href="https://parlay-betting-platform-production.up.railway.app">Ir al Portal</a></p>
-    `;
+    const houseEmailText = [
+      'Bienvenido a Parlay Bets',
+      'Tu casa de apuestas ha sido registrada exitosamente.',
+      '',
+      'Detalles de Registro:',
+      `- Nombre de Casa: ${houseData.name}`,
+      `- Email: ${houseData.email}`,
+      `- País: ${houseData.country}`,
+      `- Moneda: ${houseData.currency}`,
+      `- ID de Casa: ${houseData.id}`,
+      '',
+      'Datos de Acceso:',
+      `- Usuario: ${userData.username}`,
+      `- Contraseña: ${userData.password}`,
+      '',
+      approvalRequired
+        ? '✅ Tu casa quedará habilitada para apuestas una vez que el administrador apruebe la solicitud.'
+        : '',
+      '⚠️ IMPORTANTE: Guarda tus credenciales en un lugar seguro. Cambia tu contraseña al primer acceso.',
+      'Portal: https://parlay-betting-platform-production.up.railway.app'
+    ].filter(Boolean).join('\n');
 
     // Email para administrador
-    const adminEmailHtml = `
-      <h2>Nueva Casa de Apuestas Registrada</h2>
-      <p>Una nueva casa de apuestas ha sido registrada en el sistema.</p>
-      
-      <h3>Detalles:</h3>
-      <ul>
-        <li><strong>Nombre de Casa:</strong> ${houseData.name}</li>
-        <li><strong>Email:</strong> ${houseData.email}</li>
-        <li><strong>País:</strong> ${houseData.country}</li>
-        <li><strong>Moneda:</strong> ${houseData.currency}</li>
-        <li><strong>ID:</strong> ${houseData.id}</li>
-        <li><strong>Balance Inicial:</strong> $${houseData.account_balance}</li>
-      </ul>
-      
-      <h3>Usuario Administrador:</h3>
-      <ul>
-        <li><strong>Usuario:</strong> ${userData.username}</li>
-        <li><strong>Email del Admin:</strong> ${houseData.email}</li>
-      </ul>
-      
-      <p><strong>Fecha de Registro:</strong> ${new Date().toLocaleString('es-ES')}</p>
-    `;
+    const adminEmailText = [
+      'Nueva Casa de Apuestas Registrada',
+      'Una nueva casa de apuestas ha sido registrada en el sistema.',
+      '',
+      'Detalles:',
+      `- Nombre de Casa: ${houseData.name}`,
+      `- Email: ${houseData.email}`,
+      `- País: ${houseData.country}`,
+      `- Moneda: ${houseData.currency}`,
+      `- ID: ${houseData.id}`,
+      `- Balance Inicial: $${houseData.account_balance}`,
+      '',
+      'Usuario Administrador:',
+      `- Usuario: ${userData.username}`,
+      `- Email del Admin: ${houseData.email}`,
+      '',
+      `Fecha de Registro: ${new Date().toLocaleString('es-ES')}`,
+      '',
+      activationUrl
+        ? `Activar casa de apuestas: ${activationUrl}`
+        : '⚠️ No se generó link de activación (ADMIN_TOKEN no configurado).'
+    ].join('\n');
 
     // Enviar email a la casa
     await sendEmail({
       to: houseData.email,
       subject: 'Bienvenido a Parlay Bets - Registro Completado',
-      html: houseEmailHtml
+      text: houseEmailText
     });
 
     // Enviar email al administrador
     await sendEmail({
-      to: 'fjchmoron@chirinossolutions.com',
+      to: ADMIN_NOTIFICATION_EMAIL,
       subject: `Nueva Casa de Apuestas: ${houseData.name}`,
-      html: adminEmailHtml
+      text: adminEmailText
     });
 
     console.log('✅ Emails enviados exitosamente');

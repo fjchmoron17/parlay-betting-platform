@@ -27,6 +27,26 @@ export const placeBet = async (req, res) => {
       });
     }
     
+    const houseResult = await query(
+      'SELECT status FROM betting_houses WHERE id = $1',
+      [bettingHouseId]
+    );
+
+    if (!houseResult.rows.length) {
+      return res.status(404).json({
+        success: false,
+        error: 'Betting house not found'
+      });
+    }
+
+    const houseStatus = houseResult.rows[0].status;
+    if (houseStatus !== 'active') {
+      return res.status(403).json({
+        success: false,
+        error: 'Betting house is inactive and cannot place bets'
+      });
+    }
+
     const potentialWin = totalStake * totalOdds;
 
     const bet = await Bet.create(

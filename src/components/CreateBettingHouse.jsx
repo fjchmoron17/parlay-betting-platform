@@ -81,9 +81,11 @@ export default function CreateBettingHouse({ onSuccess, onCancel, publicMode = f
       setLoading(true);
       setError(null);
       
+      const payload = publicMode ? { ...formData, isPublic: true } : formData;
+
       const response = publicMode
-        ? await createBettingHousePublic(formData)
-        : await createBettingHouse(formData);
+        ? await createBettingHousePublic(payload)
+        : await createBettingHouse(payload);
       
       if (response.success) {
         onSuccess && onSuccess(response.data);

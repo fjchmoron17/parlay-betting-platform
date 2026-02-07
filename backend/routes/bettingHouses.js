@@ -6,13 +6,29 @@ import {
   createBettingHouse,
   getBettingHouseSummary,
   deleteBettingHouse,
-  reseedAuthUsers
+  reseedAuthUsers,
+  updateBettingHouseStatus,
+  activateBettingHouseFromEmail
 } from '../controllers/bettingHousesController.js';
 
 const router = express.Router();
 
+const requireSuperAdminRole = (req, res, next) => {
+  const roleHeader = req.headers['x-user-role'];
+  if (roleHeader !== 'super_admin') {
+    return res.status(403).json({
+      success: false,
+      error: 'Forbidden: super_admin role required'
+    });
+  }
+  next();
+};
+
 // GET /api/betting-houses - Obtener todas las casas
 router.get('/', getAllBettingHouses);
+
+// GET /api/betting-houses/activate/:id - Activar casa via email
+router.get('/activate/:id', activateBettingHouseFromEmail);
 
 // GET /api/betting-houses/summary - Resumen de todas las casas
 router.get('/summary', getBettingHouseSummary);
@@ -24,7 +40,10 @@ router.get('/:id', getBettingHouseById);
 router.post('/', createBettingHouse);
 
 // DELETE /api/betting-houses/:id - Eliminar casa
-router.delete('/:id', deleteBettingHouse);
+router.delete('/:id', requireSuperAdminRole, deleteBettingHouse);
+
+// PATCH /api/betting-houses/:id/status - Actualizar estado de casa
+router.patch('/:id/status', requireSuperAdminRole, updateBettingHouseStatus);
 
 // POST /api/betting-houses/admin/reseed - Reseed auth users (admin only)
 router.post('/admin/reseed', reseedAuthUsers);

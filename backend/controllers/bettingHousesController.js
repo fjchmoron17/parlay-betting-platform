@@ -82,6 +82,7 @@ export const getBettingHouseById = async (req, res) => {
 export const createBettingHouse = async (req, res) => {
   try {
     const { name, email, country, currency = 'USD', username, password } = req.body;
+    const isPublic = req.body?.isPublic === true || req.body?.publicMode === true;
     
     if (!name || !email || !username || !password) {
       return res.status(400).json({
@@ -101,7 +102,8 @@ export const createBettingHouse = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     
     // Crear casa de apuestas
-    const house = await BettingHouse.create(name, email, country, currency);
+    const houseStatus = isPublic ? 'inactive' : 'active';
+    const house = await BettingHouse.create(name, email, country, currency, houseStatus);
     
     // Crear usuario para la casa
     const user = await BettingHouseUser.upsert({
@@ -113,7 +115,15 @@ export const createBettingHouse = async (req, res) => {
     });
 
     // Enviar emails (no blocking - fire and forget)
-    sendBettingHouseRegistrationEmail(house, { username, password })
+    const baseApiUrl = (process.env.BACKEND_BASE_URL || process.env.API_BASE_URL || 'https://parlay-betting-platform-production.up.railway.app').replace(/\/$/, '');
+    const activationUrl = process.env.ADMIN_TOKEN
+      ? `${baseApiUrl}/api/betting-houses/activate/${house.id}?token=${encodeURIComponent(process.env.ADMIN_TOKEN)}`
+      : null;
+
+    sendBettingHouseRegistrationEmail(house, { username, password }, {
+      approvalRequired: isPublic,
+      activationUrl
+    })
       .catch(err => console.error('❌ Email send failed (non-blocking):', err.message));
     
     res.status(201).json({
@@ -127,7 +137,9 @@ export const createBettingHouse = async (req, res) => {
           role: user.role
         }
       },
-      message: 'Betting house created successfully.'
+      message: isPublic
+        ? 'Betting house created in inactive status. Awaiting admin approval.'
+        : 'Betting house created successfully.'
     });
   } catch (error) {
     console.error('Error creating betting house:', error);
@@ -141,6 +153,36 @@ export const createBettingHouse = async (req, res) => {
       success: false,
       error: 'Failed to create betting house'
     });
+  }
+};
+
+export const activateBettingHouseFromEmail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const token = req.query.token;
+
+    if (!process.env.ADMIN_TOKEN) {
+      return res.status(500).send('ADMIN_TOKEN not configured');
+    }
+
+    if (!token || token !== process.env.ADMIN_TOKEN) {
+      return res.status(403).send('Invalid or missing activation token');
+    }
+
+    const house = await BettingHouse.findById(id);
+    if (!house) {
+      return res.status(404).send('Betting house not found');
+    }
+
+    if (house.status === 'active') {
+      return res.send('Betting house is already active');
+    }
+
+    await BettingHouse.updateStatus(id, 'active');
+    return res.send('Betting house activated successfully');
+  } catch (error) {
+    console.error('Error activating betting house:', error);
+    return res.status(500).send('Failed to activate betting house');
   }
 };
 
@@ -187,6 +229,41 @@ export const deleteBettingHouse = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete betting house'
+    });
+  }
+};
+
+export const updateBettingHouseStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['active', 'inactive'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status. Use active or inactive.'
+      });
+    }
+
+    const house = await BettingHouse.findById(id);
+    if (!house) {
+      return res.status(404).json({
+        success: false,
+        error: 'Betting house not found'
+      });
+    }
+
+    const updated = await BettingHouse.updateStatus(id, status);
+    res.json({
+      success: true,
+      data: updated,
+      message: `Betting house status updated to ${status}`
+    });
+  } catch (error) {
+    console.error('Error updating betting house status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update betting house status'
     });
   }
 };

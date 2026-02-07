@@ -35,6 +35,9 @@ export default function AffiliateSignup() {
             Tu casa <strong>{success.name}</strong> fue creada correctamente.
           </p>
           <p>
+            Tu casa quedará habilitada para apuestas una vez que el administrador la apruebe.
+          </p>
+          <p>
             Usuario administrador: <strong>{success.username}</strong>
           </p>
           <div className="affiliate-actions">

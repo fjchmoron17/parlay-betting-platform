@@ -1,12 +1,14 @@
 // src/components/BettingHousesList.jsx
 import { useState, useEffect } from 'react';
-import { getAllBettingHouses, deleteBettingHouse } from '../services/b2bApi';
+import { getAllBettingHouses, deleteBettingHouse, updateBettingHouseStatus } from '../services/b2bApi';
+import { useAuth } from '../context/AuthContext';
 import './BettingHousesList.css';
 
 export default function BettingHousesList({ onSelectHouse }) {
   const [houses, setHouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isSuperAdmin } = useAuth();
 
   useEffect(() => {
     loadHouses();
@@ -37,6 +39,26 @@ export default function BettingHousesList({ onSelectHouse }) {
       alert(`Casa de apuestas "${houseName}" eliminada exitosamente`);
     } catch (err) {
       alert('Error al eliminar casa de apuestas: ' + err.message);
+      console.error(err);
+    }
+  };
+
+  const handleToggleStatus = async (event, house) => {
+    event.stopPropagation();
+    if (!isSuperAdmin) {
+      alert('Solo el super usuario puede cambiar el estado.');
+      return;
+    }
+    const nextStatus = house.status === 'active' ? 'inactive' : 'active';
+    try {
+      await updateBettingHouseStatus(house.id, nextStatus);
+      setHouses((prev) =>
+        prev.map((item) =>
+          item.id === house.id ? { ...item, status: nextStatus } : item
+        )
+      );
+    } catch (err) {
+      alert('Error al actualizar estado: ' + err.message);
       console.error(err);
     }
   };
@@ -73,7 +95,9 @@ export default function BettingHousesList({ onSelectHouse }) {
     <div className="betting-houses-list">
       <div className="list-header">
         <h2>Casas de Apuestas</h2>
-        <span className="houses-count">{houses.length} casas activas</span>
+        <span className="houses-count">
+          {houses.filter((h) => h.status === 'active').length} activas · {houses.length} total
+        </span>
       </div>
 
       {houses.length === 0 ? (
@@ -94,13 +118,31 @@ export default function BettingHousesList({ onSelectHouse }) {
                     {house.status}
                   </span>
                 </div>
-                <button 
-                  className="delete-btn"
-                  onClick={() => handleDeleteHouse(house.id, house.name)}
-                  title="Eliminar casa"
-                >
-                  🗑️
-                </button>
+                <div className="house-actions">
+                  {isSuperAdmin && (
+                    <label className="status-toggle" onClick={(event) => event.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={house.status === 'active'}
+                        onChange={(event) => handleToggleStatus(event, house)}
+                        aria-label={`Activar o desactivar ${house.name}`}
+                      />
+                      <span className="toggle-slider" />
+                    </label>
+                  )}
+                  {isSuperAdmin && (
+                    <button 
+                      className="delete-btn"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteHouse(house.id, house.name);
+                      }}
+                      title="Eliminar casa"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="house-info" onClick={() => onSelectHouse && onSelectHouse(house)}>
