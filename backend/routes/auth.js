@@ -1,5 +1,9 @@
 import express from 'express';
-import { login } from '../controllers/authController.js';
+import { 
+  login,
+  requestPasswordReset,
+  confirmPasswordReset
+} from '../controllers/authController.js';
 import { 
   testEmailConnection,
   sendAccountCreatedEmail,
@@ -10,6 +14,12 @@ const router = express.Router();
 
 // POST /api/auth/login
 router.post('/login', login);
+
+// POST /api/auth/password-reset/request
+router.post('/password-reset/request', requestPasswordReset);
+
+// POST /api/auth/password-reset/confirm
+router.post('/password-reset/confirm', confirmPasswordReset);
 
 // GET /api/auth/test-email - Prueba de configuración de email
 router.get('/test-email', async (req, res) => {
