@@ -6,7 +6,7 @@ import {
   getGameById,
   getSports
 } from '../controllers/gamesController.js';
-import axios from 'axios';
+import { oddsApiGet } from '../services/oddsApiClient.js';
 
 const router = express.Router();
 
@@ -17,19 +17,13 @@ router.get('/sports', getSports);
 router.get('/debug', async (req, res) => {
   try {
     const { sport = 'basketball_nba', region = 'us' } = req.query;
-    const apiKey = process.env.ODDS_API_KEY;
-    const baseUrl = process.env.ODDS_API_BASE_URL || 'https://api.the-odds-api.com/v4';
-    
-    const response = await axios.get(
-      `${baseUrl}/sports/${sport}/odds`,
+    const { response, keyUsed, quotaRemaining, quotaUsed } = await oddsApiGet(
+      `/sports/${sport}/odds`,
       {
-        params: {
-          apiKey: apiKey,
-          regions: region,
-          markets: 'h2h',
-          oddsFormat: 'decimal',
-          dateFormat: 'iso'
-        }
+        regions: region,
+        markets: 'h2h',
+        oddsFormat: 'decimal',
+        dateFormat: 'iso'
       }
     );
     
@@ -38,7 +32,7 @@ router.get('/debug', async (req, res) => {
     
     res.json({
       success: true,
-      apiKeyLength: apiKey?.length || 0,
+      apiKeyLength: keyUsed?.length || 0,
       totalGames: games.length,
       sampleGame: sample ? {
         id: sample.id,
@@ -48,8 +42,8 @@ router.get('/debug', async (req, res) => {
         bookmakersList: sample.bookmakers?.map(b => b.key) || [],
         firstBookmaker: sample.bookmakers?.[0] || null
       } : null,
-      quotaRemaining: response.headers['x-requests-remaining'],
-      quotaUsed: response.headers['x-requests-used']
+      quotaRemaining: quotaRemaining,
+      quotaUsed: quotaUsed
     });
   } catch (error) {
     res.status(500).json({

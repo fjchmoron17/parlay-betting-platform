@@ -1,23 +1,17 @@
 // backend/services/betSettlementService.js
 // Servicio para resolver automáticamente las apuestas usando scores de The Odds API
 
-import axios from 'axios';
 import { Bet, BetSelection } from '../db/models/index.js';
 import { query } from '../db/dbConfig.js';
+import { oddsApiGet } from './oddsApiClient.js';
 
-const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const ODDS_API_BASE = 'https://api.the-odds-api.com/v4';
 
 const normalizeKey = (value) => (value || '').toString().toLowerCase().trim();
 
 async function getSportsTitleToKeyMap() {
-  if (!ODDS_API_KEY) return {};
-
   try {
-    const response = await axios.get(`${ODDS_API_BASE}/sports`, {
-      params: { apiKey: ODDS_API_KEY },
-      timeout: 10000
-    });
+    const { response } = await oddsApiGet('/sports', {}, { timeout: 10000 });
 
     const map = {};
     (response.data || []).forEach((sport) => {
@@ -60,13 +54,10 @@ function toUTCDateOnly(value) {
  */
 async function getCompletedGames(sportKey, daysFrom = 3) {
   try {
-    const url = `${ODDS_API_BASE}/sports/${sportKey}/scores`;
-    const response = await axios.get(url, {
-      params: {
-        apiKey: ODDS_API_KEY,
-        daysFrom: daysFrom
-      }
-    });
+    const { response } = await oddsApiGet(
+      `/sports/${sportKey}/scores`,
+      { daysFrom: daysFrom }
+    );
 
     // Filtrar solo juegos completados
     const completedGames = response.data.filter(game => game.completed === true);
@@ -75,15 +66,14 @@ async function getCompletedGames(sportKey, daysFrom = 3) {
     if (completedGames.length === 0) {
       console.log(`   📡 No hay scores de ${sportKey}, intentando detectar juegos finalizados por desaparición...`);
       try {
-        const activeUrl = `${ODDS_API_BASE}/sports/${sportKey}/odds`;
-        const activeResponse = await axios.get(activeUrl, {
-          params: {
-            apiKey: ODDS_API_KEY,
+        const { response: activeResponse } = await oddsApiGet(
+          `/sports/${sportKey}/odds`,
+          {
             regions: 'us',
             markets: 'h2h',
             oddsFormat: 'decimal'
           }
-        });
+        );
         
         // Los juegos que no están en activos pero tienen commence_time > now probablemente terminaron
         const activeGames = activeResponse.data.map(g => ({
@@ -111,15 +101,14 @@ async function getCompletedGames(sportKey, daysFrom = 3) {
  */
 async function getActiveGames(sportKey) {
   try {
-    const url = `${ODDS_API_BASE}/sports/${sportKey}/odds`;
-    const response = await axios.get(url, {
-      params: {
-        apiKey: ODDS_API_KEY,
+    const { response } = await oddsApiGet(
+      `/sports/${sportKey}/odds`,
+      {
         regions: 'us',
         markets: 'h2h',
         oddsFormat: 'decimal'
       }
-    });
+    );
 
     return response.data || [];
   } catch (error) {

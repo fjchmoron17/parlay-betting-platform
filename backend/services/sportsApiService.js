@@ -1,6 +1,6 @@
 // services/sportsApiService.js
-import axios from 'axios';
 import { SPORTS_API, MOCK_GAMES } from '../config/constants.js';
+import { oddsApiGet } from './oddsApiClient.js';
 
 // Advanced in-memory cache with request deduplication and statistics
 const CACHE_TTL_MS = parseInt(process.env.GAMES_CACHE_TTL_MS || '300000', 10); // default 5 minutes
@@ -45,22 +45,7 @@ export const getCacheStats = () => {
 // Obtener lista de todos los deportes disponibles
 export const getSportsAvailable = async () => {
   try {
-    const apiKey = process.env.ODDS_API_KEY;
-    const baseUrl = process.env.ODDS_API_BASE_URL || 'https://api.the-odds-api.com/v4';
-
-    if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-      console.warn('⚠️ The Odds API key no está configurada.');
-      return {
-        success: true,
-        data: getDefaultSports(),
-        source: 'Default Sports List'
-      };
-    }
-
-    const response = await axios.get(`${baseUrl}/sports`, {
-      params: { apiKey },
-      timeout: 10000
-    });
+    const { response } = await oddsApiGet('/sports', {}, { timeout: 10000 });
 
     console.log(`✅ Got ${response.data.length} sports from The Odds API`);
 
@@ -83,13 +68,6 @@ export const getSportsAvailable = async () => {
 // Obtener juegos de The Odds API con soporte para múltiples mercados
 export const getGamesFromAPI = async (league = null, market = null, region = 'us') => {
   try {
-    const apiKey = process.env.ODDS_API_KEY;
-    const baseUrl = process.env.ODDS_API_BASE_URL || 'https://api.the-odds-api.com/v4';
-
-    if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-      throw new Error('❌ ODDS_API_KEY no está configurada en el backend');
-    }
-
     const marketsToFetch = market ? [market] : ['h2h','spreads','totals'];
     const cacheKey = `${league || 'all'}|${region}|${marketsToFetch.join(',')}`;
 
@@ -142,26 +120,21 @@ export const getGamesFromAPI = async (league = null, market = null, region = 'us
             console.log(`📡 Fetching ${sport} from The Odds API (market: ${currentMarket})...`);
             cache.stats.apiCalls++;
             
-            const response = await axios.get(
-              `${baseUrl}/sports/${sport}/odds`,
+            const { response, quotaRemaining, quotaUsed } = await oddsApiGet(
+              `/sports/${sport}/odds`,
               {
-                params: {
-                  apiKey: apiKey,
-                  regions: region,
-                  markets: currentMarket,
-                  oddsFormat: 'decimal',
-                  dateFormat: 'iso',
-                  limit: 50
-                },
-                timeout: 10000
-              }
+                regions: region,
+                markets: currentMarket,
+                oddsFormat: 'decimal',
+                dateFormat: 'iso',
+                limit: 50
+              },
+              { timeout: 10000 }
             );
 
             // Capture quota headers if present
-            if (response?.headers) {
-              lastQuotaRemaining = response.headers['x-requests-remaining'] ?? lastQuotaRemaining;
-              lastQuotaUsed = response.headers['x-requests-used'] ?? lastQuotaUsed;
-            }
+            lastQuotaRemaining = quotaRemaining ?? lastQuotaRemaining;
+            lastQuotaUsed = quotaUsed ?? lastQuotaUsed;
 
             console.log(`✅ Got ${response.data.length} games from ${sport} (${currentMarket})`);
             
