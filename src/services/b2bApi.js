@@ -68,6 +68,25 @@ export async function createBettingHouse(data) {
   }
 }
 
+// Crear casa de apuestas sin sesión (afiliación pública)
+export async function createBettingHousePublic(data) {
+  try {
+    const response = await fetch(`${API_URL}/betting-houses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || 'Failed to create betting house');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating betting house (public):', error);
+    throw error;
+  }
+}
+
 export async function getBettingHousesSummary() {
   try {
     const response = await fetch(`${API_URL}/betting-houses/summary`);

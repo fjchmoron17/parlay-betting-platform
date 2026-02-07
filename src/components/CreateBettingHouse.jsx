@@ -1,9 +1,9 @@
 // src/components/CreateBettingHouse.jsx
 import { useState } from 'react';
-import { createBettingHouse } from '../services/b2bApi';
+import { createBettingHouse, createBettingHousePublic } from '../services/b2bApi';
 import './CreateBettingHouse.css';
 
-export default function CreateBettingHouse({ onSuccess, onCancel }) {
+export default function CreateBettingHouse({ onSuccess, onCancel, publicMode = false }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -74,7 +74,9 @@ export default function CreateBettingHouse({ onSuccess, onCancel }) {
       setLoading(true);
       setError(null);
       
-      const response = await createBettingHouse(formData);
+      const response = publicMode
+        ? await createBettingHousePublic(formData)
+        : await createBettingHouse(formData);
       
       if (response.success) {
         onSuccess && onSuccess(response.data);

@@ -82,11 +82,11 @@ export default function LoginForm({ onSuccess }) {
         <nav className="top-links">
           <a href="/">Inicio</a>
           <a href="/reglas">Reglas</a>
-          <a href="/consulta-ticket">Consulta tu ticket</a>
+          <a href="/?view=consulta-ticket">Consulta tu ticket</a>
           <a href="/promociones">Promociones</a>
           <a href="/ayuda">Ayuda</a>
           <a href="/contacto">Contacto</a>
-          <a className="highlight" href="/afilia">Afiliar Agencia</a>
+          <a className="highlight" href="/?view=afilia">Afiliar Agencia</a>
         </nav>
       </header>
 
@@ -109,8 +109,8 @@ export default function LoginForm({ onSuccess }) {
               <li>Flujo B2B con auditoría por ticket</li>
             </ul>
             <div className="hero-cta">
-              <a className="primary" href="/afilia">Crear cuenta</a>
-              <a className="secondary" href="/consulta-ticket">Consultar ticket</a>
+              <a className="primary" href="/?view=afilia">Crear cuenta</a>
+              <a className="secondary" href="/?view=consulta-ticket">Consultar ticket</a>
             </div>
             <div className="support">
               <span>Soporte: 10:00 AM a 8:00 PM</span>
@@ -223,8 +223,8 @@ export default function LoginForm({ onSuccess }) {
                 💡 <strong>Demo:</strong> Usa "super admin" para ver todas las casas o selecciona "Casa de Apuestas"
               </p>
               <div className="helper-links">
-                <a href="/recuperar">Recuperar cuenta</a>
-                <a href="/registro">Crear cuenta</a>
+                <a href="/?view=reset">Recuperar cuenta</a>
+                <a href="/?view=afilia">Crear cuenta</a>
               </div>
             </div>
           </div>

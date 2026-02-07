@@ -2,14 +2,26 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Admin from "./pages/Admin";
 import HousePortal from "./pages/HousePortal";
 import ConsultTicket from "./pages/ConsultTicket";
+import AffiliateSignup from "./pages/AffiliateSignup";
+import ResetPassword from "./pages/ResetPassword";
 import LoginForm from "./components/LoginForm";
 
 function AppContent() {
   const { isAuthenticated, isSuperAdmin, user, logout, loading } = useAuth();
   const pathname = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get("view");
 
-  if (pathname.startsWith("/consulta-ticket")) {
+  if (pathname.startsWith("/consulta-ticket") || view === "consulta-ticket") {
     return <ConsultTicket />;
+  }
+
+  if (pathname.startsWith("/afilia") || pathname.startsWith("/registro") || view === "afilia") {
+    return <AffiliateSignup />;
+  }
+
+  if (pathname.startsWith("/reset") || pathname.startsWith("/recuperar") || view === "reset") {
+    return <ResetPassword />;
   }
 
   if (loading) {
