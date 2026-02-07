@@ -288,27 +288,11 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
         continue; // Juego aún está en eventos activos, no se puede resolver
       }
 
-      // Si el juego desapareció de eventos activos y ya pasó su hora de inicio, cerrar en 30 min
-      const eventTime = new Date(selection.game_commence_time);
-      const now = Date.now();
-      const maxDelayMs = 30 * 60 * 1000;
-
-      if (!isNaN(eventTime.getTime()) && now - eventTime.getTime() >= maxDelayMs) {
-        console.log(`      ❌ Selección ${selection.id}: sin scores > 30 min después del inicio - marcada como perdida`);
-        try {
-          await BetSelection.updateStatus(selection.id, 'lost');
-        } catch (error) {
-          console.error(`      ⚠️  No se pudo actualizar estado de selección ${selection.id}:`, error.message);
-        }
-        anyLost = true;
-        allWon = false;
-        continue;
-      }
-
-      console.log(`      ⚠️  Selección ${selection.id}: juego no está en activos, sin scores disponibles - esperando ventana 30 min`);
+      // Si el juego desapareció de eventos activos y aún no hay scores, esperar a la API
+      console.log(`      ⚠️  Selección ${selection.id}: juego no está en activos, sin scores disponibles - esperando API`);
       hasNoScores = true;
       allWon = false;
-      continue; // Aún dentro de la ventana de 30 minutos
+      continue;
     }
 
     if (matchedGame.commence_time && selection.game_commence_time !== matchedGame.commence_time) {
