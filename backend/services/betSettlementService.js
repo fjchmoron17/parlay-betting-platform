@@ -148,7 +148,8 @@ function determineWinner(game) {
  */
 function evaluateH2HBet(bet, game) {
   const winner = determineWinner(game);
-  if (!winner || winner === 'draw') return null;
+  if (!winner) return null;
+  if (winner === 'draw') return 'void';
 
   return bet.selected_team === winner;
 }
@@ -202,17 +203,27 @@ function evaluateTotalsBet(bet, game) {
  * Evaluar si una apuesta individual ganó
  */
 function evaluateBet(bet, game) {
+  let result = null;
+
   switch (bet.market) {
     case 'h2h':
-      return evaluateH2HBet(bet, game);
+      result = evaluateH2HBet(bet, game);
+      break;
     case 'spreads':
-      return evaluateSpreadBet(bet, game);
+      result = evaluateSpreadBet(bet, game);
+      break;
     case 'totals':
-      return evaluateTotalsBet(bet, game);
+      result = evaluateTotalsBet(bet, game);
+      break;
     default:
       console.warn(`Market type ${bet.market} not supported for auto-settlement`);
       return null;
   }
+
+  if (result === 'void') return 'void';
+  if (result === true) return 'won';
+  if (result === false) return 'lost';
+  return null;
 }
 
 /**
@@ -305,11 +316,19 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
       }
     }
 
-    const selectionWon = evaluateBet(selection, matchedGame);
+    const selectionResult = evaluateBet(selection, matchedGame);
     
-    if (selectionWon === null) {
+    if (selectionResult === null) {
       console.log(`      ⏸️  Selección ${selection.id}: no se pudo evaluar`);
       // No se pudo evaluar, mantener pendiente
+      allWon = false;
+      continue;
+    }
+
+    if (selectionResult === 'void') {
+      evaluatedCount++;
+      await BetSelection.updateStatus(selection.id, 'void');
+      console.log(`      ⚪️ Selección ${selection.id}: ${selection.selected_team} - EMPATE/VOID`);
       allWon = false;
       continue;
     }
@@ -317,12 +336,12 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     evaluatedCount++;
     
     // Actualizar el estado de la selección
-    const selectionStatus = selectionWon ? 'won' : 'lost';
+    const selectionStatus = selectionResult;
     await BetSelection.updateStatus(selection.id, selectionStatus);
     
-    console.log(`      ${selectionWon ? '✅' : '❌'} Selección ${selection.id}: ${selection.selected_team} - ${selectionWon ? 'GANÓ' : 'PERDIÓ'}`);
+    console.log(`      ${selectionResult === 'won' ? '✅' : '❌'} Selección ${selection.id}: ${selection.selected_team} - ${selectionResult === 'won' ? 'GANÓ' : 'PERDIÓ'}`);
 
-    if (selectionWon === false) {
+    if (selectionResult === 'lost') {
       anyLost = true;
       allWon = false;
       // No cortar: seguir actualizando otras selecciones terminadas
@@ -383,17 +402,32 @@ async function processUnsettledBets() {
     }
 
     // Obtener todas las apuestas pendientes
-    const pendingBets = await Bet.findAllPending();
+    const pendingSelectionResult = await query(
+      `SELECT DISTINCT bet_id
+       FROM bet_selections
+       WHERE selection_status = 'pending'`
+    );
 
-    if (pendingBets.length === 0) {
-      console.log('✅ No hay apuestas pendientes para procesar');
+    const pendingSelectionBetIds = pendingSelectionResult.rows.map(row => row.bet_id);
+
+    if (pendingSelectionBetIds.length === 0) {
+      console.log('✅ No hay selecciones pendientes para procesar');
       return { processed: 0, settled: 0 };
     }
 
-    console.log(`📊 Encontradas ${pendingBets.length} apuestas pendientes`);
+    const betsResult = await query(
+      `SELECT * FROM bets WHERE id = ANY($1::int[]) ORDER BY placed_at DESC`,
+      [pendingSelectionBetIds]
+    );
 
-    // Cargar selecciones para cada apuesta
-    for (const bet of pendingBets) {
+    const selectionBets = betsResult.rows;
+    const pendingBets = selectionBets.filter(bet => bet.status === 'pending');
+
+    console.log(`📊 Encontradas ${pendingBets.length} apuestas pendientes`);
+    console.log(`📌 Selecciones pendientes en ${selectionBets.length} apuestas (incluye resueltas)`);
+
+    // Cargar selecciones para cada apuesta con selecciones pendientes
+    for (const bet of selectionBets) {
       bet.selections = await BetSelection.findByBetId(bet.id);
     }
 
@@ -414,7 +448,7 @@ async function processUnsettledBets() {
     const sportsMap = await getSportsTitleToKeyMap();
 
     // Agrupar por deporte para minimizar llamadas a la API
-    const sportKeys = [...new Set(pendingBets
+    const sportKeys = [...new Set(selectionBets
       .filter(bet => bet.selections && bet.selections.length > 0)
       .flatMap(bet => bet.selections.map(sel => resolveSportKey(sel.league, sportsMap, leagueToSportKey)))
       .filter(key => key && key !== 'unknown')
@@ -440,7 +474,7 @@ async function processUnsettledBets() {
     let settledCount = 0;
 
     // Procesar cada apuesta
-    for (const bet of pendingBets) {
+    for (const bet of selectionBets) {
       try {
         const betSportKeys = (bet.selections || [])
           .map(sel => resolveSportKey(sel.league, sportsMap, leagueToSportKey))
@@ -453,7 +487,7 @@ async function processUnsettledBets() {
 
         const result = await settleParlayBet(bet, completedGames, activeGames);
 
-        if (result) {
+        if (result && bet.status === 'pending') {
           // Actualizar la apuesta usando el método estático
           await Bet.update(bet.id, {
             status: result.status,
@@ -463,7 +497,7 @@ async function processUnsettledBets() {
 
           settledCount++;
           console.log(`   ✅ Apuesta ${bet.bet_ticket_number} resuelta: ${result.status.toUpperCase()}, win: $${result.actual_win}`);
-        } else {
+        } else if (!result) {
           console.log(`   ⏸️  Apuesta ${bet.id}: juegos aún no completados`);
         }
       } catch (error) {
