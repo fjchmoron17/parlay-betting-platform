@@ -235,8 +235,17 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     const eventDate = toUTCDateOnly(selection.game_commence_time);
 
     if (!eventDate) {
-      console.log(`      ⏸️  Selección ${selection.id}: sin game_commence_time válido`);
-      return null;
+      console.log(`      ❌ Selección ${selection.id}: sin game_commence_time válido - marcando apuesta como perdida`);
+      try {
+        await BetSelection.updateStatus(selection.id, 'lost');
+      } catch (error) {
+        console.error(`      ⚠️  No se pudo actualizar estado de selección ${selection.id}:`, error.message);
+      }
+
+      return {
+        status: 'lost',
+        actual_win: 0
+      };
     }
 
     if (new Date(selection.game_commence_time) > new Date()) {
