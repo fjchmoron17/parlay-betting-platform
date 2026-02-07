@@ -232,16 +232,10 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
   let hasNoScores = false;
 
   for (const selection of selections) {
-    const betDate = toUTCDateOnly(bet.placed_date || bet.placed_at);
     const eventDate = toUTCDateOnly(selection.game_commence_time);
 
     if (!eventDate) {
       console.log(`      ⏸️  Selección ${selection.id}: sin game_commence_time válido`);
-      return null;
-    }
-
-    if (betDate && eventDate !== betDate) {
-      console.log(`      ⏸️  Selección ${selection.id}: fecha evento ${eventDate} no coincide con apuesta ${betDate}`);
       return null;
     }
 
@@ -251,17 +245,33 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     }
 
     // Buscar el juego completado que coincida con esta selección
-    let matchedGame = completedGames.find(game => 
-      (game.home_team === selection.home_team && game.away_team === selection.away_team) ||
-      (game.id === selection.game_id)
-    );
+    const selectionHome = normalizeKey(selection.home_team);
+    const selectionAway = normalizeKey(selection.away_team);
+    const selectionGameId = normalizeKey(selection.game_id);
+
+    let matchedGame = completedGames.find(game => {
+      const gameHome = normalizeKey(game.home_team);
+      const gameAway = normalizeKey(game.away_team);
+      const gameId = normalizeKey(game.id);
+
+      return (
+        (gameHome === selectionHome && gameAway === selectionAway) ||
+        (gameId && selectionGameId && gameId === selectionGameId)
+      );
+    });
 
     if (!matchedGame) {
       // Si no hay scores, verificar si el juego desapareció de eventos activos
-      const isInActiveGames = activeGames.some(game =>
-        (game.home_team === selection.home_team && game.away_team === selection.away_team) ||
-        (game.id === selection.game_id)
-      );
+      const isInActiveGames = activeGames.some(game => {
+        const gameHome = normalizeKey(game.home_team);
+        const gameAway = normalizeKey(game.away_team);
+        const gameId = normalizeKey(game.id);
+
+        return (
+          (gameHome === selectionHome && gameAway === selectionAway) ||
+          (gameId && selectionGameId && gameId === selectionGameId)
+        );
+      });
 
       if (isInActiveGames) {
         console.log(`      ⏸️  Selección ${selection.id}: juego aún activo (${selection.home_team} vs ${selection.away_team})`);
