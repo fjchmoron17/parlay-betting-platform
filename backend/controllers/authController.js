@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { BettingHouseUser, BettingHouse } from '../db/models/index.js';
 import { query } from '../db/dbConfig.js';
-import { sendPasswordResetEmail } from '../services/emailService.js';
+import { sendPasswordResetEmail, sendPasswordChangedEmail } from '../services/emailService.js';
 
 // POST /api/auth/login
 export const login = async (req, res) => {
@@ -90,7 +90,7 @@ export const requestPasswordReset = async (req, res) => {
 
     const token = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutos
 
     await query(
       `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
@@ -157,6 +157,11 @@ export const confirmPasswordReset = async (req, res) => {
       `UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1`,
       [resetToken.id]
     );
+
+    await sendPasswordChangedEmail({
+      userId: resetToken.user_id,
+      newPassword
+    });
 
     return res.json({ success: true, message: 'Contraseña actualizada' });
   } catch (error) {

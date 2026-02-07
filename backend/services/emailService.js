@@ -350,3 +350,42 @@ export async function sendPasswordResetEmail({ to, resetUrl }) {
     return { success: false, error: error.message };
   }
 }
+
+export async function sendPasswordChangedEmail({ userId, newPassword }) {
+  try {
+    if (!userId) {
+      throw new Error('userId is required');
+    }
+
+    const { query } = await import('../db/dbConfig.js');
+    const userResult = await query(
+      'SELECT email, username FROM betting_house_users WHERE id = $1 LIMIT 1',
+      [userId]
+    );
+
+    if (!userResult.rows.length) {
+      throw new Error('User not found for password change email');
+    }
+
+    const { email, username } = userResult.rows[0];
+
+    const emailHtml = `
+      <h2>Contraseña actualizada</h2>
+      <p>Hola ${username || ''}, tu contraseña fue actualizada correctamente.</p>
+      <p><strong>Nueva contraseña:</strong> ${newPassword}</p>
+      <p>Si no realizaste este cambio, contacta al administrador de inmediato.</p>
+      <p><a href="https://parlay-betting-platform-production.up.railway.app">Ir al Portal</a></p>
+    `;
+
+    await sendEmail({
+      to: email,
+      subject: 'Contraseña actualizada - Parlay Bets',
+      html: emailHtml
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error enviando email de contraseña:', error);
+    return { success: false, error: error.message };
+  }
+}
