@@ -126,6 +126,60 @@ export const getBetById = async (req, res) => {
   }
 };
 
+// Consulta pública por número de ticket
+export const getBetByTicketNumber = async (req, res) => {
+  try {
+    const ticket = (req.params.ticket || req.query.ticket || '').trim();
+
+    if (!ticket) {
+      return res.status(400).json({
+        success: false,
+        error: 'Ticket number is required'
+      });
+    }
+
+    const betResult = await query(
+      `SELECT id, bet_ticket_number, status, bet_type, total_stake, total_odds,
+              potential_win, actual_win, placed_at, placed_date, settled_at
+       FROM bets
+       WHERE bet_ticket_number = $1
+       LIMIT 1`,
+      [ticket]
+    );
+
+    const bet = betResult.rows[0];
+
+    if (!bet) {
+      return res.status(404).json({
+        success: false,
+        error: 'Bet not found'
+      });
+    }
+
+    const selectionsResult = await query(
+      `SELECT id, home_team, away_team, league, market, selected_team,
+              selection_status, game_commence_time, point_spread
+       FROM bet_selections
+       WHERE bet_id = $1
+       ORDER BY id`,
+      [bet.id]
+    );
+
+    bet.selections = selectionsResult.rows || [];
+
+    res.json({
+      success: true,
+      data: bet
+    });
+  } catch (error) {
+    console.error('Error fetching bet by ticket:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch bet'
+    });
+  }
+};
+
 export const settleBet = async (req, res) => {
   try {
     const { id } = req.params;

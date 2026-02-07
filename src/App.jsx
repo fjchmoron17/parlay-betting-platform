@@ -1,10 +1,16 @@
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Admin from "./pages/Admin";
 import HousePortal from "./pages/HousePortal";
+import ConsultTicket from "./pages/ConsultTicket";
 import LoginForm from "./components/LoginForm";
 
 function AppContent() {
   const { isAuthenticated, isSuperAdmin, user, logout, loading } = useAuth();
+  const pathname = window.location.pathname;
+
+  if (pathname.startsWith("/consulta-ticket")) {
+    return <ConsultTicket />;
+  }
 
   if (loading) {
     return (

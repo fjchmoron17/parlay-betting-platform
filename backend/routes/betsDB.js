@@ -7,6 +7,7 @@ import {
   settleBet,
   getBetStats,
   getBetsByDate,
+  getBetByTicketNumber,
   updateSelections,
   normalizeSelectionDates,
   validateAndFixBets,
@@ -31,6 +32,9 @@ router.get('/by-date', getBetsByDate);
 
 // GET /api/bets-db/pending - Obtener todas las selecciones pendientes
 router.get('/pending', getPendingSelections);
+
+// GET /api/bets-db/ticket/:ticket - Consulta pública por número de ticket
+router.get('/ticket/:ticket', getBetByTicketNumber);
 
 // GET /api/bets-db/detail/:id - Obtener una apuesta por ID
 router.get('/detail/:id', getBetById);
