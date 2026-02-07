@@ -288,13 +288,27 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
         continue; // Juego aún está en eventos activos, no se puede resolver
       }
 
-      // Si el juego desapareció de eventos activos y ya pasó su hora de inicio, probablemente terminó
-      // pero sin scores disponibles, marcar como void (empate)
-      console.log(`      ⚠️  Selección ${selection.id}: juego no está en activos, sin scores disponibles - VOID`);
+      // Si el juego desapareció de eventos activos y ya pasó su hora de inicio, cerrar en 30 min
+      const eventTime = new Date(selection.game_commence_time);
+      const now = Date.now();
+      const maxDelayMs = 30 * 60 * 1000;
+
+      if (!isNaN(eventTime.getTime()) && now - eventTime.getTime() >= maxDelayMs) {
+        console.log(`      ❌ Selección ${selection.id}: sin scores > 30 min después del inicio - marcada como perdida`);
+        try {
+          await BetSelection.updateStatus(selection.id, 'lost');
+        } catch (error) {
+          console.error(`      ⚠️  No se pudo actualizar estado de selección ${selection.id}:`, error.message);
+        }
+        anyLost = true;
+        allWon = false;
+        continue;
+      }
+
+      console.log(`      ⚠️  Selección ${selection.id}: juego no está en activos, sin scores disponibles - esperando ventana 30 min`);
       hasNoScores = true;
-      // Marcar como void (sin resolver automáticamente)
       allWon = false;
-      continue; // Por ahora, esperar a que la API entregue scores
+      continue; // Aún dentro de la ventana de 30 minutos
     }
 
     if (matchedGame.commence_time && selection.game_commence_time !== matchedGame.commence_time) {
@@ -359,6 +373,30 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
 async function processUnsettledBets() {
   try {
     console.log('🔄 Iniciando proceso de resolución automática de apuestas...');
+
+    // Cerrar selecciones con Fecha N/D (game_commence_time NULL)
+    const ndResult = await query(
+      `WITH updated AS (
+        UPDATE bet_selections
+        SET selection_status = 'lost'
+        WHERE selection_status = 'pending'
+          AND game_commence_time IS NULL
+        RETURNING bet_id
+      )
+      SELECT DISTINCT bet_id FROM updated`
+    );
+
+    if (ndResult.rows.length > 0) {
+      const betIds = ndResult.rows.map(r => r.bet_id);
+      console.log(`⚠️  Marcadas ${betIds.length} apuestas con selecciones Fecha N/D como PERDIDAS`);
+
+      await query(
+        `UPDATE bets
+         SET status = 'lost', actual_win = 0, settled_at = NOW()
+         WHERE id = ANY($1::int[]) AND status = 'pending'`,
+        [betIds]
+      );
+    }
 
     // Obtener todas las apuestas pendientes
     const pendingBets = await Bet.findAllPending();
