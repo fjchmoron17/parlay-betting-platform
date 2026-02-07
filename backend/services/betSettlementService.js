@@ -244,7 +244,7 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
 
       anyLost = true;
       allWon = false;
-      break;
+      continue;
     }
 
     if (new Date(selection.game_commence_time) > new Date()) {
@@ -327,7 +327,7 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     if (selectionWon === false) {
       anyLost = true;
       allWon = false;
-      break; // Si una pierde, toda la parlay pierde
+      // No cortar: seguir actualizando otras selecciones terminadas
     }
   }
 
