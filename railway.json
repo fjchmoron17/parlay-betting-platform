@@ -9,6 +9,6 @@
     "restartPolicyMaxRetries": 10
   },
   "runtime": {
-    "nodeVersion": "22"
+    "nodeVersion": "22.12.0"
   }
 }
