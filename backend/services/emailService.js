@@ -1,11 +1,17 @@
 // backend/services/emailService.js
 import nodemailer from 'nodemailer';
+import axios from 'axios';
 
 const MAIL_SERVICE = (process.env.MAIL_SERVICE || 'gmail').trim();
 const MAIL_HOST = process.env.MAIL_HOST?.trim();
 const MAIL_PORT = process.env.MAIL_PORT ? Number(process.env.MAIL_PORT) : undefined;
 const MAIL_USER = process.env.MAIL_USER;
 const MAIL_PASSWORD = process.env.MAIL_PASSWORD;
+const GRAPH_TENANT_ID = process.env.GRAPH_TENANT_ID;
+const GRAPH_CLIENT_ID = process.env.GRAPH_CLIENT_ID;
+const GRAPH_CLIENT_SECRET = process.env.GRAPH_CLIENT_SECRET;
+const GRAPH_SENDER = process.env.GRAPH_SENDER || process.env.MAIL_USER;
+const USE_GRAPH = MAIL_SERVICE.toLowerCase() === 'graph' || process.env.USE_GRAPH_EMAIL === 'true';
 
 // Log de configuración al iniciar
 console.log('📧 Email Service Init:');
@@ -14,6 +20,10 @@ console.log('  HOST:', MAIL_HOST || (MAIL_SERVICE?.toLowerCase() === 'sendgrid' 
 console.log('  PORT:', MAIL_PORT || (MAIL_SERVICE?.toLowerCase() === 'sendgrid' ? 587 : '—'));
 console.log('  USER:', MAIL_USER || 'NOT SET');
 console.log('  PASSWORD:', MAIL_PASSWORD ? 'SET (' + MAIL_PASSWORD.length + ' chars)' : 'NOT SET');
+if (USE_GRAPH) {
+  console.log('  GRAPH:', GRAPH_CLIENT_ID ? 'ENABLED' : 'NOT SET');
+  console.log('  GRAPH_SENDER:', GRAPH_SENDER || 'NOT SET');
+}
 
 // Configurar transportador de email
 const transporter = nodemailer.createTransport(
@@ -46,6 +56,87 @@ const transporter = nodemailer.createTransport(
       }
 );
 
+  let graphTokenCache = {
+    token: null,
+    expiresAt: 0
+  };
+
+  const getGraphToken = async () => {
+    if (!GRAPH_TENANT_ID || !GRAPH_CLIENT_ID || !GRAPH_CLIENT_SECRET) {
+      throw new Error('Graph credentials are not configured');
+    }
+
+    const now = Date.now();
+    if (graphTokenCache.token && graphTokenCache.expiresAt > now + 60_000) {
+      return graphTokenCache.token;
+    }
+
+    const tokenUrl = `https://login.microsoftonline.com/${GRAPH_TENANT_ID}/oauth2/v2.0/token`;
+    const params = new URLSearchParams();
+    params.append('client_id', GRAPH_CLIENT_ID);
+    params.append('client_secret', GRAPH_CLIENT_SECRET);
+    params.append('scope', 'https://graph.microsoft.com/.default');
+    params.append('grant_type', 'client_credentials');
+
+    const response = await axios.post(tokenUrl, params.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+
+    const token = response.data.access_token;
+    const expiresIn = response.data.expires_in || 3600;
+    graphTokenCache = {
+      token,
+      expiresAt: now + (expiresIn * 1000)
+    };
+
+    return token;
+  };
+
+  const sendGraphEmail = async ({ to, subject, html }) => {
+    if (!GRAPH_SENDER) {
+      throw new Error('Graph sender is not configured');
+    }
+
+    const accessToken = await getGraphToken();
+    const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(GRAPH_SENDER)}/sendMail`;
+
+    await axios.post(
+      url,
+      {
+        message: {
+          subject,
+          body: {
+            contentType: 'HTML',
+            content: html
+          },
+          toRecipients: [
+            {
+              emailAddress: { address: to }
+            }
+          ]
+        },
+        saveToSentItems: true
+      },
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }
+    );
+  };
+
+  const sendEmail = async ({ to, subject, html }) => {
+    if (USE_GRAPH) {
+      await sendGraphEmail({ to, subject, html });
+      return;
+    }
+
+    await transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to,
+      subject,
+      html
+    });
+  };
+
 // Función de prueba para verificar configuración
 export async function testEmailConnection() {
   try {
@@ -56,6 +147,32 @@ export async function testEmailConnection() {
     console.log('MAIL_USER:', process.env.MAIL_USER ? '✓ SET' : 'NOT SET');
     console.log('MAIL_PASSWORD:', process.env.MAIL_PASSWORD ? `✓ SET (${process.env.MAIL_PASSWORD.substring(0, 10)}...)` : 'NOT SET');
     
+    if (USE_GRAPH) {
+      if (!GRAPH_TENANT_ID || !GRAPH_CLIENT_ID || !GRAPH_CLIENT_SECRET || !GRAPH_SENDER) {
+        return {
+          success: false,
+          message: 'Missing Graph configuration',
+          config: {
+            GRAPH_TENANT_ID: GRAPH_TENANT_ID ? 'SET' : 'NOT SET',
+            GRAPH_CLIENT_ID: GRAPH_CLIENT_ID ? 'SET' : 'NOT SET',
+            GRAPH_CLIENT_SECRET: GRAPH_CLIENT_SECRET ? 'SET' : 'NOT SET',
+            GRAPH_SENDER: GRAPH_SENDER || 'NOT SET'
+          }
+        };
+      }
+
+      await getGraphToken();
+      return {
+        success: true,
+        message: 'Graph email configured correctly',
+        config: {
+          GRAPH_TENANT_ID: 'SET',
+          GRAPH_CLIENT_ID: 'SET',
+          GRAPH_SENDER: GRAPH_SENDER
+        }
+      };
+    }
+
     if (!process.env.MAIL_USER || !process.env.MAIL_PASSWORD) {
       return { 
         success: false, 
@@ -90,13 +207,20 @@ export async function testEmailConnection() {
       message: 'Email service configuration error',
       error: error.message,
       errorCode: error.code,
-      config: {
-        service: process.env.MAIL_SERVICE || 'gmail',
-        host: process.env.MAIL_HOST || 'auto',
-        port: process.env.MAIL_PORT || 'auto',
-        user: process.env.MAIL_USER ? 'SET' : 'NOT SET',
-        password: process.env.MAIL_PASSWORD ? 'SET' : 'NOT SET'
-      }
+      config: USE_GRAPH
+        ? {
+            GRAPH_TENANT_ID: GRAPH_TENANT_ID ? 'SET' : 'NOT SET',
+            GRAPH_CLIENT_ID: GRAPH_CLIENT_ID ? 'SET' : 'NOT SET',
+            GRAPH_CLIENT_SECRET: GRAPH_CLIENT_SECRET ? 'SET' : 'NOT SET',
+            GRAPH_SENDER: GRAPH_SENDER || 'NOT SET'
+          }
+        : {
+            service: process.env.MAIL_SERVICE || 'gmail',
+            host: process.env.MAIL_HOST || 'auto',
+            port: process.env.MAIL_PORT || 'auto',
+            user: process.env.MAIL_USER ? 'SET' : 'NOT SET',
+            password: process.env.MAIL_PASSWORD ? 'SET' : 'NOT SET'
+          }
     };
   }
 }
@@ -156,16 +280,14 @@ export async function sendBettingHouseRegistrationEmail(
     `;
 
     // Enviar email a la casa
-    await transporter.sendMail({
-      from: process.env.MAIL_USER,
+    await sendEmail({
       to: houseData.email,
       subject: 'Bienvenido a Parlay Bets - Registro Completado',
       html: houseEmailHtml
     });
 
     // Enviar email al administrador
-    await transporter.sendMail({
-      from: process.env.MAIL_USER,
+    await sendEmail({
       to: 'fjchmoron@chirinossolutions.com',
       subject: `Nueva Casa de Apuestas: ${houseData.name}`,
       html: adminEmailHtml
@@ -194,8 +316,7 @@ export async function sendAccountCreatedEmail({ to, username, tempPassword, hous
       <p><a href="https://parlay-betting-platform-production.up.railway.app">Ir al Portal</a></p>
     `;
 
-    await transporter.sendMail({
-      from: process.env.MAIL_USER,
+    await sendEmail({
       to,
       subject: 'Tu cuenta Parlay Bets está lista',
       html: emailHtml
@@ -217,8 +338,7 @@ export async function sendPasswordResetEmail({ to, resetUrl }) {
       <p>Si no solicitaste este cambio, ignora este mensaje.</p>
     `;
 
-    await transporter.sendMail({
-      from: process.env.MAIL_USER,
+    await sendEmail({
       to,
       subject: 'Restablecer contraseña - Parlay Bets',
       html: emailHtml
