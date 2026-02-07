@@ -20,24 +20,22 @@ export default function ApiQuotaMonitor() {
       setLoading(true);
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
 
-      // Consumir el endpoint de juegos que ya expone quotaRemaining/quotaUsed en el body
-      const response = await fetch(`${API_URL}/games?region=us`);
+      // Consultar cuotas de ambas API keys
+      const response = await fetch(`${API_URL}/games/quota-keys`);
       if (!response.ok) {
         throw new Error('Failed to fetch quota info');
       }
       const data = await response.json();
 
-      // Intentar primero con los campos enviados en el cuerpo; usar headers como respaldo
-      const remainingHeader = response.headers.get('x-requests-remaining');
-      const usedHeader = response.headers.get('x-requests-used');
-
-      const remaining = data?.quotaRemaining ?? (remainingHeader ? parseInt(remainingHeader) : null);
-      const used = data?.quotaUsed ?? (usedHeader ? parseInt(usedHeader) : null);
+      const keys = data?.data || [];
+      const primary = keys[0] || null;
+      const activeLabel = data?.activeKey || primary?.label || null;
+      const active = keys.find((item) => item.label === activeLabel) || primary;
 
       setQuotaInfo({
-        remaining,
-        used,
-        total: 500 // Plan gratuito de The Odds API
+        keys,
+        activeLabel,
+        active
       });
 
       setLastUpdate(new Date());
@@ -51,8 +49,8 @@ export default function ApiQuotaMonitor() {
   };
 
   const getUsagePercentage = () => {
-    if (!quotaInfo || quotaInfo.remaining === null) return 0;
-    return ((quotaInfo.total - quotaInfo.remaining) / quotaInfo.total) * 100;
+    if (!quotaInfo?.active || quotaInfo.active.remaining === null) return 0;
+    return ((quotaInfo.active.total - quotaInfo.active.remaining) / quotaInfo.active.total) * 100;
   };
 
   const getStatusColor = () => {
@@ -123,6 +121,10 @@ export default function ApiQuotaMonitor() {
             </span>
           </div>
 
+          {quotaInfo?.activeLabel && (
+            <div className="active-key">Clave activa: {quotaInfo.activeLabel}</div>
+          )}
+
           <div className="quota-visual">
             <div className="circular-progress">
               <svg width="180" height="180" viewBox="0 0 180 180">
@@ -150,7 +152,7 @@ export default function ApiQuotaMonitor() {
               </svg>
               <div className="progress-content">
                 <div className="remaining-count">
-                  {quotaInfo?.remaining ?? '---'}
+                  {quotaInfo?.active?.remaining ?? '---'}
                 </div>
                 <div className="remaining-label">Requests restantes</div>
               </div>
@@ -160,11 +162,11 @@ export default function ApiQuotaMonitor() {
           <div className="quota-details">
             <div className="detail-row">
               <span className="detail-label">Total asignado:</span>
-              <span className="detail-value">{quotaInfo?.total ?? '---'}</span>
+              <span className="detail-value">{quotaInfo?.active?.total ?? '---'}</span>
             </div>
             <div className="detail-row">
               <span className="detail-label">Utilizados:</span>
-              <span className="detail-value">{quotaInfo?.used ?? '---'}</span>
+              <span className="detail-value">{quotaInfo?.active?.used ?? '---'}</span>
             </div>
             <div className="detail-row">
               <span className="detail-label">Porcentaje usado:</span>
@@ -175,6 +177,26 @@ export default function ApiQuotaMonitor() {
 
         {/* Cards Secundarias */}
         <div className="secondary-cards">
+          {quotaInfo?.keys?.length > 0 && (
+            <div className="info-card full-width">
+              <div className="info-content">
+                <span className="info-label">Cuotas por API Key</span>
+                <div className="key-quota-list">
+                  {quotaInfo.keys.map((item) => (
+                    <div className="key-quota-item" key={item.label}>
+                      <span className="key-label">{item.label}</span>
+                      <span className="key-value">
+                        {item.remaining ?? '---'} / {item.total ?? '---'}
+                      </span>
+                      <span className={`key-status ${item.ok ? 'ok' : 'error'}`}>
+                        {item.ok ? 'OK' : 'Error'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           <div className="info-card">
             <div className="info-icon">⏰</div>
             <div className="info-content">
