@@ -235,22 +235,22 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     const eventDate = toUTCDateOnly(selection.game_commence_time);
 
     if (!eventDate) {
-      console.log(`      ❌ Selección ${selection.id}: sin game_commence_time válido - marcando apuesta como perdida`);
+      console.log(`      ❌ Selección ${selection.id}: sin game_commence_time válido - marcando selección como perdida`);
       try {
         await BetSelection.updateStatus(selection.id, 'lost');
       } catch (error) {
         console.error(`      ⚠️  No se pudo actualizar estado de selección ${selection.id}:`, error.message);
       }
 
-      return {
-        status: 'lost',
-        actual_win: 0
-      };
+      anyLost = true;
+      allWon = false;
+      break;
     }
 
     if (new Date(selection.game_commence_time) > new Date()) {
       console.log(`      ⏸️  Selección ${selection.id}: evento aún no inicia (${selection.game_commence_time})`);
-      return null;
+      allWon = false;
+      continue;
     }
 
     // Buscar el juego completado que coincida con esta selección
@@ -284,7 +284,8 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
 
       if (isInActiveGames) {
         console.log(`      ⏸️  Selección ${selection.id}: juego aún activo (${selection.home_team} vs ${selection.away_team})`);
-        return null; // Juego aún está en eventos activos, no se puede resolver
+        allWon = false;
+        continue; // Juego aún está en eventos activos, no se puede resolver
       }
 
       // Si el juego desapareció de eventos activos y ya pasó su hora de inicio, probablemente terminó
@@ -292,7 +293,8 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
       console.log(`      ⚠️  Selección ${selection.id}: juego no está en activos, sin scores disponibles - VOID`);
       hasNoScores = true;
       // Marcar como void (sin resolver automáticamente)
-      return null; // Por ahora, esperar a que la API entregue scores
+      allWon = false;
+      continue; // Por ahora, esperar a que la API entregue scores
     }
 
     if (matchedGame.commence_time && selection.game_commence_time !== matchedGame.commence_time) {
@@ -310,7 +312,8 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     if (selectionWon === null) {
       console.log(`      ⏸️  Selección ${selection.id}: no se pudo evaluar`);
       // No se pudo evaluar, mantener pendiente
-      return null;
+      allWon = false;
+      continue;
     }
 
     evaluatedCount++;
