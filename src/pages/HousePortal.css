@@ -223,12 +223,12 @@
 }
 
 .selection-panel {
-  background: #0f172a;
-  color: #e2e8f0;
+  background: #ffffff;
+  color: #1f2937;
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 20px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
 .bet-error {
@@ -284,7 +284,7 @@
 .selection-subtitle {
   margin: 0;
   font-size: 13px;
-  color: #cbd5e1;
+  color: #6b7280;
 }
 
 .selection-actions {
@@ -303,8 +303,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 10px 12px;
   gap: 12px;
@@ -325,15 +325,15 @@
 
 .selection-teams {
   font-weight: 600;
-  color: #f8fafc;
+  color: #111827;
 }
 
 .selection-market {
   font-size: 12px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.18);
-  color: #93c5fd;
+  background: #dbeafe;
+  color: #1d4ed8;
   letter-spacing: 0.03em;
 }
 
@@ -341,7 +341,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #e2e8f0;
+  color: #374151;
 }
 
 .selection-team {
@@ -352,19 +352,19 @@
   font-size: 12px;
   padding: 2px 6px;
   border-radius: 6px;
-  background: rgba(34, 197, 94, 0.18);
-  color: #4ade80;
+  background: #dcfce7;
+  color: #15803d;
 }
 
 .selection-odds {
   font-weight: 700;
-  color: #22d3ee;
+  color: #0ea5e9;
 }
 
 .remove-selection {
-  background: rgba(239, 68, 68, 0.12);
-  color: #fecaca;
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
   border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
@@ -372,7 +372,7 @@
 }
 
 .remove-selection:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: #fecaca;
 }
 
 .selection-bar {
