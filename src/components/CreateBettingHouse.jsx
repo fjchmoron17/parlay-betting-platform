@@ -12,9 +12,11 @@ export default function CreateBettingHouse({ onSuccess, onCancel, publicMode = f
     username: '',
     password: ''
   });
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const currencies = [
     { code: 'USD', name: 'Dólar (USD)' },
@@ -65,6 +67,11 @@ export default function CreateBettingHouse({ onSuccess, onCancel, publicMode = f
       return;
     }
 
+    if (formData.password !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
+
     if (formData.username.length < 3) {
       setError('El nombre de usuario debe tener al menos 3 caracteres');
       return;
@@ -82,6 +89,7 @@ export default function CreateBettingHouse({ onSuccess, onCancel, publicMode = f
         onSuccess && onSuccess(response.data);
         // Reset form
         setFormData({ name: '', email: '', country: '', currency: 'USD', username: '', password: '' });
+        setConfirmPassword('');
       }
     } catch (err) {
       setError(err.message || 'Error al crear la casa de apuestas');
@@ -205,17 +213,59 @@ export default function CreateBettingHouse({ onSuccess, onCancel, publicMode = f
           <label htmlFor="password">
             Contraseña <span className="required">*</span>
           </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="••••••••"
-            disabled={loading}
-            required
-            minLength={6}
-          />
+          <div className="password-input-wrapper">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              disabled={loading}
+              required
+              minLength={6}
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={loading}
+              title={showPassword ? 'Ocultar' : 'Mostrar'}
+            >
+              {showPassword ? '👁️' : '👁️‍🗨️'}
+            </button>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="confirmPassword">
+            Confirmar Contraseña <span className="required">*</span>
+          </label>
+          <div className="password-input-wrapper">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="confirmPassword"
+              name="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setError(null);
+              }}
+              placeholder="••••••••"
+              disabled={loading}
+              required
+              minLength={6}
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={loading}
+              title={showPassword ? 'Ocultar' : 'Mostrar'}
+            >
+              {showPassword ? '👁️' : '👁️‍🗨️'}
+            </button>
+          </div>
         </div>
 
         <div className="form-actions">
