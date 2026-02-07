@@ -42,6 +42,12 @@ export const login = async (req, res) => {
       if (!house) {
         return res.status(404).json({ success: false, error: 'Casa de apuestas no encontrada' });
       }
+      if (house.status !== 'active') {
+        return res.status(403).json({
+          success: false,
+          error: 'Casa de apuestas inactiva. Contacta al administrador.'
+        });
+      }
     }
 
     const sanitizedUser = {
