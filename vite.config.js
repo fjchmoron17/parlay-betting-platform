@@ -6,9 +6,6 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
-      headers: {
-        'Content-Security-Policy': "script-src 'self' 'unsafe-eval';"
-      }
     }
   preview: {
     host: '0.0.0.0',
