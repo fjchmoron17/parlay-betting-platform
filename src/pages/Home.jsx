@@ -9,6 +9,8 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
   const parlayRef = useRef({}); // Mantener sincrónico para validaciones inmediatas
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Widget refs
+  const widgetRefs = [useRef(null), useRef(null), useRef(null)];
 
   // Sincronizar ref cuando cambia parlay (para remociones)
   useEffect(() => {
@@ -47,100 +49,18 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
   const handleSelect = (gameId, team, odds, gameData = {}) => {
     console.log('🎯 handleSelect called:', { gameId, team, odds, gameData });
     console.log('🔍 bettingMode:', bettingMode, 'selectedGames:', selectedGames);
-    
     // Validar que gameData tenga la información necesaria
     if (!gameData.homeTeam || !gameData.awayTeam) {
       console.error('❌ ERROR: gameData incompleto', gameData);
       alert('Error: Datos del juego incompletos. Intenta de nuevo.');
       return;
     }
-
     // Crear un identificador único del juego basado en home_team + away_team
     const gameMatchId = `${gameData.homeTeam}_vs_${gameData.awayTeam}`;
     console.log('📌 gameMatchId:', gameMatchId);
-
     // VALIDACIÓN DE DUPLICADOS Y TOGGLE
     let isDuplicate = false;
-    let existingSelection = null;
-    
-    if (bettingMode) {
-      // En modo betting, verificar en selectedGames
-      existingSelection = selectedGames.find(game => 
-        `${game.home_team}_vs_${game.away_team}` === gameMatchId
-      );
-      isDuplicate = !!existingSelection;
-      console.log('📋 Checking selectedGames for duplicate:', isDuplicate);
-    } else {
-      // En modo normal, verificar en parlayRef
-      existingSelection = parlayRef.current[gameMatchId];
-      isDuplicate = !!existingSelection;
-      console.log('📋 Checking parlayRef for duplicate:', isDuplicate, parlayRef.current);
-    }
-
-    if (isDuplicate) {
-      console.log('⚠️ DUPLICATE DETECTED - TOGGLING OFF:', gameMatchId);
-      // Si es duplicado, hacer toggle (eliminar)
-      if (bettingMode && onGameSelect) {
-        // En modo betting, enviar la misma selección al padre para que haga toggle
-        onGameSelect({
-          id: gameId,
-          home_team: gameData.homeTeam,
-          away_team: gameData.awayTeam,
-          sport_title: gameData.sportTitle || gameData.league,
-          sport_key: gameData.sportKey,
-          market: gameData.market,
-          selectedTeam: team,
-          selectedOdds: odds,
-          pointSpread: gameData.pointSpread,
-          bookmaker: gameData.bookmaker,
-          commence_time: gameData.commenceTime
-        });
-      } else {
-        // En modo normal, remover de parlayRef
-        handleRemove(gameMatchId);
-      }
-      return;
-    }
-
-    console.log('✅ Adding selection:', gameMatchId);
-
-    // Si está en modo betting, usar el callback externo
-    if (bettingMode && onGameSelect) {
-      onGameSelect({
-        id: gameId,
-        home_team: gameData.homeTeam,
-        away_team: gameData.awayTeam,
-        sport_title: gameData.sportTitle || gameData.league,
-        sport_key: gameData.sportKey,
-        market: gameData.market,
-        selectedTeam: team,
-        selectedOdds: odds,
-        pointSpread: gameData.pointSpread,
-        bookmaker: gameData.bookmaker,
-        commence_time: gameData.commenceTime
-      });
-      return;
-    }
-
-    // Agregar la nueva selección (modo normal)
-    const newParlay = {
-      ...parlayRef.current,
-      [gameMatchId]: {
-        team,
-        odds,
-        homeTeam: gameData.homeTeam,
-        awayTeam: gameData.awayTeam,
-        league: gameData.league,
-        market: gameData.market,
-        gameId
-      },
-    };
-    
-    console.log('📝 newParlay object:', newParlay);
-    parlayRef.current = newParlay; // Actualizar ref inmediatamente
-    console.log('✅ parlayRef.current updated:', parlayRef.current);
-    setParlay(newParlay); // Actualizar state para re-render
-    console.log('✅ setParlay called with:', newParlay);
+    // ...existing code...
   };
 
   const handleRemove = (gameId) => {
@@ -163,6 +83,44 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
     return Object.values(groups);
   };
 
+  // Integración de widgets de monetización
+  useEffect(() => {
+    // Widget de prueba: Google AdSense iframe
+    if (widgetRefs[0].current) {
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-XXXXXXXXXXXXXXXX&output=html&h=600&w=120';
+      iframe.width = '120';
+      iframe.height = '600';
+      iframe.style.border = 'none';
+      widgetRefs[0].current.appendChild(iframe);
+    }
+    // Widgets originales
+    const scripts = [
+      {
+        id: 'elem459d7e6db30947da86fa1bcc07340452',
+        src: 'https://bwasrv.com/tags/display.js?p=%2Fregistration%2F&trk_id=2JTA&media_id=8e046c37-25b2-4994-a9c2-ee9fc3aacc40&width=120&height=600&b=elem459d7e6db30947da86fa1bcc07340452'
+      },
+      {
+        id: 'elem88f738fe94004752b1cbf599c40c14d1',
+        src: 'https://bwasrv.com/tags/display.js?trk_id=2JTA&media_id=42fb2b61-a45d-435b-8b71-f138360dfd44&width=120&height=600&b=elem88f738fe94004752b1cbf599c40c14d1'
+      },
+      {
+        id: 'elembc8a16db80cb4c468a5ff37f1db49c4b',
+        src: 'https://bwasrv.com/tags/display.js?p=%2Fpoker%2F&trk_id=2JTA&media_id=e0960b81-2729-4b05-9f1b-b6520992faf4&width=120&height=600&b=elembc8a16db80cb4c468a5ff37f1db49c4b'
+      }
+    ];
+    scripts.forEach((widget, idx) => {
+      if (widgetRefs[idx].current && !document.getElementById(widget.id)) {
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.id = widget.id;
+        script.src = widget.src;
+        widgetRefs[idx].current.appendChild(script);
+      }
+    });
+  }, []);
+
   return (
     <div className="flex flex-col p-6 gap-6">
       {/* Header */}
@@ -183,7 +141,6 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
               <p className="text-center text-gray-600">⏳ Cargando partidos...</p>
             </div>
           )}
-          
           {error && (
             <div className="alert alert-danger mt-4">
               ⚠️ {error}
@@ -195,7 +152,6 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
               </button>
             </div>
           )}
-
           {!loading && games.length === 0 && !error && (
             <div className="card mt-4">
               <p className="text-center text-gray-600">
@@ -203,7 +159,6 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
               </p>
             </div>
           )}
-
           {!loading && games.length > 0 && (
             <div>
               <p className="text-sm text-gray-600 mb-3">
@@ -221,9 +176,20 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
             </div>
           )}
         </div>
-
         {/* Panel de Parlay */}
         {!bettingMode && <ParlayPanel parlay={parlay} onRemove={handleRemove} />}
+      </div>
+      {/* Widgets de monetización al final */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '32px', flexWrap: 'wrap' }}>
+        <iframe
+          src="https://es.wikipedia.org/wiki/Wikipedia:Portada"
+          width="120"
+          height="600"
+          style={{ border: 'none' }}
+          title="Widget de prueba"
+        ></iframe>
+        <div ref={widgetRefs[1]}></div>
+        <div ref={widgetRefs[2]}></div>
       </div>
     </div>
   );
