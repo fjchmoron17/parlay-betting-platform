@@ -239,6 +239,46 @@ export const DailyReport = {
 
   // Calcular reporte diario
   async calculate(bettingHouseId, reportDate) {
+    // Obtener la fecha de la primera apuesta de la casa
+    const firstBet = await query(
+      `SELECT MIN(placed_at::date) as first_bet_date FROM bets WHERE betting_house_id = $1`,
+      [bettingHouseId]
+    );
+    const firstBetDate = firstBet.rows[0]?.first_bet_date;
+
+    // Si el día es anterior a la primera apuesta, todo debe ser 0
+    if (!firstBetDate || new Date(reportDate) < new Date(firstBetDate)) {
+      const openingBalance = 0;
+      const closingBalance = 0;
+      const result = await query(
+        `INSERT INTO daily_reports (
+          betting_house_id, report_date, 
+          total_bets_placed, total_amount_wagered,
+          bets_won, bets_lost, bets_void, bets_pending,
+          total_winnings, total_losses, total_commissions, net_profit_loss,
+          opening_balance, closing_balance
+        ) VALUES ($1, $2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        ON CONFLICT (betting_house_id, report_date) 
+        DO UPDATE SET
+          total_bets_placed = 0,
+          total_amount_wagered = 0,
+          bets_won = 0,
+          bets_lost = 0,
+          bets_void = 0,
+          bets_pending = 0,
+          total_winnings = 0,
+          total_losses = 0,
+          total_commissions = 0,
+          net_profit_loss = 0,
+          closing_balance = 0,
+          opening_balance = 0,
+          updated_at = CURRENT_TIMESTAMP
+        RETURNING *`,
+        [bettingHouseId, reportDate]
+      );
+      return result.rows[0];
+    }
+
     // Obtener balance de apertura (del día anterior)
     const prevReport = await query(
       `SELECT closing_balance FROM daily_reports
@@ -246,11 +286,8 @@ export const DailyReport = {
        ORDER BY report_date DESC LIMIT 1`,
       [bettingHouseId, reportDate]
     );
-    
-    const openingBalance = prevReport.rows[0]?.closing_balance || 
-      (await query('SELECT account_balance FROM betting_houses WHERE id = $1', [bettingHouseId]))
-        .rows[0]?.account_balance || 0;
-    
+    const openingBalance = prevReport.rows[0]?.closing_balance || 0;
+
     // Calcular totales del día desde las apuestas
     const stats = await query(
       `SELECT
@@ -266,9 +303,7 @@ export const DailyReport = {
       WHERE betting_house_id = $1 AND placed_at::date = $2::date`,
       [bettingHouseId, reportDate]
     );
-    
     const dayStats = stats.rows[0];
-    // Si no hay apuestas ese día, todos los valores deben ser 0 y el balance igual al de apertura
     const noBets = parseInt(dayStats.total_bets) === 0;
     const totalBets = noBets ? 0 : parseInt(dayStats.total_bets);
     const totalWagered = noBets ? 0 : parseFloat(dayStats.total_wagered);
