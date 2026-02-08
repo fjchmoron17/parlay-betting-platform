@@ -229,261 +229,135 @@ export default function HousePortal() {
         <div className="header-left">
           <h1>🎰 {house?.name}</h1>
           <div className="house-info-chips">
-            <span className="info-chip">
-              💰 Balance: {formatCurrency(house?.account_balance)}
-            </span>
-            <span className="info-chip">
-              🌍 {house?.country}
-            </span>
-            <span className="info-chip">
-              👤 {user?.username}
-            </span>
+            <span className="info-chip">💰 Balance: {formatCurrency(house?.account_balance)}</span>
+            <span className="info-chip">🌍 {house?.country}</span>
+            <span className="info-chip">👤 {user?.username}</span>
           </div>
         </div>
-        <button onClick={logout} className="logout-btn">
-          Cerrar Sesión
-        </button>
+        <button onClick={logout} className="logout-btn">Cerrar Sesión</button>
       </div>
 
-      {/* Navigation */}
-        <div className="main-content">
-          {activeView === 'betting' && (
-            <div className="betting-view">
-              <div className="betting-columns">
-                <div className="games-column">
-                  <FilterPanel filters={filters} setFilters={setFilters} />
-                  <Home
-                    filters={filters}
-                    bettingMode={true}
-                    selectedGames={selectedGames}
-                    onGameSelect={handleGameSelection}
-                  />
-                </div>
-                <div className="panel-column">
-                  {/* Panel de apuestas original (puedes comentar si usas ParlayPanel) */}
-                  <div className="bet-panel" style={{ border: '2px dashed #4CAF50', marginBottom: 16 }}>
-                    <h2>Panel de Apuestas (original)</h2>
-                    <pre style={{ fontSize: 12, background: '#f3f3f3', padding: 8, borderRadius: 6, marginBottom: 8 }}>
-                      {JSON.stringify(selectedGames, null, 2)}
-                    </pre>
-                  </div>
-                  {/* Panel ParlayPanel integrado para depuración visual */}
-                  <ParlayPanel parlay={Object.fromEntries(selectedGames.map(g => [g.id + '-' + g.market + '-' + g.selectedTeam, {
-                    team: g.selectedTeam,
-                    odds: g.selectedOdds,
-                    homeTeam: g.home_team || g.homeTeam,
-                    awayTeam: g.away_team || g.awayTeam,
-                    league: g.league,
-                    market: g.market
-                  }]))} onRemove={key => {
-                    // Extraer id, market, selectedTeam del key
-                    const [id, market, selectedTeam] = key.split('-');
-                    handleRemoveSelection({ id, market, selectedTeam });
-                  }} />
-                </div>
-              </div>
-            </div>
-          )}
-
-      {/* Content */}
-      <div className="portal-content">
+      <div className="main-content">
         {activeView === 'betting' && (
           <div className="betting-view">
-            <div className="betting-layout">
-              <div className="games-section">
-                <Home 
-                  onGameSelect={handleGameSelection}
-                  selectedGames={selectedGames}
-                  bettingMode={true}
+            <div className="betting-columns">
+              <div className="games-column">
+                <FilterPanel filters={filters} setFilters={setFilters} />
+                <Home
                   filters={filters}
+                  bettingMode={true}
+                  selectedGames={selectedGames}
+                  onGameSelect={handleGameSelection}
                 />
               </div>
-              {selectedGames.length > 0 && (
-                <div className="selection-sidebar">
-                  <div className="selection-panel">
-                <div className="selection-header">
-                  <div>
-                    <p className="selection-title">Selecciones actuales</p>
-                    <p className="selection-subtitle">{selectedGames.length} selección(es) • {selectedGames.length > 1 ? 'Parlay' : 'Apuesta Simple'}</p>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setSelectedGames([]);
-                      setStakeAmount('');
-                      setPotentialWin(0);
-                      setError(null);
-                    }}
-                    className="clear-btn"
-                  >
-                    Vaciar Todo
-                  </button>
+              <div className="panel-column">
+                {/* Panel de apuestas original */}
+                <div className="bet-panel" style={{ border: '2px dashed #4CAF50', marginBottom: 16 }}>
+                  <h2>Panel de Apuestas (original)</h2>
+                  <pre style={{ fontSize: 12, background: '#f3f3f3', padding: 8, borderRadius: 6, marginBottom: 8 }}>
+                    {JSON.stringify(selectedGames, null, 2)}
+                  </pre>
                 </div>
+                {/* Panel ParlayPanel integrado para depuración visual */}
+                <ParlayPanel parlay={Object.fromEntries(selectedGames.map(g => [g.id + '-' + g.market + '-' + g.selectedTeam, {
+                  team: g.selectedTeam,
+                  odds: g.selectedOdds,
+                  homeTeam: g.home_team || g.homeTeam,
+                  awayTeam: g.away_team || g.awayTeam,
+                  league: g.league,
+                  market: g.market
+                }]))} onRemove={key => {
+                  const [id, market, selectedTeam] = key.split('-');
+                  handleRemoveSelection({ id, market, selectedTeam });
+                }} />
 
-                <div className="selection-list">
-                  {selectedGames.map((sel, idx) => (
-                    <div key={`${sel.id}-${sel.market}-${sel.selectedTeam}-${idx}`} className="selection-item">
-                      <div className="selection-main">
-                        <div className="selection-matchup">
-                          <span className="selection-teams">{sel.home_team} vs {sel.away_team}</span>
-                          <span className="selection-market">{sel.market.toUpperCase()}</span>
-                        <div className="betting-layout">
-                          <div className="games-section">
-                            <Home 
-                              onGameSelect={handleGameSelection}
-                              selectedGames={selectedGames}
-                              bettingMode={true}
-                              filters={filters}
-                            />
-                          </div>
-                          {/* Sección de monto y crear apuesta */}
-                          <div className="bet-input-section" style={{
-                            marginTop: '20px',
-                            padding: '20px',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '12px',
-                            border: '2px solid #e0e0e0'
-                          }}>
-                            <div style={{ marginBottom: '16px' }}>
-                              <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '8px'
-                              }}>
-                                <label style={{ fontWeight: '600', fontSize: '14px' }}>
-                                  💰 Monto a Apostar
-                                </label>
-                                <span style={{ 
-                                  fontSize: '12px', 
-                                  color: '#666',
-                                  backgroundColor: '#fff',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  border: '1px solid #ddd'
-                                }}>
-                                  Cuota Total: {calculateTotalOdds().toFixed(2)}
-                                </span>
-                              </div>
-                              <input
-                                type="number"
-                                value={stakeAmount}
-                                onChange={handleStakeChange}
-                                placeholder="Ingresa el monto..."
-                                min="0"
-                                step="0.01"
-                                style={{
-                                  width: '100%',
-                                  padding: '12px',
-                                  fontSize: '16px',
-                                  border: '2px solid #ddd',
-                                  borderRadius: '8px',
-                                  outline: 'none',
-                                  transition: 'border-color 0.2s'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
-                                disabled={loading}
-                              />
-                            </div>
-
-                            {potentialWin > 0 && (
-                              <div style={{
-                                padding: '16px',
-                                backgroundColor: '#e8f5e9',
-                                borderRadius: '8px',
-                                marginBottom: '16px',
-                                border: '2px solid #4CAF50'
-                              }}>
-                                <div style={{ 
-                                  display: 'flex', 
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center'
-                                }}>
-                                  <span style={{ fontWeight: '600', color: '#2e7d32' }}>
-                                    🎯 Ganancia Potencial:
-                                  </span>
-                                  <span style={{ 
-                                    fontSize: '24px', 
-                                    fontWeight: 'bold',
-                                    color: '#2e7d32'
-                                  }}>
-                                    {formatCurrency(potentialWin)}
-                                  </span>
-                                </div>
-                                <div style={{ 
-                                  fontSize: '12px', 
-                                  color: '#558b2f',
-                                  marginTop: '8px',
-                                  textAlign: 'right'
-                                }}>
-                                  Ganancia neta: {formatCurrency(potentialWin - parseFloat(stakeAmount || 0))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Botón único para crear apuesta */}
-                            <button 
-                              onClick={handlePlaceBet}
-                              disabled={loading || !stakeAmount || parseFloat(stakeAmount) <= 0}
-                              className="create-bet-btn"
-                              style={{
-                                width: '100%',
-                                padding: '14px',
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                backgroundColor: loading ? '#ccc' : '#4CAF50',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.2s',
-                                opacity: (!stakeAmount || parseFloat(stakeAmount) <= 0) ? 0.5 : 1
-                              }}
-                            >
-                              {loading ? '⏳ Creando apuesta...' : '✅ Crear Apuesta'}
-                            </button>
-                          </div>
+                {/* Sidebar de selecciones y formulario de apuesta */}
+                {selectedGames.length > 0 && (
+                  <div className="selection-sidebar">
+                    <div className="selection-panel">
+                      <div className="selection-header">
+                        <div>
+                          <p className="selection-title">Selecciones actuales</p>
+                          <p className="selection-subtitle">{selectedGames.length} selección(es) • {selectedGames.length > 1 ? 'Parlay' : 'Apuesta Simple'}</p>
                         </div>
+                        <button 
+                          onClick={() => {
+                            setSelectedGames([]);
+                            setStakeAmount('');
+                            setPotentialWin(0);
+                            setError(null);
+                          }}
+                          className="clear-btn"
+                        >Vaciar Todo</button>
                       </div>
-                    )}
-
-                  <button 
-                    onClick={handlePlaceBet}
-                    disabled={loading || !stakeAmount || parseFloat(stakeAmount) <= 0}
-                    className="create-bet-btn"
-                    style={{
-                      width: '100%',
-                      padding: '14px',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      backgroundColor: loading ? '#ccc' : '#4CAF50',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      opacity: (!stakeAmount || parseFloat(stakeAmount) <= 0) ? 0.5 : 1
-                    }}
-                  >
-                    {loading ? '⏳ Creando apuesta...' : '✅ Crear Apuesta'}
-                  </button>
-                </div>
+                      <div className="selection-list">
+                        {selectedGames.map((sel, idx) => (
+                          <div key={`${sel.id}-${sel.market}-${sel.selectedTeam}-${idx}`} className="selection-item">
+                            <div className="selection-main">
+                              <div className="selection-matchup">
+                                <span className="selection-teams">{sel.home_team} vs {sel.away_team}</span>
+                                <span className="selection-market">{sel.market.toUpperCase()}</span>
+                              </div>
+                              <button onClick={() => handleRemoveSelection(sel)} className="remove-btn">✖</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="bet-input-section" style={{ marginTop: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '12px', border: '2px solid #e0e0e0' }}>
+                        <div style={{ marginBottom: '16px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <label style={{ fontWeight: '600', fontSize: '14px' }}>💰 Monto a Apostar</label>
+                            <span style={{ fontSize: '12px', color: '#666', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd' }}>
+                              Cuota Total: {calculateTotalOdds().toFixed(2)}
+                            </span>
+                          </div>
+                          <input
+                            type="number"
+                            value={stakeAmount}
+                            onChange={handleStakeChange}
+                            placeholder="Ingresa el monto..."
+                            min="0"
+                            step="0.01"
+                            style={{ width: '100%', padding: '12px', fontSize: '16px', border: '2px solid #ddd', borderRadius: '8px', outline: 'none', transition: 'border-color 0.2s' }}
+                            onFocus={e => e.target.style.borderColor = '#4CAF50'}
+                            disabled={loading}
+                          />
+                        </div>
+                        {potentialWin > 0 && (
+                          <div style={{ padding: '16px', backgroundColor: '#e8f5e9', borderRadius: '8px', marginBottom: '16px', border: '2px solid #4CAF50' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontWeight: '600', color: '#2e7d32' }}>🎯 Ganancia Potencial:</span>
+                              <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>{formatCurrency(potentialWin)}</span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#558b2f', marginTop: '8px', textAlign: 'right' }}>
+                              Ganancia neta: {formatCurrency(potentialWin - parseFloat(stakeAmount || 0))}
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          onClick={handlePlaceBet}
+                          disabled={loading || !stakeAmount || parseFloat(stakeAmount) <= 0}
+                          className="create-bet-btn"
+                          style={{ width: '100%', padding: '14px', fontSize: '16px', fontWeight: 'bold', backgroundColor: loading ? '#ccc' : '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: (!stakeAmount || parseFloat(stakeAmount) <= 0) ? 0.5 : 1 }}
+                        >
+                          {loading ? '⏳ Creando apuesta...' : '✅ Crear Apuesta'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
-
         {activeView === 'bets' && (
           <div className="bets-view">
             <BetsList bettingHouseId={house?.id} />
           </div>
         )}
-
         {activeView === 'reports' && (
           <div className="reports-view">
-            <DailyReports 
-              bettingHouseId={house?.id}
-              houseName={house?.name}
-            />
+            <DailyReports bettingHouseId={house?.id} houseName={house?.name} />
           </div>
         )}
       </div>
