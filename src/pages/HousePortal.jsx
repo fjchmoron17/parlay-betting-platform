@@ -258,18 +258,23 @@ export default function HousePortal() {
                     {JSON.stringify(selectedGames, null, 2)}
                   </pre>
                 </div>
-                {/* Panel ParlayPanel integrado para depuración visual */}
-                <ParlayPanel parlay={Object.fromEntries(selectedGames.map(g => [g.id + '-' + g.market + '-' + g.selectedTeam, {
-                  team: g.selectedTeam,
-                  odds: g.selectedOdds,
-                  homeTeam: g.home_team || g.homeTeam,
-                  awayTeam: g.away_team || g.awayTeam,
-                  league: g.league,
-                  market: g.market
-                }]))} onRemove={key => {
-                  const [id, market, selectedTeam] = key.split('-');
-                  handleRemoveSelection({ id, market, selectedTeam });
-                }} />
+                {/* ParlayPanel solo si hay selecciones, y con estructura esperada */}
+                {selectedGames.length > 0 && (
+                  <ParlayPanel
+                    parlay={Object.fromEntries(selectedGames.map(g => [g.id, {
+                      team: g.selectedTeam,
+                      odds: g.selectedOdds,
+                      homeTeam: g.home_team || g.homeTeam,
+                      awayTeam: g.away_team || g.awayTeam,
+                      league: g.league,
+                      market: g.market
+                    }]))}
+                    onRemove={id => {
+                      // Remover por id
+                      handleRemoveSelection(selectedGames.find(g => g.id === id));
+                    }}
+                  />
+                )}
 
                 {/* Sidebar de selecciones y formulario de apuesta */}
                 {selectedGames.length > 0 && (
