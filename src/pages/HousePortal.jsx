@@ -8,6 +8,7 @@ import Home from './Home';
 import ParlayPanel from '../components/ParlayPanel';
 import FilterPanel from '../components/FilterPanel';
 import './HousePortal.css';
+import '../components/PlaceBetForm.css';
 
 export default function HousePortal() {
   const { user, house, logout, refreshHouseData } = useAuth();
@@ -239,6 +240,22 @@ export default function HousePortal() {
         <button onClick={logout} className="logout-btn">Cerrar Sesión</button>
       </div>
 
+      {/* Menú de navegación restaurado */}
+      <nav className="portal-nav">
+        <button
+          className={activeView === 'betting' ? 'active' : ''}
+          onClick={() => setActiveView('betting')}
+        >🎯 Apostar</button>
+        <button
+          className={activeView === 'bets' ? 'active' : ''}
+          onClick={() => setActiveView('bets')}
+        >📄 Mis Jugadas</button>
+        <button
+          className={activeView === 'reports' ? 'active' : ''}
+          onClick={() => setActiveView('reports')}
+        >📊 Reportes</button>
+      </nav>
+
       <div className="main-content">
         {activeView === 'betting' && (
           <div className="betting-view">
@@ -273,87 +290,68 @@ export default function HousePortal() {
                         className="clear-btn"
                       >Vaciar Todo</button>
                     </div>
-                    {/* Mostrar cada jugada seleccionada como un panel independiente */}
                     <div className="selection-list">
                       {selectedGames.map((sel, idx) => (
-                        <div key={`${sel.id}-${sel.market}-${sel.selectedTeam}-${idx}`} className="selection-item" style={{ border: '1px solid #e0e0e0', borderRadius: 8, marginBottom: 12, padding: 12, background: '#fff' }}>
-                          <div className="selection-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              {/* Partido */}
-                              <div className="selection-matchup" style={{ fontWeight: 600, marginBottom: 2 }}>
-                                {sel.home_team} vs {sel.away_team}
-                              </div>
-                              {/* Liga */}
-                              <div style={{ fontSize: 13, color: '#888', marginBottom: 2 }}>
-                                {sel.league || sel.sportTitle || 'N/A'}
-                              </div>
-                              {/* Fecha y hora */}
-                              {sel.game_commence_time && (
-                                <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>
-                                  🗓️ {new Date(sel.game_commence_time).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                              )}
-                              {/* Mercado y selección */}
-                              <div style={{ fontSize: 14, color: '#1976d2', fontWeight: 700, marginBottom: 2 }}>
-                                {sel.market.toUpperCase()}
-                              </div>
-                              {/* Mostrar equipo solo en H2H o SPREADS, Over/Under en TOTALS */}
-                              {['h2h', 'spreads'].includes(sel.market) && sel.selectedTeam && (
-                                <div style={{ fontSize: 13, color: '#333', marginBottom: 2 }}>
-                                  Selección: <span style={{ fontWeight: 600 }}>{sel.selectedTeam}</span>
-                                </div>
-                              )}
-                              {sel.market === 'totals' && sel.selectedTeam && (
-                                <div style={{ fontSize: 13, color: '#333', marginBottom: 2 }}>
-                                  Selección: <span style={{ fontWeight: 600 }}>{sel.selectedTeam}</span>
-                                </div>
-                              )}
-                              <div style={{ fontSize: 13, color: '#333' }}>@ <span style={{ fontWeight: 600 }}>{sel.selectedOdds}</span></div>
-                            </div>
-                            <button onClick={() => handleRemoveSelection(sel)} className="remove-btn" style={{ marginLeft: 12, fontSize: 18 }}>✖</button>
+                        <div key={`${sel.id}-${sel.market}-${sel.selectedTeam}-${idx}`} className="selection-item">
+                          <div className="selection-info">
+                            <span className="selection-teams">
+                              {sel.home_team} vs {sel.away_team}
+                            </span>
+                            <span className="selection-pick">
+                              {sel.selectedTeam} {sel.pointSpread ? `(${sel.pointSpread})` : ''}
+                            </span>
+                            <span className="selection-pick">
+                              {sel.league || sel.sportTitle || 'N/A'} • {sel.market ? sel.market.toUpperCase() : ''}
+                            </span>
+                            {sel.game_commence_time && (
+                              <span className="selection-pick">
+                                🗓️ {new Date(sel.game_commence_time).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
                           </div>
+                          <span className="selection-odds">{sel.selectedOdds?.toFixed ? sel.selectedOdds.toFixed(2) : sel.selectedOdds}</span>
+                          <button onClick={() => handleRemoveSelection(sel)} className="remove-selection" type="button">✖</button>
                         </div>
                       ))}
                     </div>
-                    <div className="bet-input-section" style={{ marginTop: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '12px', border: '2px solid #e0e0e0' }}>
-                      <div style={{ marginBottom: '16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <label style={{ fontWeight: '600', fontSize: '14px' }}>💰 Monto a Apostar</label>
-                          <span style={{ fontSize: '12px', color: '#666', backgroundColor: '#fff', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd' }}>
-                            Cuota Total: {calculateTotalOdds().toFixed(2)}
-                          </span>
-                        </div>
+                    <div className="bet-inputs">
+                      <div className="form-group">
+                        <label htmlFor="stake">Monto a Apostar</label>
                         <input
                           type="number"
+                          id="stake"
+                          name="stake"
                           value={stakeAmount}
                           onChange={handleStakeChange}
-                          placeholder="Ingresa el monto..."
-                          min="0"
+                          placeholder="0.00"
                           step="0.01"
-                          style={{ width: '100%', padding: '12px', fontSize: '16px', border: '2px solid #ddd', borderRadius: '8px', outline: 'none', transition: 'border-color 0.2s' }}
-                          onFocus={e => e.target.style.borderColor = '#4CAF50'}
+                          min="0.01"
                           disabled={loading}
                         />
                       </div>
-                      {potentialWin > 0 && (
-                        <div style={{ padding: '16px', backgroundColor: '#e8f5e9', borderRadius: '8px', marginBottom: '16px', border: '2px solid #4CAF50' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontWeight: '600', color: '#2e7d32' }}>🎯 Ganancia Potencial:</span>
-                            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>{formatCurrency(potentialWin)}</span>
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#558b2f', marginTop: '8px', textAlign: 'right' }}>
-                            Ganancia neta: {formatCurrency(potentialWin - parseFloat(stakeAmount || 0))}
-                          </div>
+                      <div className="bet-calculations">
+                        <div className="calc-row">
+                          <span>Cuota Total:</span>
+                          <span className="calc-value">{calculateTotalOdds().toFixed(2)}</span>
                         </div>
-                      )}
-                      <button
-                        onClick={handlePlaceBet}
-                        disabled={loading || !stakeAmount || parseFloat(stakeAmount) <= 0}
-                        className="create-bet-btn"
-                        style={{ width: '100%', padding: '14px', fontSize: '16px', fontWeight: 'bold', backgroundColor: loading ? '#ccc' : '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: (!stakeAmount || parseFloat(stakeAmount) <= 0) ? 0.5 : 1 }}
-                      >
-                        {loading ? '⏳ Creando apuesta...' : '✅ Crear Apuesta'}
-                      </button>
+                        <div className="calc-row highlight">
+                          <span>Ganancia Potencial:</span>
+                          <span className="calc-value">{formatCurrency(potentialWin)}</span>
+                        </div>
+                      </div>
+                      <div className="form-actions">
+                        <button type="button" onClick={() => {
+                          setSelectedGames([]);
+                          setStakeAmount('');
+                          setPotentialWin(0);
+                          setError(null);
+                        }} className="cancel-btn" disabled={loading}>
+                          Cancelar
+                        </button>
+                        <button onClick={handlePlaceBet} className="submit-btn" disabled={loading || !stakeAmount || parseFloat(stakeAmount) <= 0}>
+                          {loading ? 'Creando...' : 'Crear Apuesta'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
