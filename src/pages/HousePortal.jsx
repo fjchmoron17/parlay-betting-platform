@@ -273,35 +273,21 @@ export default function HousePortal() {
                         className="clear-btn"
                       >Vaciar Todo</button>
                     </div>
-                    {/* Agrupar selecciones por partido (id) y mostrar mercados y cuotas */}
+                    {/* Mostrar cada jugada seleccionada como un panel independiente */}
                     <div className="selection-list">
-                      {Object.values(selectedGames.reduce((acc, sel) => {
-                        const key = sel.id;
-                        if (!acc[key]) {
-                          acc[key] = {
-                            ...sel,
-                            markets: []
-                          };
-                        }
-                        acc[key].markets.push({
-                          name: sel.market.toUpperCase(),
-                          odds: sel.selectedOdds
-                        });
-                        return acc;
-                      }, {})).map((group, idx) => (
-                        <div key={group.id + '-' + idx} className="selection-item">
-                          <div className="selection-main">
-                            <div className="selection-matchup">
-                              <span className="selection-teams">{group.home_team} vs {group.away_team}</span>
-                              <span className="selection-market">
-                                {group.markets.map((m, i) => (
-                                  <span key={m.name + '-' + i} style={{ marginRight: 8 }}>
-                                    {m.name} <span style={{ color: '#1976d2', fontWeight: 600 }}>@{m.odds}</span>
-                                    <button onClick={() => setSelectedGames(selectedGames.filter(sel => !(sel.id === group.id && sel.market.toUpperCase() === m.name)))} className="remove-btn" style={{ marginLeft: 4 }}>✖</button>
-                                  </span>
-                                ))}
-                              </span>
+                      {selectedGames.map((sel, idx) => (
+                        <div key={`${sel.id}-${sel.market}-${sel.selectedTeam}-${idx}`} className="selection-item" style={{ border: '1px solid #e0e0e0', borderRadius: 8, marginBottom: 12, padding: 12, background: '#fff' }}>
+                          <div className="selection-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div className="selection-matchup" style={{ fontWeight: 600, marginBottom: 4 }}>
+                                {sel.home_team} vs {sel.away_team}
+                              </div>
+                              <div style={{ fontSize: 14, color: '#1976d2', fontWeight: 700, marginBottom: 2 }}>
+                                {sel.market.toUpperCase()} {sel.selectedTeam ? `- ${sel.selectedTeam}` : ''}
+                              </div>
+                              <div style={{ fontSize: 13, color: '#333' }}>Cuota: <span style={{ fontWeight: 600 }}>{sel.selectedOdds}</span></div>
                             </div>
+                            <button onClick={() => handleRemoveSelection(sel)} className="remove-btn" style={{ marginLeft: 12, fontSize: 18 }}>✖</button>
                           </div>
                         </div>
                       ))}
