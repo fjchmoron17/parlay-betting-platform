@@ -254,25 +254,7 @@ export default function HousePortal() {
               </div>
               <div className="selection-sidebar" style={{ flex: 1, minWidth: 340 }}>
                 {/* Panel de apuestas original eliminado */}
-                {/* ParlayPanel solo si hay selecciones, y con estructura esperada */}
-                {selectedGames.length > 0 && (
-                  <ParlayPanel
-                    parlay={selectedGames.reduce((acc, g) => {
-                      acc[g.id] = {
-                        team: g.selectedTeam,
-                        odds: g.selectedOdds,
-                        homeTeam: g.home_team || g.homeTeam,
-                        awayTeam: g.away_team || g.awayTeam,
-                        league: g.league,
-                        market: g.market
-                      };
-                      return acc;
-                    }, {})}
-                    onRemove={id => {
-                      handleRemoveSelection(selectedGames.find(g => g.id === id));
-                    }}
-                  />
-                )}
+                {/* ParlayPanel eliminado, todo queda en Selecciones actuales */}
                 {/* Sidebar de selecciones y formulario de apuesta */}
                 {selectedGames.length > 0 && (
                   <div className="selection-panel">
@@ -291,7 +273,7 @@ export default function HousePortal() {
                         className="clear-btn"
                       >Vaciar Todo</button>
                     </div>
-                    {/* Agrupar selecciones por partido (id) */}
+                    {/* Agrupar selecciones por partido (id) y mostrar mercados y cuotas */}
                     <div className="selection-list">
                       {Object.values(selectedGames.reduce((acc, sel) => {
                         const key = sel.id;
@@ -301,19 +283,25 @@ export default function HousePortal() {
                             markets: []
                           };
                         }
-                        acc[key].markets.push(sel.market.toUpperCase());
+                        acc[key].markets.push({
+                          name: sel.market.toUpperCase(),
+                          odds: sel.selectedOdds
+                        });
                         return acc;
                       }, {})).map((group, idx) => (
                         <div key={group.id + '-' + idx} className="selection-item">
                           <div className="selection-main">
                             <div className="selection-matchup">
                               <span className="selection-teams">{group.home_team} vs {group.away_team}</span>
-                              <span className="selection-market">{group.markets.join(', ')}</span>
+                              <span className="selection-market">
+                                {group.markets.map((m, i) => (
+                                  <span key={m.name + '-' + i} style={{ marginRight: 8 }}>
+                                    {m.name} <span style={{ color: '#1976d2', fontWeight: 600 }}>@{m.odds}</span>
+                                    <button onClick={() => setSelectedGames(selectedGames.filter(sel => !(sel.id === group.id && sel.market.toUpperCase() === m.name)))} className="remove-btn" style={{ marginLeft: 4 }}>✖</button>
+                                  </span>
+                                ))}
+                              </span>
                             </div>
-                            {/* Botón para remover todas las selecciones de este partido */}
-                            <button onClick={() => {
-                              setSelectedGames(selectedGames.filter(sel => sel.id !== group.id));
-                            }} className="remove-btn">✖</button>
                           </div>
                         </div>
                       ))}
