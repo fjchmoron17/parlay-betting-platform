@@ -420,6 +420,7 @@ export default function HousePortal() {
                               </div>
                             )}
 
+                            {/* Botón único para crear apuesta */}
                             <button 
                               onClick={handlePlaceBet}
                               disabled={loading || !stakeAmount || parseFloat(stakeAmount) <= 0}
