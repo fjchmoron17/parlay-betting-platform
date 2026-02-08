@@ -326,123 +326,124 @@ export default function HousePortal() {
                         <div className="selection-matchup">
                           <span className="selection-teams">{sel.home_team} vs {sel.away_team}</span>
                           <span className="selection-market">{sel.market.toUpperCase()}</span>
-                        </div>
-                        <div className="selection-date">
-                          🗓️ {(() => {
-                            const gameTime = sel.game_commence_time || sel.game_time || sel.commence_time || sel.commenceTime;
-                            return gameTime
-                              ? new Date(gameTime).toLocaleDateString('es-ES', {
-                                  weekday: 'short',
-                                  day: 'numeric',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })
-                              : 'Fecha N/D';
-                          })()}
-                        </div>
-                        <div className="selection-pick">
-                          <span className="selection-team">{sel.selectedTeam}</span>
-                          {sel.pointSpread !== null && sel.pointSpread !== undefined && (
-                            <span className="selection-spread">{sel.pointSpread > 0 ? '+' : ''}{sel.pointSpread}</span>
-                          )}
-                          <span className="selection-odds">@{sel.selectedOdds?.toFixed ? sel.selectedOdds.toFixed(2) : sel.selectedOdds}</span>
-                        </div>
-                      </div>
-                      <button
-                        className="remove-selection"
-                        onClick={() => handleRemoveSelection(sel)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                        <div className="betting-layout">
+                          <div className="games-section">
+                            <Home 
+                              onGameSelect={handleGameSelection}
+                              selectedGames={selectedGames}
+                              bettingMode={true}
+                              filters={filters}
+                            />
+                          </div>
+                          {/* Sección de monto y crear apuesta */}
+                          <div className="bet-input-section" style={{
+                            marginTop: '20px',
+                            padding: '20px',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '12px',
+                            border: '2px solid #e0e0e0'
+                          }}>
+                            <div style={{ marginBottom: '16px' }}>
+                              <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '8px'
+                              }}>
+                                <label style={{ fontWeight: '600', fontSize: '14px' }}>
+                                  💰 Monto a Apostar
+                                </label>
+                                <span style={{ 
+                                  fontSize: '12px', 
+                                  color: '#666',
+                                  backgroundColor: '#fff',
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  border: '1px solid #ddd'
+                                }}>
+                                  Cuota Total: {calculateTotalOdds().toFixed(2)}
+                                </span>
+                              </div>
+                              <input
+                                type="number"
+                                value={stakeAmount}
+                                onChange={handleStakeChange}
+                                placeholder="Ingresa el monto..."
+                                min="0"
+                                step="0.01"
+                                style={{
+                                  width: '100%',
+                                  padding: '12px',
+                                  fontSize: '16px',
+                                  border: '2px solid #ddd',
+                                  borderRadius: '8px',
+                                  outline: 'none',
+                                  transition: 'border-color 0.2s'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
+                                disabled={loading}
+                              />
+                            </div>
 
-                {/* Sección de monto y crear apuesta */}
-                <div className="bet-input-section" style={{
-                  marginTop: '20px',
-                  padding: '20px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '12px',
-                  border: '2px solid #e0e0e0'
-                }}>
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px'
-                    }}>
-                      <label style={{ fontWeight: '600', fontSize: '14px' }}>
-                        💰 Monto a Apostar
-                      </label>
-                      <span style={{ 
-                        fontSize: '12px', 
-                        color: '#666',
-                        backgroundColor: '#fff',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        border: '1px solid #ddd'
-                      }}>
-                        Cuota Total: {calculateTotalOdds().toFixed(2)}
-                      </span>
-                    </div>
-                    <input
-                      type="number"
-                      value={stakeAmount}
-                      onChange={handleStakeChange}
-                      placeholder="Ingresa el monto..."
-                      min="0"
-                      step="0.01"
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        fontSize: '16px',
-                        border: '2px solid #ddd',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        transition: 'border-color 0.2s'
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = '#4CAF50'}
-                      disabled={loading}
-                    />
-                  </div>
+                            {potentialWin > 0 && (
+                              <div style={{
+                                padding: '16px',
+                                backgroundColor: '#e8f5e9',
+                                borderRadius: '8px',
+                                marginBottom: '16px',
+                                border: '2px solid #4CAF50'
+                              }}>
+                                <div style={{ 
+                                  display: 'flex', 
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center'
+                                }}>
+                                  <span style={{ fontWeight: '600', color: '#2e7d32' }}>
+                                    🎯 Ganancia Potencial:
+                                  </span>
+                                  <span style={{ 
+                                    fontSize: '24px', 
+                                    fontWeight: 'bold',
+                                    color: '#2e7d32'
+                                  }}>
+                                    {formatCurrency(potentialWin)}
+                                  </span>
+                                </div>
+                                <div style={{ 
+                                  fontSize: '12px', 
+                                  color: '#558b2f',
+                                  marginTop: '8px',
+                                  textAlign: 'right'
+                                }}>
+                                  Ganancia neta: {formatCurrency(potentialWin - parseFloat(stakeAmount || 0))}
+                                </div>
+                              </div>
+                            )}
 
-                  {potentialWin > 0 && (
-                    <div style={{
-                      padding: '16px',
-                      backgroundColor: '#e8f5e9',
-                      borderRadius: '8px',
-                      marginBottom: '16px',
-                      border: '2px solid #4CAF50'
-                    }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
-                        <span style={{ fontWeight: '600', color: '#2e7d32' }}>
-                          🎯 Ganancia Potencial:
-                        </span>
-                        <span style={{ 
-                          fontSize: '24px', 
-                          fontWeight: 'bold',
-                          color: '#2e7d32'
-                        }}>
-                          {formatCurrency(potentialWin)}
-                        </span>
+                            <button 
+                              onClick={handlePlaceBet}
+                              disabled={loading || !stakeAmount || parseFloat(stakeAmount) <= 0}
+                              className="create-bet-btn"
+                              style={{
+                                width: '100%',
+                                padding: '14px',
+                                fontSize: '16px',
+                                fontWeight: 'bold',
+                                backgroundColor: loading ? '#ccc' : '#4CAF50',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s',
+                                opacity: (!stakeAmount || parseFloat(stakeAmount) <= 0) ? 0.5 : 1
+                              }}
+                            >
+                              {loading ? '⏳ Creando apuesta...' : '✅ Crear Apuesta'}
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ 
-                        fontSize: '12px', 
-                        color: '#558b2f',
-                        marginTop: '8px',
-                        textAlign: 'right'
-                      }}>
-                        Ganancia neta: {formatCurrency(potentialWin - parseFloat(stakeAmount || 0))}
-                      </div>
-                    </div>
-                  )}
+                    )}
 
                   <button 
                     onClick={handlePlaceBet}
