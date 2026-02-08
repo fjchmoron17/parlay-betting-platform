@@ -284,15 +284,6 @@ export default function HousePortal() {
               </div>
             </div>
           )}
-                onClick={() => setError(null)}
-                aria-label="Cerrar mensaje"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Content */}
       <div className="portal-content">
