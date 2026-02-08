@@ -47,20 +47,18 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
   };
 
   const handleSelect = (gameId, team, odds, gameData = {}) => {
-    console.log('🎯 handleSelect called:', { gameId, team, odds, gameData });
-    console.log('🔍 bettingMode:', bettingMode, 'selectedGames:', selectedGames);
-    // Validar que gameData tenga la información necesaria
-    if (!gameData.homeTeam || !gameData.awayTeam) {
-      console.error('❌ ERROR: gameData incompleto', gameData);
-      alert('Error: Datos del juego incompletos. Intenta de nuevo.');
-      return;
-    }
-    // Crear un identificador único del juego basado en home_team + away_team
-    const gameMatchId = `${gameData.homeTeam}_vs_${gameData.awayTeam}`;
-    console.log('📌 gameMatchId:', gameMatchId);
-    // VALIDACIÓN DE DUPLICADOS Y TOGGLE
-    let isDuplicate = false;
-    // ...existing code...
+    // Restaurar lógica estable: agregar selección al parlay
+    setParlay((prev) => ({
+      ...prev,
+      [gameId]: {
+        team,
+        odds,
+        homeTeam: gameData.homeTeam,
+        awayTeam: gameData.awayTeam,
+        league: gameData.league,
+        market: gameData.market,
+      },
+    }));
   };
 
   const handleRemove = (gameId) => {
