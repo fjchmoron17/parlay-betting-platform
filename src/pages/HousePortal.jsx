@@ -291,15 +291,29 @@ export default function HousePortal() {
                         className="clear-btn"
                       >Vaciar Todo</button>
                     </div>
+                    {/* Agrupar selecciones por partido (id) */}
                     <div className="selection-list">
-                      {selectedGames.map((sel, idx) => (
-                        <div key={`${sel.id}-${sel.market}-${sel.selectedTeam}-${idx}`} className="selection-item">
+                      {Object.values(selectedGames.reduce((acc, sel) => {
+                        const key = sel.id;
+                        if (!acc[key]) {
+                          acc[key] = {
+                            ...sel,
+                            markets: []
+                          };
+                        }
+                        acc[key].markets.push(sel.market.toUpperCase());
+                        return acc;
+                      }, {})).map((group, idx) => (
+                        <div key={group.id + '-' + idx} className="selection-item">
                           <div className="selection-main">
                             <div className="selection-matchup">
-                              <span className="selection-teams">{sel.home_team} vs {sel.away_team}</span>
-                              <span className="selection-market">{sel.market.toUpperCase()}</span>
+                              <span className="selection-teams">{group.home_team} vs {group.away_team}</span>
+                              <span className="selection-market">{group.markets.join(', ')}</span>
                             </div>
-                            <button onClick={() => handleRemoveSelection(sel)} className="remove-btn">✖</button>
+                            {/* Botón para remover todas las selecciones de este partido */}
+                            <button onClick={() => {
+                              setSelectedGames(selectedGames.filter(sel => sel.id !== group.id));
+                            }} className="remove-btn">✖</button>
                           </div>
                         </div>
                       ))}
