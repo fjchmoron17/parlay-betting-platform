@@ -56,11 +56,20 @@ async function getCompletedGames(sportKey, daysFrom = 3) {
   try {
     const { response } = await oddsApiGet(
       `/sports/${sportKey}/scores`,
-      { daysFrom: daysFrom }
+      { daysFrom: daysFrom, dateFormat: 'iso' }
     );
 
-    // Filtrar solo juegos completados
-    const completedGames = response.data.filter(game => game.completed === true);
+    const now = Date.now();
+    const completionCutoff = now - 2 * 60 * 60 * 1000; // 2 horas
+
+    // Filtrar juegos completados o con scores disponibles (fallback)
+    const completedGames = response.data.filter((game) => {
+      if (game.completed === true) return true;
+      if (!game.scores || game.scores.length < 2) return false;
+      const commence = new Date(game.commence_time).getTime();
+      if (Number.isNaN(commence)) return false;
+      return commence < completionCutoff;
+    });
     
     // Si no hay scores completados, intentar obtener eventos activos para detectar desapariciones
     if (completedGames.length === 0) {
