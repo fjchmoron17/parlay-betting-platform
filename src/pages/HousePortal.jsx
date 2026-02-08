@@ -279,8 +279,11 @@ export default function HousePortal() {
                         <div key={`${sel.id}-${sel.market}-${sel.selectedTeam}-${idx}`} className="selection-item" style={{ border: '1px solid #e0e0e0', borderRadius: 8, marginBottom: 12, padding: 12, background: '#fff' }}>
                           <div className="selection-main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                              <div className="selection-matchup" style={{ fontWeight: 600, marginBottom: 4 }}>
+                              <div className="selection-matchup" style={{ fontWeight: 600, marginBottom: 2 }}>
                                 {sel.home_team} vs {sel.away_team}
+                              </div>
+                              <div style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>
+                                Liga: {sel.league || sel.sportTitle || 'N/A'}
                               </div>
                               <div style={{ fontSize: 14, color: '#1976d2', fontWeight: 700, marginBottom: 2 }}>
                                 {sel.market.toUpperCase()} {sel.selectedTeam ? `- ${sel.selectedTeam}` : ''}
