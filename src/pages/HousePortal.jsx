@@ -253,13 +253,7 @@ export default function HousePortal() {
                 />
               </div>
               <div className="selection-sidebar" style={{ flex: 1, minWidth: 340 }}>
-                {/* Panel de apuestas original */}
-                <div className="bet-panel" style={{ border: '2px dashed #4CAF50', marginBottom: 16 }}>
-                  <h2>Panel de Apuestas (original)</h2>
-                  <pre style={{ fontSize: 12, background: '#f3f3f3', padding: 8, borderRadius: 6, marginBottom: 8 }}>
-                    {JSON.stringify(selectedGames, null, 2)}
-                  </pre>
-                </div>
+                {/* Panel de apuestas original eliminado */}
                 {/* ParlayPanel solo si hay selecciones, y con estructura esperada */}
                 {selectedGames.length > 0 && (
                   <ParlayPanel
