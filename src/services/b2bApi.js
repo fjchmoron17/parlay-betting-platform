@@ -236,12 +236,12 @@ export async function getBetsByDate(bettingHouseId, date) {
 // REPORTS
 // ============================================
 
-export async function calculateDailyReport(bettingHouseId, reportDate) {
+export async function calculateDailyReport(bettingHouseId, fromDate, toDate) {
   try {
     const response = await fetch(`${API_URL}/reports/calculate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ betting_house_id: bettingHouseId, report_date: reportDate })
+      body: JSON.stringify({ betting_house_id: bettingHouseId, from_date: fromDate, to_date: toDate })
     });
     if (!response.ok) throw new Error('Failed to calculate report');
     return await response.json();

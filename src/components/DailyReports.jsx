@@ -44,9 +44,25 @@ export default function DailyReports({ bettingHouseId, houseName }) {
   const handleCalculateReport = async () => {
     try {
       setLoading(true);
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to;
       const today = new Date().toISOString().split('T')[0];
-      await calculateDailyReport(bettingHouseId, today);
-      alert('Reporte calculado exitosamente');
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      const now = new Date(today);
+      const diffDays = Math.floor((to - from) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0 || diffDays > 30) {
+        alert('El rango debe ser entre 1 y 30 días');
+        setLoading(false);
+        return;
+      }
+      if (to > now) {
+        alert('No puedes calcular reportes a futuro');
+        setLoading(false);
+        return;
+      }
+      await calculateDailyReport(bettingHouseId, fromDate, toDate);
+      alert('Reporte calculado exitosamente para el rango seleccionado');
       loadReports();
     } catch (err) {
       alert('Error al calcular reporte: ' + err.message);
@@ -111,7 +127,7 @@ export default function DailyReports({ bettingHouseId, houseName }) {
           className="calculate-btn"
           disabled={loading}
         >
-          🔄 Calcular Reporte de Hoy
+          🔄 Calcular Reporte por Rango (máx 30 días)
         </button>
       </div>
 

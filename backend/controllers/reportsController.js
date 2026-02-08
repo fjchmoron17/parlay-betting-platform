@@ -4,17 +4,46 @@ import { DailyReport } from '../db/models/index.js';
 export const calculateDailyReport = async (req, res) => {
   try {
     const bettingHouseId = req.body.betting_house_id || req.body.bettingHouseId;
+    const fromDate = req.body.from_date || req.body.fromDate;
+    const toDate = req.body.to_date || req.body.toDate;
     const reportDate = req.body.report_date || req.body.reportDate;
-    
-    if (!bettingHouseId || !reportDate) {
+
+    if (!bettingHouseId || (!reportDate && (!fromDate || !toDate))) {
       return res.status(400).json({
         success: false,
-        error: 'betting_house_id and report_date are required'
+        error: 'betting_house_id and report_date or from_date/to_date are required'
       });
     }
-    
+
+    // Si se pasa un rango, calcular para cada día
+    let reports = [];
+    if (fromDate && toDate) {
+      const start = new Date(fromDate);
+      const end = new Date(toDate);
+      const diffDays = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0 || diffDays > 31) {
+        return res.status(400).json({
+          success: false,
+          error: 'El rango debe ser entre 1 y 31 días'
+        });
+      }
+      for (let i = 0; i <= diffDays; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const isoDate = date.toISOString().split('T')[0];
+        const report = await DailyReport.calculate(bettingHouseId, isoDate);
+        reports.push(report);
+      }
+      res.json({
+        success: true,
+        data: reports,
+        message: `Reportes calculados para el rango ${fromDate} a ${toDate}`
+      });
+      return;
+    }
+
+    // Si solo es un día
     const report = await DailyReport.calculate(bettingHouseId, reportDate);
-    
     res.json({
       success: true,
       data: report,

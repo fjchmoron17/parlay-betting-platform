@@ -34,9 +34,17 @@ function resolveSportKey(league, sportsMap, leagueFallbacks) {
   const normalized = normalizeKey(league);
   if (!normalized) return 'unknown';
 
+  // Fallback: try to match league/country/team to API keys
   if (sportsMap[normalized]) return sportsMap[normalized];
   if (sportsMap[`key:${normalized}`]) return sportsMap[`key:${normalized}`];
   if (leagueFallbacks[normalized]) return leagueFallbacks[normalized];
+
+  // Fallback for 'other': try to match by team/country
+  if (normalized === 'other') {
+    // Try to match using home/away team or country
+    // This will be handled in settleParlayBet per selection
+    return 'other';
+  }
 
   return normalized;
 }
@@ -266,16 +274,35 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     const selectionHome = normalizeKey(selection.home_team);
     const selectionAway = normalizeKey(selection.away_team);
     const selectionGameId = normalizeKey(selection.game_id);
+    const selectionLeague = normalizeKey(selection.league);
+    const selectionCountry = normalizeKey(selection.country || '');
 
+    // Fallback: try to match by league/country/team for 'other'
     let matchedGame = completedGames.find(game => {
       const gameHome = normalizeKey(game.home_team);
       const gameAway = normalizeKey(game.away_team);
       const gameId = normalizeKey(game.id);
+      const gameLeague = normalizeKey(game.league || game.sportTitle || '');
+      const gameCountry = normalizeKey(game.country || '');
+      const gameCommence = toUTCDateOnly(game.commence_time);
+      const selectionCommence = toUTCDateOnly(selection.game_commence_time);
 
-      return (
-        (gameHome === selectionHome && gameAway === selectionAway) ||
-        (gameId && selectionGameId && gameId === selectionGameId)
-      );
+      // Match by gameId
+      if (gameId && selectionGameId && gameId === selectionGameId) return true;
+
+      // Match by teams and date (±1 day)
+      if (gameHome === selectionHome && gameAway === selectionAway) {
+        if (!selectionCommence || !gameCommence) return true;
+        const diffDays = Math.abs(new Date(game.commence_time).getTime() - new Date(selection.game_commence_time).getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays <= 1) return true;
+      }
+
+      // Fallback: match by league/country if 'other'
+      if (selectionLeague === 'other') {
+        if (gameLeague && selectionLeague && gameLeague === selectionLeague) return true;
+        if (gameCountry && selectionCountry && gameCountry === selectionCountry) return true;
+      }
+      return false;
     });
 
     if (!matchedGame) {
