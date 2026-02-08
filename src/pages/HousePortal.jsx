@@ -32,6 +32,11 @@ export default function HousePortal() {
     setPotentialWin(potential);
   }, [selectedGames, stakeAmount]);
 
+  // Log para depurar el estado actualizado de selectedGames
+  useEffect(() => {
+    console.log('[LOG] selectedGames actualizado:', selectedGames);
+  }, [selectedGames]);
+
   // Auto-cerrar mensajes de error después de 5 segundos
   useEffect(() => {
     if (!error) return;
