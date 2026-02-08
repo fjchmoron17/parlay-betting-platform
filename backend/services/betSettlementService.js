@@ -438,19 +438,44 @@ async function processUnsettledBets() {
       'ncaaf': 'americanfootball_ncaaf',
       'ncaab': 'basketball_ncaab',
       'other': 'other',
+      'soccer': 'soccer',
       'atp': 'tennis_atp_aus_open_singles',
       'tennis': 'tennis_atp_aus_open_singles'
     };
+
+    const fallbackSoccerKeys = [
+      'soccer_epl',
+      'soccer_la_liga',
+      'soccer_serie_a',
+      'soccer_bundesliga',
+      'soccer_ligue_1',
+      'soccer_spain_segunda_division',
+      'soccer_italy_serie_b',
+      'soccer_uefa_champs_league',
+      'soccer_uefa_europa_league'
+    ];
 
     // Resolver sport keys dinámicamente desde la API de deportes
     const sportsMap = await getSportsTitleToKeyMap();
 
     // Agrupar por deporte para minimizar llamadas a la API
-    const sportKeys = [...new Set(selectionBets
+    const rawSportKeys = selectionBets
       .filter(bet => bet.selections && bet.selections.length > 0)
       .flatMap(bet => bet.selections.map(sel => resolveSportKey(sel.league, sportsMap, leagueToSportKey)))
-      .filter(key => key && key !== 'unknown')
-    )];
+      .filter(key => key && key !== 'unknown');
+
+    const needsSoccerFallback = selectionBets
+      .flatMap(bet => bet.selections || [])
+      .some(sel => {
+        const normalized = normalizeKey(sel.league);
+        return normalized === 'soccer' || normalized === 'other';
+      });
+
+    const expandedKeys = needsSoccerFallback
+      ? rawSportKeys.concat(fallbackSoccerKeys)
+      : rawSportKeys;
+
+    const sportKeys = [...new Set(expandedKeys.filter(key => key !== 'other' && key !== 'soccer'))];
 
     const allCompletedGames = {};
     const allActiveGames = {};
