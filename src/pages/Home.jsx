@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Helmet } from "react-helmet";
 import GroupedGameCard from "../components/GroupedGameCard";
 import ParlayPanel from "../components/ParlayPanel";
 import { gamesAPI } from "../services/api";
