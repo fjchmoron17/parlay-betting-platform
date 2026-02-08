@@ -11,6 +11,7 @@ import './HousePortal.css';
 import '../components/PlaceBetForm.css';
 
 export default function HousePortal() {
+    // Cambio de contraste y despliegue forzado - 2026-02-08
   const { user, house, logout, refreshHouseData } = useAuth();
   const [activeView, setActiveView] = useState('betting'); // betting, bets, reports
   const [selectedGames, setSelectedGames] = useState([]);
