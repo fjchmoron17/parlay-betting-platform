@@ -48,6 +48,22 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
 
   const handleSelect = (gameId, team, odds, gameData = {}) => {
     // Permitir toggle: si ya existe, quitar; si no, agregar
+    if (bettingMode && onGameSelect) {
+      onGameSelect({
+        id: gameId,
+        home_team: gameData.homeTeam,
+        away_team: gameData.awayTeam,
+        league: gameData.league || gameData.sportTitle || gameData.sport_key || 'OTHER',
+        market: gameData.market,
+        selectedTeam: team,
+        selectedOdds: odds,
+        pointSpread: gameData.pointSpread,
+        bookmaker: gameData.bookmaker,
+        game_commence_time: gameData.game_commence_time || gameData.game_time || gameData.commence_time || gameData.commenceTime
+      });
+      return;
+    }
+
     setParlay((prev) => {
       const exists = prev[gameId] && prev[gameId].team === team && prev[gameId].market === gameData.market;
       if (exists) {
@@ -141,7 +157,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
                   gameGroup={gameGroup}
                   onSelect={handleSelect}
                   index={index}
-                  selectedGames={bettingMode ? selectedGames : []}
+                  selectedGames={bettingMode ? selectedGames : Object.values(parlay)}
                 />
               ))}
             </div>
