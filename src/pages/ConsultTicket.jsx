@@ -87,6 +87,8 @@ export default function ConsultTicket() {
       <section className="ticket-card">
         <form onSubmit={handleSubmit} className="ticket-form">
           <input
+            id="ticket-input"
+            name="ticket"
             type="text"
             placeholder="Ej: BET-1769..."
             value={ticket}

@@ -5,6 +5,7 @@ import { placeBet } from '../services/b2bApi';
 import BetsList from '../components/BetsList';
 import DailyReports from '../components/DailyReports';
 import Home from './Home';
+import ParlayPanel from '../components/ParlayPanel';
 import FilterPanel from '../components/FilterPanel';
 import './HousePortal.css';
 
@@ -94,6 +95,7 @@ export default function HousePortal() {
   };
 
   const handleGameSelection = (game) => {
+    console.log('[LOG] Selección recibida:', game);
     // Verificar si se puede agregar la selección
     const validation = canAddSelection(game, selectedGames);
     
@@ -104,25 +106,36 @@ export default function HousePortal() {
 
     // Agregar/remover juego de la selección
     setSelectedGames(prev => {
+      const updated = (() => {
       const exists = prev.find(g => 
         g.id === game.id && g.selectedTeam === game.selectedTeam && g.market === game.market
       );
       
       if (exists) {
-        return prev.filter(g => 
+        const filtered = prev.filter(g => 
           !(g.id === game.id && g.selectedTeam === game.selectedTeam && g.market === game.market)
         );
+        console.log('[LOG] Jugada removida. Estado actual:', filtered);
+        return filtered;
       } else {
         setError(null); // Limpiar error al agregar exitosamente
-        return [...prev, game];
+        const added = [...prev, game];
+        console.log('[LOG] Jugada agregada. Estado actual:', added);
+        return added;
       }
+    })();
+    return updated;
     });
   };
 
   const handleRemoveSelection = (selection) => {
-    setSelectedGames(prev => prev.filter(g => 
-      !(g.id === selection.id && g.selectedTeam === selection.selectedTeam && g.market === selection.market)
-    ));
+    setSelectedGames(prev => {
+      const filtered = prev.filter(g => 
+        !(g.id === selection.id && g.selectedTeam === selection.selectedTeam && g.market === selection.market)
+      );
+      console.log('[LOG] Jugada removida desde panel. Estado actual:', filtered);
+      return filtered;
+    });
   };
 
   const calculateTotalOdds = () => {
@@ -233,40 +246,44 @@ export default function HousePortal() {
       </div>
 
       {/* Navigation */}
-      <div className="portal-nav">
-        <button
-          className={activeView === 'betting' ? 'active' : ''}
-          onClick={() => setActiveView('betting')}
-        >
-          🎲 Apostar
-        </button>
-        <button
-          className={activeView === 'bets' ? 'active' : ''}
-          onClick={() => setActiveView('bets')}
-        >
-          📋 Mis Apuestas
-        </button>
-        <button
-          className={activeView === 'reports' ? 'active' : ''}
-          onClick={() => setActiveView('reports')}
-        >
-          📊 Reportes
-        </button>
-      </div>
-
-      {/* Sticky Filters and Error Banner */}
-      {activeView === 'betting' && (
-        <div className="sticky-top-bar">
-          <FilterPanel 
-            filters={filters}
-            onFilterChange={handleFilterChange}
-          />
-          {error && (
-            <div className="bet-error-top" role="alert">
-              <div className="bet-error__content">⚠️ {error}</div>
-              <button
-                type="button"
-                className="bet-error__close"
+        <div className="main-content">
+          {activeView === 'betting' && (
+            <div className="betting-view">
+              <div className="betting-columns">
+                <div className="games-column">
+                  <FilterPanel filters={filters} setFilters={setFilters} />
+                  <Home
+                    filters={filters}
+                    bettingMode={true}
+                    selectedGames={selectedGames}
+                    onGameSelect={handleGameSelection}
+                  />
+                </div>
+                <div className="panel-column">
+                  {/* Panel de apuestas original (puedes comentar si usas ParlayPanel) */}
+                  <div className="bet-panel" style={{ border: '2px dashed #4CAF50', marginBottom: 16 }}>
+                    <h2>Panel de Apuestas (original)</h2>
+                    <pre style={{ fontSize: 12, background: '#f3f3f3', padding: 8, borderRadius: 6, marginBottom: 8 }}>
+                      {JSON.stringify(selectedGames, null, 2)}
+                    </pre>
+                  </div>
+                  {/* Panel ParlayPanel integrado para depuración visual */}
+                  <ParlayPanel parlay={Object.fromEntries(selectedGames.map(g => [g.id + '-' + g.market + '-' + g.selectedTeam, {
+                    team: g.selectedTeam,
+                    odds: g.selectedOdds,
+                    homeTeam: g.home_team || g.homeTeam,
+                    awayTeam: g.away_team || g.awayTeam,
+                    league: g.league,
+                    market: g.market
+                  }]))} onRemove={key => {
+                    // Extraer id, market, selectedTeam del key
+                    const [id, market, selectedTeam] = key.split('-');
+                    handleRemoveSelection({ id, market, selectedTeam });
+                  }} />
+                </div>
+              </div>
+            </div>
+          )}
                 onClick={() => setError(null)}
                 aria-label="Cerrar mensaje"
               >

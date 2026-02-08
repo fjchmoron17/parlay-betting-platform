@@ -88,7 +88,7 @@ const ParlayPanel = ({ parlay, onRemove }) => {
 
   return (
     <>
-      <div className="w-80 bg-white rounded-lg shadow p-4 sticky top-6 h-fit">
+      <div className="w-80 bg-white rounded-lg shadow p-4 sticky top-6 h-fit" style={{ border: '2px solid red', zIndex: 9999 }}>
         <h2 className="text-xl font-bold mb-3">Tu Parlay</h2>
 
         {entries.length === 0 ? (
