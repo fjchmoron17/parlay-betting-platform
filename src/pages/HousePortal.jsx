@@ -466,7 +466,6 @@ export default function HousePortal() {
                   </button>
                 </div>
               </div>
-                </div>
               )}
             </div>
           </div>
