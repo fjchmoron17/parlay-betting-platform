@@ -1,3 +1,5 @@
+// Commit for Railway snapshot: 2026-02-08
+// Despliegue forzado: 2026-02-08
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Admin from "./pages/Admin";
 import HousePortal from "./pages/HousePortal";
