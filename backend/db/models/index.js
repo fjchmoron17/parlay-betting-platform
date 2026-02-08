@@ -268,18 +268,20 @@ export const DailyReport = {
     );
     
     const dayStats = stats.rows[0];
-    const totalWagered = parseFloat(dayStats.total_wagered);
-    const totalWinnings = parseFloat(dayStats.total_winnings);
-
-    // Comisión de plataforma fija 5% sobre el total apostado del día
-    const totalCommissions = totalWagered * 0.05;
-
-    // Pérdidas del operador = monto apostado - premios pagados
-    const totalLosses = totalWagered - totalWinnings;
-    // Utilidad neta del operador = monto apostado - premios - comisiones (salida)
-    const netProfitLoss = totalWagered - totalWinnings - totalCommissions;
+    // Si no hay apuestas ese día, todos los valores deben ser 0 y el balance igual al de apertura
+    const noBets = parseInt(dayStats.total_bets) === 0;
+    const totalBets = noBets ? 0 : parseInt(dayStats.total_bets);
+    const totalWagered = noBets ? 0 : parseFloat(dayStats.total_wagered);
+    const betsWon = noBets ? 0 : parseInt(dayStats.bets_won);
+    const betsLost = noBets ? 0 : parseInt(dayStats.bets_lost);
+    const betsVoid = noBets ? 0 : parseInt(dayStats.bets_void);
+    const betsPending = noBets ? 0 : parseInt(dayStats.bets_pending);
+    const totalWinnings = noBets ? 0 : parseFloat(dayStats.total_winnings);
+    const totalCommissions = noBets ? 0 : totalWagered * 0.05;
+    const totalLosses = noBets ? 0 : totalWagered - totalWinnings;
+    const netProfitLoss = noBets ? 0 : totalWagered - totalWinnings - totalCommissions;
     const closingBalance = parseFloat(openingBalance) + netProfitLoss;
-    
+
     // Insertar o actualizar reporte
     const result = await query(
       `INSERT INTO daily_reports (
@@ -306,13 +308,13 @@ export const DailyReport = {
       RETURNING *`,
       [
         bettingHouseId, reportDate,
-        dayStats.total_bets, dayStats.total_wagered,
-        dayStats.bets_won, dayStats.bets_lost, dayStats.bets_void, dayStats.bets_pending,
-        dayStats.total_winnings, totalLosses, totalCommissions, netProfitLoss,
+        totalBets, totalWagered,
+        betsWon, betsLost, betsVoid, betsPending,
+        totalWinnings, totalLosses, totalCommissions, netProfitLoss,
         openingBalance, closingBalance
       ]
     );
-    
+
     // Actualizar el balance de la casa con el closing_balance del reporte
     await query(
       `UPDATE betting_houses 
@@ -320,7 +322,7 @@ export const DailyReport = {
        WHERE id = $2`,
       [closingBalance, bettingHouseId]
     );
-    
+
     return result.rows[0];
   },
 
