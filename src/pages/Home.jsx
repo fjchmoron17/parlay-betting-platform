@@ -147,8 +147,10 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
             </div>
           )}
         </div>
-        {/* Panel de Parlay */}
-        {!bettingMode && <ParlayPanel parlay={parlay} onRemove={handleRemove} />}
+        {/* Panel de Parlay: solo mostrar si hay selecciones */}
+        {!bettingMode && Object.keys(parlay).length > 0 && (
+          <ParlayPanel parlay={parlay} onRemove={handleRemove} />
+        )}
       </div>
       {/* Widgets de monetización al final */}
       <Helmet>
