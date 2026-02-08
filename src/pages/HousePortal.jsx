@@ -98,19 +98,15 @@ export default function HousePortal() {
     console.log('[LOG] Selección recibida:', game);
     // Verificar si se puede agregar la selección
     const validation = canAddSelection(game, selectedGames);
-    
     if (!validation.allowed) {
+      console.log('[LOG] Selección bloqueada por validación:', validation.message);
       setError(validation.message);
       return;
     }
-
-    // Agregar/remover juego de la selección
     setSelectedGames(prev => {
-      const updated = (() => {
       const exists = prev.find(g => 
         g.id === game.id && g.selectedTeam === game.selectedTeam && g.market === game.market
       );
-      
       if (exists) {
         const filtered = prev.filter(g => 
           !(g.id === game.id && g.selectedTeam === game.selectedTeam && g.market === game.market)
@@ -118,14 +114,15 @@ export default function HousePortal() {
         console.log('[LOG] Jugada removida. Estado actual:', filtered);
         return filtered;
       } else {
-        setError(null); // Limpiar error al agregar exitosamente
+        setError(null);
         const added = [...prev, game];
         console.log('[LOG] Jugada agregada. Estado actual:', added);
         return added;
       }
-    })();
-    return updated;
     });
+    setTimeout(() => {
+      console.log('[LOG] Estado final selectedGames:', selectedGames);
+    }, 100);
   };
 
   const handleRemoveSelection = (selection) => {
@@ -261,16 +258,18 @@ export default function HousePortal() {
                 {/* ParlayPanel solo si hay selecciones, y con estructura esperada */}
                 {selectedGames.length > 0 && (
                   <ParlayPanel
-                    parlay={Object.fromEntries(selectedGames.map(g => [g.id, {
-                      team: g.selectedTeam,
-                      odds: g.selectedOdds,
-                      homeTeam: g.home_team || g.homeTeam,
-                      awayTeam: g.away_team || g.awayTeam,
-                      league: g.league,
-                      market: g.market
-                    }]))}
+                    parlay={selectedGames.reduce((acc, g) => {
+                      acc[g.id] = {
+                        team: g.selectedTeam,
+                        odds: g.selectedOdds,
+                        homeTeam: g.home_team || g.homeTeam,
+                        awayTeam: g.away_team || g.awayTeam,
+                        league: g.league,
+                        market: g.market
+                      };
+                      return acc;
+                    }, {})}
                     onRemove={id => {
-                      // Remover por id
                       handleRemoveSelection(selectedGames.find(g => g.id === id));
                     }}
                   />
