@@ -47,18 +47,27 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
   };
 
   const handleSelect = (gameId, team, odds, gameData = {}) => {
-    // Restaurar lógica estable: agregar selección al parlay
-    setParlay((prev) => ({
-      ...prev,
-      [gameId]: {
-        team,
-        odds,
-        homeTeam: gameData.homeTeam,
-        awayTeam: gameData.awayTeam,
-        league: gameData.league,
-        market: gameData.market,
-      },
-    }));
+    // Permitir toggle: si ya existe, quitar; si no, agregar
+    setParlay((prev) => {
+      const exists = prev[gameId] && prev[gameId].team === team && prev[gameId].market === gameData.market;
+      if (exists) {
+        const copy = { ...prev };
+        delete copy[gameId];
+        return copy;
+      } else {
+        return {
+          ...prev,
+          [gameId]: {
+            team,
+            odds,
+            homeTeam: gameData.homeTeam,
+            awayTeam: gameData.awayTeam,
+            league: gameData.league,
+            market: gameData.market,
+          },
+        };
+      }
+    });
   };
 
   const handleRemove = (gameId) => {
