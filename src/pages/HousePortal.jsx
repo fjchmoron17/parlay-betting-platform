@@ -88,15 +88,23 @@ export default function HousePortal() {
       }
     }
 
-    // Si llegamos aquí, la combinación no está permitida
+    // Mensaje de error original del branch estable
     const marketNames = {
       'h2h': 'Ganador',
       'spreads': 'Spread',
       'totals': 'Totales'
     };
-    return { 
-      allowed: false, 
-      message: `No puedes combinar ${marketNames[newMarket] || newMarket} con ${existingMarkets.map(m => marketNames[m] || m).join(', ')} del mismo juego.\n\nCombinaciones permitidas:\n• Ganador + Totales\n• Spread + Totales` 
+    // Si la combinación es h2h + spreads (no permitida)
+    if ((existingMarkets.includes('h2h') && newMarket === 'spreads') || (existingMarkets.includes('spreads') && newMarket === 'h2h')) {
+      return {
+        allowed: false,
+        message: 'No puedes combinar Ganador y Spread del mismo partido.\n\nSolo puedes combinar:\n• Ganador + Totales\n• Spread + Totales'
+      };
+    }
+    // Mensaje genérico para otras combinaciones no permitidas
+    return {
+      allowed: false,
+      message: `No puedes combinar ${marketNames[newMarket] || newMarket} con ${existingMarkets.map(m => marketNames[m] || m).join(', ')} del mismo juego.\n\nCombinaciones permitidas:\n• Ganador + Totales\n• Spread + Totales`
     };
   };
 
