@@ -48,6 +48,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
   const handleSelect = (gameId, team, odds, gameData = {}) => {
     // Permitir toggle: si ya existe, quitar; si no, agregar
     if (bettingMode && onGameSelect) {
+      console.log('[LOG] handleSelect llamado en Home.jsx:', { gameId, team, odds, gameData });
       onGameSelect({
         id: gameId,
         home_team: gameData.homeTeam,
