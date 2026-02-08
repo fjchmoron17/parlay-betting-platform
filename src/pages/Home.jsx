@@ -168,18 +168,6 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
           <ParlayPanel parlay={parlay} onRemove={handleRemove} />
         )}
       </div>
-      {/* Widgets de monetización al final */}
-      <Helmet>
-        <script async id="elem459d7e6db30947da86fa1bcc07340452" src="https://bwasrv.com/tags/display.js?p=%2Fregistration%2F&trk_id=2JTA&media_id=8e046c37-25b2-4994-a9c2-ee9fc3aacc40&width=120&height=600&b=elem459d7e6db30947da86fa1bcc07340452"></script>
-        <script async id="elem88f738fe94004752b1cbf599c40c14d1" src="https://bwasrv.com/tags/display.js?trk_id=2JTA&media_id=42fb2b61-a45d-435b-8b71-f138360dfd44&width=120&height=600&b=elem88f738fe94004752b1cbf599c40c14d1"></script>
-        <script async id="elembc8a16db80cb4c468a5ff37f1db49c4b" src="https://bwasrv.com/tags/display.js?p=%2Fpoker%2F&trk_id=2JTA&media_id=e0960b81-2729-4b05-9f1b-b6520992faf4&width=120&height=600&b=elembc8a16db80cb4c468a5ff37f1db49c4b"></script>
-      </Helmet>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '32px', flexWrap: 'wrap' }}>
-        {/* Los widgets se mostrarán en los contenedores por el script externo */}
-        <div id="elem459d7e6db30947da86fa1bcc07340452"></div>
-        <div id="elem88f738fe94004752b1cbf599c40c14d1"></div>
-        <div id="elembc8a16db80cb4c468a5ff37f1db49c4b"></div>
-      </div>
     </div>
   );
 };
