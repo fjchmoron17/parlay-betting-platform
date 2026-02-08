@@ -8,6 +8,7 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
   };
 
   const selectOption = (market, team, odds, gameId, pointSpread = null) => {
+    console.log('[LOG] selectOption llamado en GroupedGameCard:', { market, team, odds, gameId, pointSpread });
     onSelect(gameId, team, odds, {
       homeTeam: firstGame.home_team,
       awayTeam: firstGame.away_team,
