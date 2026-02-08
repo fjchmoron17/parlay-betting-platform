@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { Helmet } from "react-helmet";
 import GroupedGameCard from "../components/GroupedGameCard";
 import ParlayPanel from "../components/ParlayPanel";
 import { gamesAPI } from "../services/api";
@@ -9,8 +10,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
   const parlayRef = useRef({}); // Mantener sincrónico para validaciones inmediatas
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Widget refs
-  const widgetRefs = [useRef(null), useRef(null), useRef(null)];
+  // Widget refs (ya no usados)
 
   // Sincronizar ref cuando cambia parlay (para remociones)
   useEffect(() => {
@@ -83,43 +83,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
     return Object.values(groups);
   };
 
-  // Integración de widgets de monetización
-  useEffect(() => {
-    // Widget de prueba: Google AdSense iframe
-    if (widgetRefs[0].current) {
-      const iframe = document.createElement('iframe');
-      iframe.src = 'https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-XXXXXXXXXXXXXXXX&output=html&h=600&w=120';
-      iframe.width = '120';
-      iframe.height = '600';
-      iframe.style.border = 'none';
-      widgetRefs[0].current.appendChild(iframe);
-    }
-    // Widgets originales
-    const scripts = [
-      {
-        id: 'elem459d7e6db30947da86fa1bcc07340452',
-        src: 'https://bwasrv.com/tags/display.js?p=%2Fregistration%2F&trk_id=2JTA&media_id=8e046c37-25b2-4994-a9c2-ee9fc3aacc40&width=120&height=600&b=elem459d7e6db30947da86fa1bcc07340452'
-      },
-      {
-        id: 'elem88f738fe94004752b1cbf599c40c14d1',
-        src: 'https://bwasrv.com/tags/display.js?trk_id=2JTA&media_id=42fb2b61-a45d-435b-8b71-f138360dfd44&width=120&height=600&b=elem88f738fe94004752b1cbf599c40c14d1'
-      },
-      {
-        id: 'elembc8a16db80cb4c468a5ff37f1db49c4b',
-        src: 'https://bwasrv.com/tags/display.js?p=%2Fpoker%2F&trk_id=2JTA&media_id=e0960b81-2729-4b05-9f1b-b6520992faf4&width=120&height=600&b=elembc8a16db80cb4c468a5ff37f1db49c4b'
-      }
-    ];
-    scripts.forEach((widget, idx) => {
-      if (widgetRefs[idx].current && !document.getElementById(widget.id)) {
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.async = true;
-        script.id = widget.id;
-        script.src = widget.src;
-        widgetRefs[idx].current.appendChild(script);
-      }
-    });
-  }, []);
+  // Eliminado: integración dinámica, ahora scripts van en JSX
 
   return (
     <div className="flex flex-col p-6 gap-6">
@@ -180,16 +144,16 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
         {!bettingMode && <ParlayPanel parlay={parlay} onRemove={handleRemove} />}
       </div>
       {/* Widgets de monetización al final */}
+      <Helmet>
+        <script async id="elem459d7e6db30947da86fa1bcc07340452" src="https://bwasrv.com/tags/display.js?p=%2Fregistration%2F&trk_id=2JTA&media_id=8e046c37-25b2-4994-a9c2-ee9fc3aacc40&width=120&height=600&b=elem459d7e6db30947da86fa1bcc07340452"></script>
+        <script async id="elem88f738fe94004752b1cbf599c40c14d1" src="https://bwasrv.com/tags/display.js?trk_id=2JTA&media_id=42fb2b61-a45d-435b-8b71-f138360dfd44&width=120&height=600&b=elem88f738fe94004752b1cbf599c40c14d1"></script>
+        <script async id="elembc8a16db80cb4c468a5ff37f1db49c4b" src="https://bwasrv.com/tags/display.js?p=%2Fpoker%2F&trk_id=2JTA&media_id=e0960b81-2729-4b05-9f1b-b6520992faf4&width=120&height=600&b=elembc8a16db80cb4c468a5ff37f1db49c4b"></script>
+      </Helmet>
       <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '32px', flexWrap: 'wrap' }}>
-        <iframe
-          src="https://es.wikipedia.org/wiki/Wikipedia:Portada"
-          width="120"
-          height="600"
-          style={{ border: 'none' }}
-          title="Widget de prueba"
-        ></iframe>
-        <div ref={widgetRefs[1]}></div>
-        <div ref={widgetRefs[2]}></div>
+        {/* Los widgets se mostrarán en los contenedores por el script externo */}
+        <div id="elem459d7e6db30947da86fa1bcc07340452"></div>
+        <div id="elem88f738fe94004752b1cbf599c40c14d1"></div>
+        <div id="elembc8a16db80cb4c468a5ff37f1db49c4b"></div>
       </div>
     </div>
   );
