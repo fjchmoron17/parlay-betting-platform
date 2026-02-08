@@ -1,3 +1,4 @@
+// Commit for Railway snapshot: 2026-02-08
 // backend/services/betSettlementService.js
 // Servicio para resolver automáticamente las apuestas usando scores de The Odds API
 
