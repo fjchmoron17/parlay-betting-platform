@@ -13,17 +13,25 @@ export default function BetsList({ bettingHouseId }) {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [dateFilterActive, setDateFilterActive] = useState(false);
 
+  // Nuevo: obtener el deporte seleccionado desde props o contexto
+  const [selectedSport, setSelectedSport] = useState('');
   useEffect(() => {
     if (bettingHouseId) {
       loadBets();
     }
-  }, [bettingHouseId, filter, dateFilterActive]);
+  }, [bettingHouseId, filter, dateFilterActive, selectedSport]);
 
   const loadBets = async () => {
     try {
       setLoading(true);
       const response = await getBetsForHouse(bettingHouseId);
       let filteredBets = response.data || [];
+      // Filtrar por deporte seleccionado
+      if (selectedSport && selectedSport !== '') {
+        filteredBets = filteredBets.filter(bet =>
+          bet.selections && bet.selections.some(sel => sel.league === selectedSport || sel.sport_key === selectedSport)
+        );
+      }
       // Filtrar por rango de fechas SOLO si está activo
       if (dateFilterActive && dateRange.start && dateRange.end) {
         const startDate = new Date(dateRange.start);
