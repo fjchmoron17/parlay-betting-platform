@@ -64,7 +64,7 @@ const FilterPanel = ({ filters, onFilterChange }) => {
             value={selectedSport}
             onChange={handleSportChange}
             className="filter-select"
-            disabled={loading}
+            disabled={loading && sports.length === 0}
           >
             <option value="">Todos los Deportes</option>
             {loading ? null :
