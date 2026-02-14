@@ -11,6 +11,7 @@ export default function BetsList({ bettingHouseId }) {
   const [filter, setFilter] = useState('all'); // all, pending, won, lost
   const [selectedBet, setSelectedBet] = useState(null); // Para el modal de detalles
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [dateFilterActive, setDateFilterActive] = useState(false);
 
   useEffect(() => {
     if (bettingHouseId) {
@@ -23,18 +24,18 @@ export default function BetsList({ bettingHouseId }) {
       setLoading(true);
       const response = await getBetsForHouse(bettingHouseId);
       let filteredBets = response.data || [];
-      // Filtrar por estado
-      if (filter !== 'all') {
-        filteredBets = filteredBets.filter(bet => bet.status === filter);
-      }
-      // Filtrar por rango de fechas
-      if (dateRange.start && dateRange.end) {
+      // Filtrar por rango de fechas si está activo
+      if (dateFilterActive && dateRange.start && dateRange.end) {
         const startDate = new Date(dateRange.start);
         const endDate = new Date(dateRange.end);
         filteredBets = filteredBets.filter(bet => {
           const betDate = new Date(bet.placed_at);
           return betDate >= startDate && betDate <= endDate;
         });
+      }
+      // Filtrar por estado SOLO si no hay filtro de fechas activo
+      if (!dateFilterActive && filter !== 'all') {
+        filteredBets = filteredBets.filter(bet => bet.status === filter);
       }
       setBets(filteredBets);
       setError(null);
@@ -290,22 +291,50 @@ export default function BetsList({ bettingHouseId }) {
             Perdidas
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px' }}>
-          <label style={{ fontSize: '13px', color: '#374151' }}>Rango de fechas:</label>
-          <input
-            type="date"
-            value={dateRange.start}
-            onChange={e => setDateRange({ ...dateRange, start: e.target.value })}
-            style={{ padding: '6px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-          />
-          <span style={{ fontSize: '13px', color: '#374151' }}>a</span>
-          <input
-            type="date"
-            value={dateRange.end}
-            onChange={e => setDateRange({ ...dateRange, end: e.target.value })}
-            style={{ padding: '6px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-          />
-        </div>
+        {!dateFilterActive && (
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px' }}>
+            <label style={{ fontSize: '13px', color: '#374151' }}>Rango de fechas:</label>
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={e => setDateRange({ ...dateRange, start: e.target.value })}
+              style={{ padding: '6px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+            />
+            <span style={{ fontSize: '13px', color: '#374151' }}>a</span>
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={e => setDateRange({ ...dateRange, end: e.target.value })}
+              style={{ padding: '6px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+            />
+            <button
+              style={{ padding: '6px 14px', borderRadius: '6px', background: '#2563eb', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}
+              disabled={!dateRange.start || !dateRange.end}
+              onClick={() => { setDateFilterActive(true); setFilter('all'); }}
+            >
+              Aplicar
+            </button>
+            <button
+              style={{ padding: '6px 14px', borderRadius: '6px', background: '#e5e7eb', color: '#1f2937', border: 'none', fontWeight: 600, cursor: 'pointer' }}
+              onClick={() => { setDateRange({ start: '', end: '' }); setDateFilterActive(false); }}
+            >
+              Restablecer
+            </button>
+          </div>
+        )}
+        {dateFilterActive && (
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px' }}>
+            <span style={{ fontSize: '13px', color: '#2563eb', fontWeight: 600 }}>
+              Filtro de fechas aplicado: {dateRange.start} a {dateRange.end}
+            </span>
+            <button
+              style={{ padding: '6px 14px', borderRadius: '6px', background: '#e5e7eb', color: '#1f2937', border: 'none', fontWeight: 600, cursor: 'pointer' }}
+              onClick={() => { setDateRange({ start: '', end: '' }); setDateFilterActive(false); }}
+            >
+              Restablecer
+            </button>
+          </div>
+        )}
       </div>
 
       {bets.length === 0 ? (
