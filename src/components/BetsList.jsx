@@ -10,6 +10,7 @@ export default function BetsList({ bettingHouseId }) {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all, pending, won, lost
   const [selectedBet, setSelectedBet] = useState(null); // Para el modal de detalles
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   useEffect(() => {
     if (bettingHouseId) {
@@ -22,11 +23,19 @@ export default function BetsList({ bettingHouseId }) {
       setLoading(true);
       const response = await getBetsForHouse(bettingHouseId);
       let filteredBets = response.data || [];
-      
+      // Filtrar por estado
       if (filter !== 'all') {
         filteredBets = filteredBets.filter(bet => bet.status === filter);
       }
-      
+      // Filtrar por rango de fechas
+      if (dateRange.start && dateRange.end) {
+        const startDate = new Date(dateRange.start);
+        const endDate = new Date(dateRange.end);
+        filteredBets = filteredBets.filter(bet => {
+          const betDate = new Date(bet.placed_at);
+          return betDate >= startDate && betDate <= endDate;
+        });
+      }
       setBets(filteredBets);
       setError(null);
     } catch (err) {
@@ -280,6 +289,22 @@ export default function BetsList({ bettingHouseId }) {
           >
             Perdidas
           </button>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px' }}>
+          <label style={{ fontSize: '13px', color: '#374151' }}>Rango de fechas:</label>
+          <input
+            type="date"
+            value={dateRange.start}
+            onChange={e => setDateRange({ ...dateRange, start: e.target.value })}
+            style={{ padding: '6px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+          />
+          <span style={{ fontSize: '13px', color: '#374151' }}>a</span>
+          <input
+            type="date"
+            value={dateRange.end}
+            onChange={e => setDateRange({ ...dateRange, end: e.target.value })}
+            style={{ padding: '6px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+          />
         </div>
       </div>
 
