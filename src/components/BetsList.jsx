@@ -15,11 +15,12 @@ export default function BetsList({ bettingHouseId }) {
 
   // Nuevo: obtener el deporte seleccionado desde props o contexto
   const [selectedSport, setSelectedSport] = useState('');
+
   useEffect(() => {
     if (bettingHouseId) {
       loadBets();
     }
-  }, [bettingHouseId, filter, dateFilterActive, selectedSport]);
+  }, [bettingHouseId, filter, dateFilterActive, dateRange, selectedSport]);
 
   const loadBets = async () => {
     try {
@@ -32,17 +33,28 @@ export default function BetsList({ bettingHouseId }) {
           bet.selections && bet.selections.some(sel => sel.league === selectedSport || sel.sport_key === selectedSport)
         );
       }
-      // Filtrar por rango de fechas SOLO si está activo
+      // Filtrar por rango de fechas si está activo y hay fechas
       if (dateFilterActive && dateRange.start && dateRange.end) {
-        const startDate = new Date(dateRange.start);
-        const endDate = new Date(dateRange.end);
+        // Normalizar fechas a YYYY-MM-DD para comparar solo la fecha, ignorando la hora
+        const startDateStr = dateRange.start;
+        const endDateStr = dateRange.end;
         filteredBets = filteredBets.filter(bet => {
-          const betDate = new Date(bet.placed_at);
-          return betDate >= startDate && betDate <= endDate;
+          // Extraer solo la parte de fecha (YYYY-MM-DD) de placed_at
+          let betDateStr = '';
+          if (typeof bet.placed_at === 'string' && bet.placed_at.length >= 10) {
+            betDateStr = bet.placed_at.slice(0, 10);
+          } else {
+            // fallback: intentar formatear como ISO
+            const d = new Date(bet.placed_at);
+            if (!isNaN(d.getTime())) {
+              betDateStr = d.toISOString().slice(0, 10);
+            }
+          }
+          return betDateStr >= startDateStr && betDateStr <= endDateStr;
         });
       }
-      // Filtrar por estado SOLO si no hay filtro de fechas activo
-      if (!dateFilterActive && filter !== 'all') {
+      // Filtrar por estado si no es 'all'
+      if (filter !== 'all') {
         filteredBets = filteredBets.filter(bet => bet.status === filter);
       }
       setBets(filteredBets);
@@ -320,8 +332,6 @@ export default function BetsList({ bettingHouseId }) {
               disabled={!dateRange.start || !dateRange.end}
               onClick={() => {
                 setDateFilterActive(true);
-                setFilter('all');
-                loadBets();
               }}
             >
               Aplicar
