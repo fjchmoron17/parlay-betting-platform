@@ -89,7 +89,7 @@
 .selection-teams {
   font-size: 14px;
   font-weight: 600;
-  color: #f8fafc;
+  color: #1a202c; /* Oscuro, alto contraste */
 }
 
 .selection-pick {
