@@ -270,7 +270,7 @@ export default function HousePortal() {
           <div className="betting-view">
             <div className="betting-columns" style={{ display: 'flex', alignItems: 'flex-start', gap: '32px' }}>
               <div className="games-column" style={{ flex: 2 }}>
-                <FilterPanel filters={filters} setFilters={setFilters} />
+                <FilterPanel filters={filters} onFilterChange={handleFilterChange} />
                 <Home
                   filters={filters}
                   bettingMode={true}
