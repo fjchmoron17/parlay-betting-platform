@@ -116,6 +116,33 @@ export default function BetSettlement() {
           )}
         </div>
       )}
+        // Nueva función para marcar apuestas viejas como void
+        const handleVoidOldBets = async () => {
+          if (!confirm('¿Deseas marcar todas las apuestas abiertas de hace más de una semana como VOID?')) {
+            return;
+          }
+          setLoading(true);
+          setError(null);
+          setResult(null);
+          try {
+            const response = await fetch(`${API_URL}/bets/void-old`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            const data = await response.json();
+            if (data.success) {
+              setResult({ message: data.message, data: { processed: data.count, settled: data.count } });
+            } else {
+              setError(data.error || 'Error al marcar apuestas void');
+            }
+          } catch (err) {
+            setError(err.message || 'Error de conexión con el servidor');
+          } finally {
+            setLoading(false);
+          }
+        };
 
       <div className="settlement-card">
         <div className="settlement-info">
@@ -221,6 +248,23 @@ export default function BetSettlement() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 16px;
+                <button
+                  onClick={handleVoidOldBets}
+                  disabled={loading}
+                  className="secondary-btn large"
+                  style={{ marginLeft: 16 }}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner"></span>
+                      Marcando void...
+                    </>
+                  ) : (
+                    <>
+                      🕒 Marcar apuestas viejas como VOID
+                    </>
+                  )}
+                </button>
         }
 
         .status-indicator {

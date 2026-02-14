@@ -38,6 +38,38 @@ const saveBets = (bets) => {
   }
 };
 
+// Marcar todas las apuestas abiertas de hace más de una semana como void
+export const voidOldPendingBets = async (req, res) => {
+  try {
+    const bets = readBets();
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    let count = 0;
+    bets.forEach((bet) => {
+      if (
+        bet.status === 'pending' &&
+        new Date(bet.createdAt) < oneWeekAgo
+      ) {
+        bet.status = 'void';
+        bet.updatedAt = now.toISOString();
+        count++;
+      }
+    });
+    saveBets(bets);
+    res.json({
+      success: true,
+      message: `Marcadas ${count} apuestas como void`,
+      count,
+    });
+  } catch (error) {
+    console.error('Error marcando apuestas void:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al marcar apuestas void',
+    });
+  }
+};
+
 // Generar ID único para la apuesta
 const generateBetId = () => {
   const timestamp = Date.now();
