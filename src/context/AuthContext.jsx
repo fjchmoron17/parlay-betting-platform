@@ -60,6 +60,27 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async ({ role, username, password }) => {
+    // Permitir acceso demo sin backend si username y password son demo/demo123
+    if (username === 'demo' && password === 'demo123') {
+      const fakeUser = {
+        id: 'demo',
+        username: 'demo',
+        role: role || 'house_admin',
+        name: 'Usuario Demo',
+        email: 'demo@demo.com',
+      };
+      const session = {
+        user: fakeUser,
+        house: null,
+        loginTime: Date.now()
+      };
+      localStorage.setItem('authSession', JSON.stringify(session));
+      setUser(fakeUser);
+      setHouse(null);
+      startSessionTimer(SESSION_TIMEOUT);
+      return { success: true };
+    }
+    // ...existing code...
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
