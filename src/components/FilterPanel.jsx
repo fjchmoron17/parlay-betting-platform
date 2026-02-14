@@ -60,16 +60,21 @@ const FilterPanel = ({ filters, onFilterChange }) => {
             disabled={loading}
           >
             <option value="">Todos los Deportes</option>
-            {Array.isArray(sports) && sports.length > 0 && sports.every(([g, items]) => Array.isArray(items)) &&
-              sports.map(([group, items]) => (
-                <optgroup key={group} label={group}>
-                  {items.map(sport => (
-                    <option key={sport.key} value={sport.key}>
-                      {sport.title}
-                    </option>
-                  ))}
-                </optgroup>
-              ))
+            {loading ? null :
+              (!Array.isArray(sports) || sports.length === 0) ? (
+                <option value="" disabled>No hay deportes disponibles</option>
+              ) : (
+                sports.every(([g, items]) => Array.isArray(items)) &&
+                sports.map(([group, items]) => (
+                  <optgroup key={group} label={group}>
+                    {items.map(sport => (
+                      <option key={sport.key} value={sport.key}>
+                        {sport.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))
+              )
             }
           </select>
         </div>
