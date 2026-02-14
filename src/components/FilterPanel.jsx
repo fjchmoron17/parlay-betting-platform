@@ -9,11 +9,18 @@ const FilterPanel = ({ filters, onFilterChange }) => {
     let mounted = true;
     setLoading(true);
     sportsAPI.getAll()
-      .then(data => {
+      .then(raw => {
+        // Soportar: {success, data}, array plano, array agrupado
+        let data = raw;
+        if (raw && typeof raw === 'object' && Array.isArray(raw.data)) {
+          data = raw.data;
+        }
         let grouped = [];
-        if (Array.isArray(data?.data)) {
-          grouped = data.data;
+        if (Array.isArray(data) && data.length > 0 && Array.isArray(data[0])) {
+          // Ya está agrupado
+          grouped = data;
         } else if (Array.isArray(data)) {
+          // Agrupar por group/league_group
           const byGroup = {};
           data.forEach(sport => {
             const group = sport.league_group || sport.group || 'Otros';
