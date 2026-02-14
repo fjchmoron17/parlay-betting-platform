@@ -4,6 +4,67 @@ import { placeBet } from "../services/b2bApi";
 import { useAuth } from "../context/AuthContext";
 
 const ParlayPanel = ({ parlay, onRemove }) => {
+    // Validación de combinaciones same-game
+    function validateCombination(entries) {
+      // Agrupar selecciones por evento
+      const byGame = {};
+      for (const [gameId, sel] of entries) {
+        if (!byGame[gameId]) byGame[gameId] = [];
+        byGame[gameId].push(sel);
+      }
+      for (const gameId in byGame) {
+        const markets = byGame[gameId].map(s => s.market);
+        // Regla: H2H + Totales PERMITIDO, Spread + Totales PERMITIDO, H2H + Spread NO PERMITIDO
+        if (markets.includes('h2h') && markets.includes('spreads')) {
+          return {
+            allowed: false,
+            message: 'No puedes combinar Ganador y Spread del mismo evento. Solo puedes combinar: Ganador + Totales o Spread + Totales.'
+          };
+        }
+        // Otras combinaciones same-game
+        if (markets.length > 1) {
+          const allowedCombos = [
+            ['h2h', 'totals'],
+            ['spreads', 'totals']
+          ];
+          const combo = markets.sort();
+          const isAllowed = allowedCombos.some(ac => ac.every(m => combo.includes(m)) && combo.length === ac.length);
+          if (!isAllowed && combo.length > 1) {
+            return {
+              allowed: false,
+              message: 'Combinación de mercados no permitida en el mismo evento. Solo puedes combinar: Ganador + Totales o Spread + Totales.'
+            };
+          }
+        }
+      }
+      return { allowed: true };
+    }
+
+    // Cálculo de odds ajustado
+    function calculateOdds(entries) {
+      // Si hay combinaciones same-game permitidas, aplicar ajuste por correlación
+      // Si todas las selecciones son de diferentes eventos, multiplicar estándar
+      const byGame = {};
+      for (const [gameId, sel] of entries) {
+        if (!byGame[gameId]) byGame[gameId] = [];
+        byGame[gameId].push(sel);
+      }
+      let odds = 1;
+      let hasSameGameCombo = false;
+      for (const gameId in byGame) {
+        const markets = byGame[gameId].map(s => s.market);
+        if (markets.length > 1) {
+          hasSameGameCombo = true;
+          // Ajuste por correlación: multiplicar odds y aplicar factor de reducción
+          // Ejemplo: factor 0.85
+          const comboOdds = byGame[gameId].reduce((acc, s) => acc * s.odds, 1);
+          odds *= comboOdds * 0.85;
+        } else {
+          odds *= byGame[gameId][0].odds;
+        }
+      }
+      return odds.toFixed(2);
+    }
   const { house } = useAuth();
   const [betTicket, setBetTicket] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -14,7 +75,7 @@ const ParlayPanel = ({ parlay, onRemove }) => {
   const combinedOdds =
     entries.length === 0
       ? 0
-      : entries.reduce((acc, [, g]) => acc * g.odds, 1).toFixed(2);
+      : calculateOdds(entries);
 
   const potentialWinnings = betAmount * combinedOdds - betAmount;
 
@@ -23,17 +84,20 @@ const ParlayPanel = ({ parlay, onRemove }) => {
       alert("Selecciona al menos un partido");
       return;
     }
-
     if (!house?.id) {
       alert("No se encontró información de la casa de apuestas");
       return;
     }
-
+    // Validar combinaciones
+    const validation = validateCombination(entries);
+    if (!validation.allowed) {
+      alert(validation.message);
+      return;
+    }
     setLoading(true);
     try {
       // Generar ticket number único
       const ticketNumber = `BET-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-      
       // Crear datos de la apuesta para el sistema B2B
       const betData = {
         bettingHouseId: house.id,
@@ -54,10 +118,8 @@ const ParlayPanel = ({ parlay, onRemove }) => {
           gameCommenceTime: selection.gameCommenceTime || selection.gameTime
         }))
       };
-
       // Enviar al backend usando la API B2B
       const response = await placeBet(betData);
-
       if (response.success) {
         // Crear ticket con datos de respuesta
         setBetTicket({
@@ -70,8 +132,6 @@ const ParlayPanel = ({ parlay, onRemove }) => {
           status: "pending",
           createdAt: new Date().toISOString(),
         });
-        
-        // Limpiar selecciones después de apostar exitosamente
         alert("¡Apuesta creada exitosamente!");
       }
     } catch (error) {

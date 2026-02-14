@@ -17,14 +17,14 @@ export default function BetsList({ bettingHouseId }) {
     if (bettingHouseId) {
       loadBets();
     }
-  }, [bettingHouseId, filter]);
+  }, [bettingHouseId, filter, dateFilterActive]);
 
   const loadBets = async () => {
     try {
       setLoading(true);
       const response = await getBetsForHouse(bettingHouseId);
       let filteredBets = response.data || [];
-      // Filtrar por rango de fechas si está activo
+      // Filtrar por rango de fechas SOLO si está activo
       if (dateFilterActive && dateRange.start && dateRange.end) {
         const startDate = new Date(dateRange.start);
         const endDate = new Date(dateRange.end);
@@ -310,7 +310,11 @@ export default function BetsList({ bettingHouseId }) {
             <button
               style={{ padding: '6px 14px', borderRadius: '6px', background: '#2563eb', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}
               disabled={!dateRange.start || !dateRange.end}
-              onClick={() => { setDateFilterActive(true); setFilter('all'); }}
+              onClick={() => {
+                setDateFilterActive(true);
+                setFilter('all');
+                loadBets();
+              }}
             >
               Aplicar
             </button>
