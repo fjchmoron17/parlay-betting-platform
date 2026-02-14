@@ -1,5 +1,6 @@
 // src/pages/Admin.jsx
 import { useState } from 'react';
+import OddsWidgetPage from './OddsWidgetPage';
 import BettingHousesList from '../components/BettingHousesList';
 import CreateBettingHouse from '../components/CreateBettingHouse';
 import BetsList from '../components/BetsList';
@@ -10,7 +11,7 @@ import ManualResolutionPanel from '../components/ManualResolutionPanel';
 import './Admin.css';
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState('houses'); // houses, create, bets, reports, quota, settlement, manual
+  const [activeTab, setActiveTab] = useState('houses'); // houses, create, bets, reports, quota, settlement, manual, oddsWidget
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -32,6 +33,12 @@ export default function Admin() {
           <h1>Panel B2B - Administración</h1>
           <p className="subtitle">Gestión de Casas de Apuestas y Jugadas</p>
         </div>
+        <button
+          className={activeTab === 'oddsWidget' ? 'active' : ''}
+          onClick={() => setActiveTab('oddsWidget')}
+        >
+          📈 Comparador de Cuotas
+        </button>
       </div>
 
       <div className="admin-nav">
@@ -173,6 +180,12 @@ export default function Admin() {
         {activeTab === 'manual' && (
           <div className="tab-content">
             <ManualResolutionPanel />
+          </div>
+        )}
+
+        {activeTab === 'oddsWidget' && (
+          <div className="tab-content">
+            <OddsWidgetPage />
           </div>
         )}
       </div>
