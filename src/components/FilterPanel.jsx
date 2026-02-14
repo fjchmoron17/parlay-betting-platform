@@ -2,6 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { sportsAPI } from '../services/api';
 
 const FilterPanel = ({ filters, onFilterChange }) => {
+    useEffect(() => {
+      let mounted = true;
+      setLoading(true);
+      sportsAPI.getAll()
+        .then(data => {
+          // Agrupar deportes por grupo/league si es necesario
+          let grouped = [];
+          if (Array.isArray(data?.data)) {
+            // Si la API ya devuelve agrupados
+            grouped = data.data;
+          } else if (Array.isArray(data)) {
+            // Si es un array plano, agrupar por league_group o similar
+            const byGroup = {};
+            data.forEach(sport => {
+              const group = sport.league_group || sport.group || 'Otros';
+              if (!byGroup[group]) byGroup[group] = [];
+              byGroup[group].push(sport);
+            });
+            grouped = Object.entries(byGroup);
+          }
+          if (mounted) setSports(grouped);
+        })
+        .catch(() => { if (mounted) setSports([]); })
+        .finally(() => { if (mounted) setLoading(false); });
+      return () => { mounted = false; };
+    }, []);
   const [sports, setSports] = useState([]);
   const [loading, setLoading] = useState(true);
 
