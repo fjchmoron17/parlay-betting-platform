@@ -1,5 +1,6 @@
 // src/pages/HousePortal.jsx
 import { useState, useEffect } from 'react';
+import ToastNotification from '../components/ToastNotification';
 import { useAuth } from '../context/AuthContext';
 import { placeBet } from '../services/b2bApi';
 import BetsList from '../components/BetsList';
@@ -236,6 +237,8 @@ export default function HousePortal() {
 
   return (
     <div className="house-portal">
+      {/* Toast Notification for errors */}
+      <ToastNotification message={error} onClose={() => setError(null)} />
       {/* Header */}
       <div className="portal-header">
         <div className="header-left">
