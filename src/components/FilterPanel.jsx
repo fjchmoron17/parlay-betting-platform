@@ -15,6 +15,11 @@ const FilterPanel = ({ filters, onFilterChange }) => {
     // Agrega más regiones si es necesario
   };
 
+  // Handler faltante para el selector de deportes
+  const handleSportChange = (e) => {
+    onFilterChange({ ...filters, sport: e.target.value });
+  };
+
   return (
     <div className="filter-panel">
       <div className="filter-container">

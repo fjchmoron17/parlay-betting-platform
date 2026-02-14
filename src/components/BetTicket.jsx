@@ -9,9 +9,14 @@ const BetTicket = ({ bet, onClose }) => {
     onClose();
   };
 
+
   if (!bet) return null;
 
-  const totalOdds = bet.selections.reduce((acc, sel) => acc * sel.odds, 1).toFixed(2);
+  // Defensive: ensure selections is always an array
+  const selections = Array.isArray(bet.selections) ? bet.selections : [];
+  const totalOdds = selections.length > 0
+    ? selections.reduce((acc, sel) => acc * (Number(sel.odds) || 1), 1).toFixed(2)
+    : '1.00';
   const betAmount = bet.amount || 100;
   const potentialWinnings = (betAmount * totalOdds - betAmount).toFixed(2);
   const totalReturn = (betAmount * totalOdds).toFixed(2);
