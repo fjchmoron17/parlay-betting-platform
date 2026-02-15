@@ -566,6 +566,21 @@ async function processUnsettledBets() {
     // Procesar cada apuesta
     for (const bet of selectionBets) {
       try {
+        // Derivar sport para cada selección si no está presente
+        for (const sel of bet.selections || []) {
+          if (!sel.sport) {
+            // Intentar derivar el deporte del sportKey
+            const key = resolveSportKey(sel.league, sportsMap, leagueToSportKey);
+            if (key && key.includes('_')) {
+              sel.sport = key.split('_')[0];
+            } else if (key) {
+              sel.sport = key;
+            } else {
+              sel.sport = 'unknown';
+            }
+          }
+        }
+
         const betSportKeys = (bet.selections || [])
           .map(sel => resolveSportKey(sel.league, sportsMap, leagueToSportKey))
           .filter(key => key && key !== 'unknown');
@@ -575,7 +590,8 @@ async function processUnsettledBets() {
 
         console.log(`   🔍 Apuesta ${bet.id}: ${bet.selections?.length || 0} selecciones, ligas: ${[...new Set(betSportKeys)].join(', ') || 'unknown'}`);
 
-        const result = await settleParlayBet(bet, completedGames, activeGames);
+        // Pasar allCompletedGames y allActiveGames para fallback universal
+        const result = await settleParlayBet(bet, completedGames, activeGames, allCompletedGames, allActiveGames);
 
         if (result && bet.status === 'pending') {
           // Actualizar la apuesta usando el método estático
