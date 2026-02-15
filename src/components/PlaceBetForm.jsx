@@ -86,6 +86,8 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
         }))
       };
 
+      // LOG: Mostrar el objeto betData antes de enviarlo al backend
+      console.log('[DEBUG] betData a enviar:', JSON.stringify(betData, null, 2));
       const response = await placeBet(betData);
 
       if (response.success) {
