@@ -81,23 +81,28 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
           // Si el mercado es de totales y el equipo seleccionado contiene over/under, extraerlo
                     // [COPILOT] Refuerzo: lógica Over/Under explícita para totales
           if (game.market && game.market.toLowerCase().includes('total')) {
-            const teamStr = (game.selectedTeam || '').toLowerCase();
-            // Detectar explícitamente Over/Under y normalizar a 'Over'/'Under'
-            if (!overUnderType && (teamStr.includes('over') || teamStr.includes('under'))) {
-              overUnderType = teamStr.includes('over') ? 'Over' : 'Under';
-            }
-            // Extraer valor si viene en el nombre del equipo (ej: "Over 143.5" o "Under 141")
-            if (!overUnderValue && teamStr.match(/(over|under)\s*([\d\.]+)/)) {
-              overUnderValue = teamStr.match(/(over|under)\s*([\d\.]+)/)[2];
-            }
-            // Limpiar selectedTeam para que no incluya Over/Under ni el valor
-            if (teamStr.includes('over') || teamStr.includes('under')) {
-              selectedTeam = (game.selectedTeam || '').replace(/(Over|Under)\s*[\d\.]+/i, '').trim();
-            }
-            // Si no se detecta Over/Under, forzar a 'Over' por defecto (pero advertir en consola)
-            if (!overUnderType) {
-              overUnderType = 'Over';
-              console.warn('[COPILOT] Advertencia: No se detectó Over/Under en la selección, se asigna Over por defecto.');
+            // Extraer Over/Under y valor desde el HTML del botón seleccionado
+            // Ejemplo: <span class="team-name">Over<span class="reference-value">146.5</span></span>
+            let html = game.selectedHtml || '';
+            let htmlMatch = html.match(/<span class="team-name">(Over|Under)<span class="reference-value">([\d\.]+)<\/span><\/span>/i);
+            if (htmlMatch) {
+              overUnderType = htmlMatch[1];
+              overUnderValue = htmlMatch[2];
+            } else {
+              const teamStr = (game.selectedTeam || '').toLowerCase();
+              if (!overUnderType && (teamStr.includes('over') || teamStr.includes('under'))) {
+                overUnderType = teamStr.includes('over') ? 'Over' : 'Under';
+              }
+              if (!overUnderValue && teamStr.match(/(over|under)\s*([\d\.]+)/)) {
+                overUnderValue = teamStr.match(/(over|under)\s*([\d\.]+)/)[2];
+              }
+              if (teamStr.includes('over') || teamStr.includes('under')) {
+                selectedTeam = (game.selectedTeam || '').replace(/(Over|Under)\s*[\d\.]+/i, '').trim();
+              }
+              if (!overUnderType) {
+                overUnderType = 'Over';
+                console.warn('[COPILOT] Advertencia: No se detectó Over/Under en la selección, se asigna Over por defecto.');
+              }
             }
           }
           return {
