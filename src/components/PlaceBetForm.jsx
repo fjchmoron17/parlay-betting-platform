@@ -31,6 +31,9 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
 
   const handleSubmit = async (e) => {
 
+  // LOG: Mostrar el contenido de selectedGames antes de validar sport_key
+  console.log('[DEBUG] selectedGames en handleSubmit:', JSON.stringify(selectedGames, null, 2));
+
     e.preventDefault();
 
     if (!formData.stake || parseFloat(formData.stake) <= 0) {
