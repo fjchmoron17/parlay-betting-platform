@@ -278,7 +278,6 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     const selectionLeague = normalizeKey(selection.league);
     const selectionCountry = normalizeKey(selection.country || '');
 
-    // Fallback: try to match by league/country/team for 'other' and, if not found, search in all sportKeys of the same sport
     let matchedGame = completedGames.find(game => {
       const gameHome = normalizeKey(game.home_team);
       const gameAway = normalizeKey(game.away_team);
@@ -289,26 +288,41 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
       const selectionCommence = toUTCDateOnly(selection.game_commence_time);
 
       // Match by gameId
-      if (gameId && selectionGameId && gameId === selectionGameId) return true;
+      if (gameId && selectionGameId && gameId === selectionGameId) {
+        console.log(`         [MATCH] Por gameId: ${gameId}`);
+        return true;
+      }
 
       // Match by teams and date (±1 day)
       if (gameHome === selectionHome && gameAway === selectionAway) {
-        if (!selectionCommence || !gameCommence) return true;
+        if (!selectionCommence || !gameCommence) {
+          console.log(`         [MATCH] Por equipos (sin fecha)`);
+          return true;
+        }
         const diffDays = Math.abs(new Date(game.commence_time).getTime() - new Date(selection.game_commence_time).getTime()) / (1000 * 60 * 60 * 24);
-        if (diffDays <= 1) return true;
+        if (diffDays <= 1) {
+          console.log(`         [MATCH] Por equipos y fecha (±1 día)`);
+          return true;
+        }
       }
 
       // Fallback: match by league/country if 'other'
       if (selectionLeague === 'other') {
-        if (gameLeague && selectionLeague && gameLeague === selectionLeague) return true;
-        if (gameCountry && selectionCountry && gameCountry === selectionCountry) return true;
+        if (gameLeague && selectionLeague && gameLeague === selectionLeague) {
+          console.log(`         [MATCH] Por league (other): ${gameLeague}`);
+          return true;
+        }
+        if (gameCountry && selectionCountry && gameCountry === selectionCountry) {
+          console.log(`         [MATCH] Por country (other): ${gameCountry}`);
+          return true;
+        }
       }
       return false;
     });
 
-    // Si no se encontró, buscar en todos los sportKeys del mismo deporte
     if (!matchedGame && allCompletedGames && selection.sport) {
       const sportKeys = Object.keys(allCompletedGames).filter(key => key.startsWith(selection.sport.toLowerCase()));
+      console.log(`         [FALLBACK] Buscando en todos los sportKeys del deporte: ${selection.sport} (${sportKeys.join(', ')})`);
       for (const key of sportKeys) {
         const games = allCompletedGames[key] || [];
         matchedGame = games.find(game => {
@@ -317,15 +331,27 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
           const gameId = normalizeKey(game.id);
           const gameCommence = toUTCDateOnly(game.commence_time);
           const selectionCommence = toUTCDateOnly(selection.game_commence_time);
-          if (gameId && selectionGameId && gameId === selectionGameId) return true;
+          if (gameId && selectionGameId && gameId === selectionGameId) {
+            console.log(`            [MATCH-FALLBACK] Por gameId en ${key}: ${gameId}`);
+            return true;
+          }
           if (gameHome === selectionHome && gameAway === selectionAway) {
-            if (!selectionCommence || !gameCommence) return true;
+            if (!selectionCommence || !gameCommence) {
+              console.log(`            [MATCH-FALLBACK] Por equipos en ${key} (sin fecha)`);
+              return true;
+            }
             const diffDays = Math.abs(new Date(game.commence_time).getTime() - new Date(selection.game_commence_time).getTime()) / (1000 * 60 * 60 * 24);
-            if (diffDays <= 1) return true;
+            if (diffDays <= 1) {
+              console.log(`            [MATCH-FALLBACK] Por equipos y fecha en ${key} (±1 día)`);
+              return true;
+            }
           }
           return false;
         });
         if (matchedGame) break;
+      }
+      if (!matchedGame) {
+        console.log(`         [NO MATCH] No se encontró partido en ningún sportKey de ${selection.sport}`);
       }
     }
 
