@@ -86,7 +86,9 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
           point_spread: game.pointSpread || null,
           bookmaker: game.bookmaker,
           game_commence_time: game.game_commence_time || game.game_time || game.commence_time || game.commenceTime
-        }))
+          ,over_under_type: game.over_under_type || null,
+          over_under_value: game.over_under_value || null
+        })),
       };
 
       // LOG: Mostrar el objeto betData antes de enviarlo al backend

@@ -192,18 +192,55 @@ function evaluateSpreadBet(bet, game) {
 function evaluateTotalsBet(bet, game) {
   if (!game.scores || game.scores.length < 2) return null;
 
-  const homeScore = parseInt(game.scores.find(s => s.name === game.home_team)?.score || 0);
-  const awayScore = parseInt(game.scores.find(s => s.name === game.away_team)?.score || 0);
-  const totalScore = homeScore + awayScore;
+  const overUnderType = bet.over_under_type || (bet.selected_team && bet.selected_team.toLowerCase().includes('over') ? 'over' : 'under');
+  const overUnderValue = bet.over_under_value != null ? parseFloat(bet.over_under_value) : parseFloat(bet.point_spread);
 
-  const pointTotal = parseFloat(bet.point_spread); // En totals, point_spread contiene el total
-  const isOver = bet.selected_team.toLowerCase().includes('over');
-
-  if (isOver) {
-    return totalScore > pointTotal;
+  // Si es tenis y hay sets, calcular por juegos o sets
+  if (game.sport_key && game.sport_key.includes('tennis') && Array.isArray(game.sets) && game.sets.length > 0) {
+    // Si el mercado es juegos totales
+    if (bet.market === 'totals_games' || bet.market === 'totals' || bet.market === 'total_games') {
+      const totalJuegos = game.sets.reduce((sum, set) => sum + (parseInt(set.home) || 0) + (parseInt(set.away) || 0), 0);
+      if (overUnderType === 'over') {
+        if (totalJuegos > overUnderValue) return true;
+        if (totalJuegos < overUnderValue) return false;
+        return 'void';
+      } else if (overUnderType === 'under') {
+        if (totalJuegos < overUnderValue) return true;
+        if (totalJuegos > overUnderValue) return false;
+        return 'void';
+      }
+    }
+    // Si el mercado es sets totales
+    if (bet.market === 'totals_sets' || bet.market === 'total_sets') {
+      const homeSets = game.sets.filter(set => (parseInt(set.home) || 0) > (parseInt(set.away) || 0)).length;
+      const awaySets = game.sets.filter(set => (parseInt(set.away) || 0) > (parseInt(set.home) || 0)).length;
+      const totalSets = homeSets + awaySets;
+      if (overUnderType === 'over') {
+        if (totalSets > overUnderValue) return true;
+        if (totalSets < overUnderValue) return false;
+        return 'void';
+      } else if (overUnderType === 'under') {
+        if (totalSets < overUnderValue) return true;
+        if (totalSets > overUnderValue) return false;
+        return 'void';
+      }
+    }
   } else {
-    return totalScore < pointTotal;
+    // Resolver por goles, canastas o puntos (otros deportes)
+    const homeScore = parseInt(game.scores.find(s => s.name === game.home_team)?.score || 0);
+    const awayScore = parseInt(game.scores.find(s => s.name === game.away_team)?.score || 0);
+    const totalScore = homeScore + awayScore;
+    if (overUnderType === 'over') {
+      if (totalScore > overUnderValue) return true;
+      if (totalScore < overUnderValue) return false;
+      return 'void';
+    } else if (overUnderType === 'under') {
+      if (totalScore < overUnderValue) return true;
+      if (totalScore > overUnderValue) return false;
+      return 'void';
+    }
   }
+  return null;
 }
 
 /**

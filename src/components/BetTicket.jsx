@@ -56,7 +56,8 @@ const BetTicket = ({ bet, onClose }) => {
             // Determinar el estado de la selección si está disponible
             const selectionStatus = selection.selection_status || selection.selectionStatus;
             const gameTime = selection.game_commence_time || selection.gameCommenceTime || selection.game_time || selection.commence_time || selection.commenceTime;
-            
+            // Considerar cualquier mercado que incluya 'total' (goles, puntos, juegos, sets, etc)
+            const isTotals = selection.market && selection.market.toLowerCase().includes('total');
             return (
               <div key={index} className={`ticket-selection-item ${selectionStatus ? `status-${selectionStatus}` : ''}`}>
                 <div className="selection-number">#{index + 1}</div>
@@ -66,6 +67,16 @@ const BetTicket = ({ bet, onClose }) => {
                   </p>
                   <p className="selection-meta">
                     {selection.league} • {selection.market}
+                    {isTotals && (selection.over_under_type && selection.over_under_value) && (
+                      <span className="totals-detail"> • {selection.over_under_type.toUpperCase()} {selection.over_under_value} {selection.over_under_type && selection.market && (() => {
+                        // Mostrar tipo de totales: goles, puntos, juegos, sets, etc
+                        if (selection.market.toLowerCase().includes('goles')) return 'goles';
+                        if (selection.market.toLowerCase().includes('puntos')) return 'puntos';
+                        if (selection.market.toLowerCase().includes('juegos')) return 'juegos';
+                        if (selection.market.toLowerCase().includes('sets')) return 'sets';
+                        return '';
+                      })()}</span>
+                    )}
                     <span className="game-time"> • {gameTime
                       ? new Date(gameTime).toLocaleDateString('es-ES', {
                           month: 'short',

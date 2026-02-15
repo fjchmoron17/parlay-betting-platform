@@ -430,16 +430,18 @@ export const BetSelection = {
     const values = [];
     const params = [];
 
-    // Debug log: print each selection's game_id and sport_key
+    // Debug log: print each selection's game_id, sport_key, over_under_type, over_under_value
     console.log('BetSelection.createMany - selections received:', selections.map(sel => ({
       game_id: sel.game_id,
       sport_key: sel.sport_key,
-      sportKey: sel.sportKey
+      sportKey: sel.sportKey,
+      over_under_type: sel.over_under_type,
+      over_under_value: sel.over_under_value
     })));
 
     selections.forEach((sel, idx) => {
-      const baseIndex = idx * 12;
-      values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10}, $${baseIndex + 11}, $${baseIndex + 12})`);
+      const baseIndex = idx * 14;
+      values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10}, $${baseIndex + 11}, $${baseIndex + 12}, $${baseIndex + 13}, $${baseIndex + 14})`);
       const commenceTime =
         sel.game_commence_time ??
         sel.gameCommenceTime ??
@@ -459,16 +461,19 @@ export const BetSelection = {
         sel.selected_odds,
         sel.point_spread ?? null,
         sel.bookmaker ?? null,
-        commenceTime
+        commenceTime,
+        sel.over_under_type ?? null,
+        sel.over_under_value ?? null
       );
     });
 
     const sql = `
       INSERT INTO bet_selections (
         bet_id, game_id, sport_key, home_team, away_team, league, market,
-        selected_team, selected_odds, point_spread, bookmaker, game_commence_time
+        selected_team, selected_odds, point_spread, bookmaker, game_commence_time,
+        over_under_type, over_under_value
       ) VALUES ${values.join(', ')}
-      RETURNING id, bet_id, game_id, sport_key, home_team, away_team, league, market, selected_team, selected_odds, point_spread, game_commence_time, selection_status;
+      RETURNING id, bet_id, game_id, sport_key, home_team, away_team, league, market, selected_team, selected_odds, point_spread, game_commence_time, selection_status, over_under_type, over_under_value;
     `;
 
     const result = await query(sql, params);

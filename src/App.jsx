@@ -1,5 +1,6 @@
 // Commit for Railway snapshot: 2026-02-08
 // Despliegue forzado: 2026-02-08
+import React from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Admin from "./pages/Admin";
 import HousePortal from "./pages/HousePortal";
@@ -9,10 +10,25 @@ import ResetPassword from "./pages/ResetPassword";
 import LoginForm from "./components/LoginForm";
 
 function AppContent() {
+
   const { isAuthenticated, isSuperAdmin, user, logout, loading } = useAuth();
   const pathname = window.location.pathname;
   const params = new URLSearchParams(window.location.search);
   const view = params.get("view");
+
+  // Ruta especial para test de ticket
+  const [BetTicketTest, setBetTicketTest] = React.useState(null);
+  React.useEffect(() => {
+    if (pathname.startsWith("/test-ticket")) {
+      import("./components/BetTicketTest").then(mod => {
+        setBetTicketTest(() => mod.default);
+      });
+    }
+  }, [pathname]);
+  if (pathname.startsWith("/test-ticket")) {
+    if (!BetTicketTest) return null;
+    return <BetTicketTest />;
+  }
 
   if (pathname.startsWith("/consulta-ticket") || view === "consulta-ticket") {
     return <ConsultTicket />;

@@ -9,6 +9,18 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
 
   const selectOption = (market, team, odds, gameId, pointSpread = null) => {
     console.log('[LOG] selectOption llamado en GroupedGameCard:', { market, team, odds, gameId, pointSpread });
+    // Detectar si es Totales y setear over/under y valor
+    let overUnderType = null;
+    let overUnderValue = null;
+    if (market === 'totals') {
+      if (team === 'Over' || team === 'over') {
+        overUnderType = 'over';
+        overUnderValue = pointSpread;
+      } else if (team === 'Under' || team === 'under') {
+        overUnderType = 'under';
+        overUnderValue = pointSpread;
+      }
+    }
     onSelect(gameId, team, odds, {
       homeTeam: firstGame.home_team,
       awayTeam: firstGame.away_team,
@@ -19,7 +31,9 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
       commenceTime: firstGame.game_commence_time || firstGame.game_time || firstGame.commence_time,
       sportKey: firstGame.sportKey || firstGame.sport_key,
       sport_key: firstGame.sport_key || firstGame.sportKey,
-      sportTitle: firstGame.sportTitle
+      sportTitle: firstGame.sportTitle,
+      over_under_type: overUnderType,
+      over_under_value: overUnderValue
     });
   };
 

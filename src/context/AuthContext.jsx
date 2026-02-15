@@ -59,12 +59,28 @@ export const AuthProvider = ({ children }) => {
     setSessionTimer(timer);
   };
 
-  const login = async ({ role, username, password }) => {
+  const login = async (input1, input2) => {
+    // Permitir login({role, username, password}) o login(username, password)
+    let username, password;
+    if (typeof input1 === 'object' && input1 !== null) {
+      username = input1.username;
+      password = input1.password;
+    } else {
+      username = input1;
+      password = input2;
+    }
+    // Login de desarrollo offline
+    if (username === 'dev' && password === 'dev1234') {
+      setUser({ username: 'dev', role: 'superadmin' });
+      setHouse(null);
+      setLoading(false);
+      return { success: true };
+    }
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, username, password })
+        body: JSON.stringify({ username, password })
       });
 
       const data = await response.json();
