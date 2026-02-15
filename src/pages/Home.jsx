@@ -60,7 +60,10 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
         selectedOdds: odds,
         pointSpread: gameData.pointSpread,
         bookmaker: gameData.bookmaker,
-        game_commence_time: gameData.game_commence_time || gameData.game_time || gameData.commence_time || gameData.commenceTime
+        game_commence_time: gameData.game_commence_time || gameData.game_time || gameData.commence_time || gameData.commenceTime,
+        sportKey: gameData.sportKey || gameData.sport_key,
+        sport_key: gameData.sport_key || gameData.sportKey,
+        sportTitle: gameData.sportTitle
       });
       return;
     }
@@ -81,6 +84,9 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
             awayTeam: gameData.awayTeam,
             league: gameData.league,
             market: gameData.market,
+            sportKey: gameData.sportKey || gameData.sport_key,
+            sport_key: gameData.sport_key || gameData.sportKey,
+            sportTitle: gameData.sportTitle
           },
         };
       }

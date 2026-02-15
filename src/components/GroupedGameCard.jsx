@@ -16,7 +16,10 @@ const GroupedGameCard = ({ gameGroup, onSelect, index, selectedGames = [] }) => 
       market: market,
       pointSpread,
       bookmaker: firstGame.bookmaker || firstGame.bookmakers?.[0]?.title || 'Desconocido',
-      commenceTime: firstGame.game_commence_time || firstGame.game_time || firstGame.commence_time
+      commenceTime: firstGame.game_commence_time || firstGame.game_time || firstGame.commence_time,
+      sportKey: firstGame.sportKey || firstGame.sport_key,
+      sport_key: firstGame.sport_key || firstGame.sportKey,
+      sportTitle: firstGame.sportTitle
     });
   };
 
