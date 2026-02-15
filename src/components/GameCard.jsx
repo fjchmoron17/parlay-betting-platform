@@ -11,6 +11,7 @@ const GameCard = ({ game, onSelect, index }) => {
       league: game.league,
       sportTitle: game.sportTitle,
       sportKey: game.sportKey,
+      sport_key: game.sport_key || game.sportKey, // Propaga ambas variantes
       market: game.market,
       pointSpread: null,
       bookmaker: 'Desconocido',
