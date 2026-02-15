@@ -278,7 +278,7 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
     const selectionLeague = normalizeKey(selection.league);
     const selectionCountry = normalizeKey(selection.country || '');
 
-    // Fallback: try to match by league/country/team for 'other'
+    // Fallback: try to match by league/country/team for 'other' and, if not found, search in all sportKeys of the same sport
     let matchedGame = completedGames.find(game => {
       const gameHome = normalizeKey(game.home_team);
       const gameAway = normalizeKey(game.away_team);
@@ -306,25 +306,64 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
       return false;
     });
 
+    // Si no se encontró, buscar en todos los sportKeys del mismo deporte
+    if (!matchedGame && allCompletedGames && selection.sport) {
+      const sportKeys = Object.keys(allCompletedGames).filter(key => key.startsWith(selection.sport.toLowerCase()));
+      for (const key of sportKeys) {
+        const games = allCompletedGames[key] || [];
+        matchedGame = games.find(game => {
+          const gameHome = normalizeKey(game.home_team);
+          const gameAway = normalizeKey(game.away_team);
+          const gameId = normalizeKey(game.id);
+          const gameCommence = toUTCDateOnly(game.commence_time);
+          const selectionCommence = toUTCDateOnly(selection.game_commence_time);
+          if (gameId && selectionGameId && gameId === selectionGameId) return true;
+          if (gameHome === selectionHome && gameAway === selectionAway) {
+            if (!selectionCommence || !gameCommence) return true;
+            const diffDays = Math.abs(new Date(game.commence_time).getTime() - new Date(selection.game_commence_time).getTime()) / (1000 * 60 * 60 * 24);
+            if (diffDays <= 1) return true;
+          }
+          return false;
+        });
+        if (matchedGame) break;
+      }
+    }
+
     if (!matchedGame) {
       // Si no hay scores, verificar si el juego desapareció de eventos activos
-      const isInActiveGames = activeGames.some(game => {
-        const gameHome = normalizeKey(game.home_team);
-        const gameAway = normalizeKey(game.away_team);
-        const gameId = normalizeKey(game.id);
-
-        return (
-          (gameHome === selectionHome && gameAway === selectionAway) ||
-          (gameId && selectionGameId && gameId === selectionGameId)
-        );
-      });
-
+      let isInActiveGames = false;
+      if (activeGames && activeGames.length > 0) {
+        isInActiveGames = activeGames.some(game => {
+          const gameHome = normalizeKey(game.home_team);
+          const gameAway = normalizeKey(game.away_team);
+          const gameId = normalizeKey(game.id);
+          return (
+            (gameHome === selectionHome && gameAway === selectionAway) ||
+            (gameId && selectionGameId && gameId === selectionGameId)
+          );
+        });
+      }
+      if (!isInActiveGames && allActiveGames && selection.sport) {
+        const sportKeys = Object.keys(allActiveGames).filter(key => key.startsWith(selection.sport.toLowerCase()));
+        for (const key of sportKeys) {
+          const games = allActiveGames[key] || [];
+          isInActiveGames = games.some(game => {
+            const gameHome = normalizeKey(game.home_team);
+            const gameAway = normalizeKey(game.away_team);
+            const gameId = normalizeKey(game.id);
+            return (
+              (gameHome === selectionHome && gameAway === selectionAway) ||
+              (gameId && selectionGameId && gameId === selectionGameId)
+            );
+          });
+          if (isInActiveGames) break;
+        }
+      }
       if (isInActiveGames) {
         console.log(`      ⏸️  Selección ${selection.id}: juego aún activo (${selection.home_team} vs ${selection.away_team})`);
         allWon = false;
         continue; // Juego aún está en eventos activos, no se puede resolver
       }
-
       // Si el juego desapareció de eventos activos y aún no hay scores, esperar a la API
       console.log(`      ⚠️  Selección ${selection.id}: juego no está en activos, sin scores disponibles - esperando API`);
       hasNoScores = true;
