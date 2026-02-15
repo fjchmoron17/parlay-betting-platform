@@ -236,7 +236,7 @@ function evaluateBet(bet, game) {
 /**
  * Resolver una apuesta parlay
  */
-async function settleParlayBet(bet, completedGames, activeGames = []) {
+async function settleParlayBet(bet, completedGames, activeGames = [], allCompletedGames = {}, allActiveGames = {}) {
   const selections = bet.selections;
   
   if (!selections || selections.length === 0) {
@@ -320,9 +320,18 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
       return false;
     });
 
-    if (!matchedGame && allCompletedGames && selection.sport) {
-      const sportKeys = Object.keys(allCompletedGames).filter(key => key.startsWith(selection.sport.toLowerCase()));
-      console.log(`         [FALLBACK] Buscando en todos los sportKeys del deporte: ${selection.sport} (${sportKeys.join(', ')})`);
+    if (!matchedGame && allCompletedGames) {
+      let sportKeys = [];
+      if (selection.sport && selection.sport.toLowerCase() !== 'other') {
+        sportKeys = Object.keys(allCompletedGames).filter(key => key.startsWith(selection.sport.toLowerCase()));
+      }
+      // Si no hay sportKeys o el deporte es 'other', buscar en todos los sportKeys
+      if (sportKeys.length === 0) {
+        sportKeys = Object.keys(allCompletedGames);
+        console.log(`         [FALLBACK] Buscando en TODOS los sportKeys disponibles (ligas: ${sportKeys.join(', ')})`);
+      } else {
+        console.log(`         [FALLBACK] Buscando en todos los sportKeys del deporte: ${selection.sport} (${sportKeys.join(', ')})`);
+      }
       for (const key of sportKeys) {
         const games = allCompletedGames[key] || [];
         matchedGame = games.find(game => {
@@ -351,7 +360,7 @@ async function settleParlayBet(bet, completedGames, activeGames = []) {
         if (matchedGame) break;
       }
       if (!matchedGame) {
-        console.log(`         [NO MATCH] No se encontró partido en ningún sportKey de ${selection.sport}`);
+        console.log(`         [NO MATCH] No se encontró partido en ningún sportKey disponible`);
       }
     }
 
