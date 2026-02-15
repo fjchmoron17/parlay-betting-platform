@@ -293,15 +293,18 @@ async function settleParlayBet(bet, completedGames, activeGames = [], allComplet
         return true;
       }
 
-      // Match by teams and date (±1 day)
+      // Match by teams and date (±2 días, solo fecha)
       if (gameHome === selectionHome && gameAway === selectionAway) {
         if (!selectionCommence || !gameCommence) {
           console.log(`         [MATCH] Por equipos (sin fecha)`);
           return true;
         }
-        const diffDays = Math.abs(new Date(game.commence_time).getTime() - new Date(selection.game_commence_time).getTime()) / (1000 * 60 * 60 * 24);
-        if (diffDays <= 1) {
-          console.log(`         [MATCH] Por equipos y fecha (±1 día)`);
+        // Comparar solo la fecha (YYYY-MM-DD)
+        const date1 = gameCommence;
+        const date2 = selectionCommence;
+        const diffDays = Math.abs(new Date(date1).getTime() - new Date(date2).getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays <= 2) {
+          console.log(`         [MATCH] Por equipos y fecha (±2 días)`);
           return true;
         }
       }
@@ -365,35 +368,22 @@ async function settleParlayBet(bet, completedGames, activeGames = [], allComplet
     }
 
     if (!matchedGame) {
-      // Si no hay scores, verificar si el juego desapareció de eventos activos
+      // Si no hay scores, verificar si el juego está ACTIVO en la API (no resolver si está activo)
       let isInActiveGames = false;
-      if (activeGames && activeGames.length > 0) {
-        isInActiveGames = activeGames.some(game => {
-          const gameHome = normalizeKey(game.home_team);
-          const gameAway = normalizeKey(game.away_team);
-          const gameId = normalizeKey(game.id);
-          return (
-            (gameHome === selectionHome && gameAway === selectionAway) ||
-            (gameId && selectionGameId && gameId === selectionGameId)
-          );
-        });
-      }
-      if (!isInActiveGames && allActiveGames && selection.sport) {
-        const sportKeys = Object.keys(allActiveGames).filter(key => key.startsWith(selection.sport.toLowerCase()));
-        for (const key of sportKeys) {
-          const games = allActiveGames[key] || [];
-          isInActiveGames = games.some(game => {
-            const gameHome = normalizeKey(game.home_team);
-            const gameAway = normalizeKey(game.away_team);
-            const gameId = normalizeKey(game.id);
-            return (
-              (gameHome === selectionHome && gameAway === selectionAway) ||
-              (gameId && selectionGameId && gameId === selectionGameId)
-            );
-          });
-          if (isInActiveGames) break;
-        }
-      }
+      // Buscar en todos los sportKeys si no hay match directo
+      const allActive = [
+        ...(activeGames || []),
+        ...Object.values(allActiveGames || {}).flat()
+      ];
+      isInActiveGames = allActive.some(game => {
+        const gameHome = normalizeKey(game.home_team);
+        const gameAway = normalizeKey(game.away_team);
+        const gameId = normalizeKey(game.id);
+        return (
+          (gameHome === selectionHome && gameAway === selectionAway) ||
+          (gameId && selectionGameId && gameId === selectionGameId)
+        );
+      });
       if (isInActiveGames) {
         console.log(`      ⏸️  Selección ${selection.id}: juego aún activo (${selection.home_team} vs ${selection.away_team})`);
         allWon = false;
