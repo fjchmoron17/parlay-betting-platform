@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import GroupedGameCard from "../components/GroupedGameCard";
 import ParlayPanel from "../components/ParlayPanel";
 import { gamesAPI } from "../services/api";
-import AdsterraBanner from '../components/AdsterraBanner';
+// import AdsterraBanner from '../components/AdsterraBanner';
 
 const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters = { sport: undefined, region: 'us' } }) => {
   const [games, setGames] = useState([]);
@@ -117,8 +117,7 @@ const Home = ({ onGameSelect, selectedGames = [], bettingMode = false, filters =
 
   return (
     <div className="flex flex-col p-6 gap-6">
-      {/* Banner de Adsterra para monetización */}
-      <AdsterraBanner />
+      {/* Banner eliminado: ahora en Promociones */}
       {/* Header */}
       {!bettingMode && (
         <div>

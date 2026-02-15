@@ -8,8 +8,13 @@ import ConsultTicket from "./pages/ConsultTicket";
 import AffiliateSignup from "./pages/AffiliateSignup";
 import ResetPassword from "./pages/ResetPassword";
 import LoginForm from "./components/LoginForm";
+import Promotions from "./pages/Promotions";
+const COMMIT_HASH = process.env.REACT_APP_COMMIT_HASH || 'unknown';
 
 function AppContent() {
+  if (pathname.startsWith("/promociones") || view === "promociones") {
+    return <Promotions />;
+  }
 
   const { isAuthenticated, isSuperAdmin, user, logout, loading } = useAuth();
   const pathname = window.location.pathname;
@@ -82,7 +87,14 @@ function AppContent() {
   }
 
   // Casa de apuestas
-  return <HousePortal />;
+  return (
+    <>
+      <HousePortal />
+      <div style={{position:'fixed',bottom:0,right:0,background:'#eee',padding:'4px 12px',fontSize:'12px',borderRadius:'8px 0 0 0',zIndex:9999}}>
+        Commit: {COMMIT_HASH}
+      </div>
+    </>
+  );
 }
 
 function App() {
