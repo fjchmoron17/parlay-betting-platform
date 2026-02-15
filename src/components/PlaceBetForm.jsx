@@ -30,6 +30,7 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
   };
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
 
     if (!formData.stake || parseFloat(formData.stake) <= 0) {
@@ -39,6 +40,13 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
 
     if (selectedGames.length === 0) {
       setError('Selecciona al menos un juego');
+      return;
+    }
+
+    // Validar que todas las selecciones tengan sport_key
+    const missingSportKey = selectedGames.some(game => !game.sport_key && !game.sportKey);
+    if (missingSportKey) {
+      setError('Error: Uno o más juegos seleccionados no tienen sport_key. No se puede crear la apuesta.');
       return;
     }
 
