@@ -191,9 +191,11 @@ export default function HousePortal() {
         potential_win: potentialWinAmount,
         selections: selectedGames.map(game => ({
           game_id: game.id,
+          sport_key: game.sport_key || game.sportKey || '',
+          sportKey: game.sportKey || game.sport_key || '',
           home_team: game.home_team,
           away_team: game.away_team,
-          league: game.sport_key || game.sport_title || game.sportTitle || game.league || 'OTHER',
+          league: game.league || game.sport_title || game.sportTitle || game.sport_key || game.sportKey || 'OTHER',
           market: game.market,
           selected_team: game.selectedTeam,
           selected_odds: game.selectedOdds,
