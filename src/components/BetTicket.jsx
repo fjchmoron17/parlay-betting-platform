@@ -64,10 +64,14 @@ const BetTicket = ({ bet, onClose }) => {
             if (isTotals && (!overUnderType || !overUnderValue) && selection.selected_team) {
               const teamStr = selection.selected_team.toLowerCase();
               if (!overUnderType && (teamStr.includes('over') || teamStr.includes('under'))) {
-                overUnderType = teamStr.includes('over') ? 'over' : 'under';
+                overUnderType = teamStr.includes('over') ? 'Over' : 'Under';
               }
               if (!overUnderValue && teamStr.match(/(over|under)\s*([\d\.]+)/)) {
                 overUnderValue = teamStr.match(/(over|under)\s*([\d\.]+)/)[2];
+              }
+              // Si no se detecta Over/Under, asumir Over por defecto
+              if (!overUnderType) {
+                overUnderType = 'Over';
               }
             }
             return (
@@ -80,7 +84,7 @@ const BetTicket = ({ bet, onClose }) => {
                   <p className="selection-meta">
                     {selection.league} • {selection.market}
                     {isTotals && (overUnderType && overUnderValue) && (
-                      <span className="totals-detail"> • {overUnderType.toUpperCase()} {overUnderValue} {overUnderType && selection.market && (() => {
+                      <span className="totals-detail"> • {overUnderType} {overUnderValue} {overUnderType && selection.market && (() => {
                         if (selection.market.toLowerCase().includes('goles')) return 'goles';
                         if (selection.market.toLowerCase().includes('puntos')) return 'puntos';
                         if (selection.market.toLowerCase().includes('juegos')) return 'juegos';
@@ -108,8 +112,8 @@ const BetTicket = ({ bet, onClose }) => {
                 </div>
                 <div className="selection-bet">
                   <p className="selection-team">
-                    {isTotals
-                      ? (overUnderType ? overUnderType.toUpperCase() : '')
+                    {isTotals && overUnderType && overUnderValue
+                      ? `${overUnderType} ${overUnderValue}`
                       : (selection.team || selection.selected_team)}
                   </p>
                   <p className="selection-odds">@{selection.odds || selection.selected_odds}</p>

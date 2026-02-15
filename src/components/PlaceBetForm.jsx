@@ -163,6 +163,10 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
               if (teamStr.includes('over') || teamStr.includes('under')) {
                 selectedTeam = (game.selectedTeam || '').replace(/(Over|Under)\s*[\d\.]+/i, '').trim();
               }
+              // Si no se detecta Over/Under, asumir Over por defecto
+              if (!overUnderType) {
+                overUnderType = 'Over';
+              }
             }
             return (
               <div key={index} className="selection-item">
