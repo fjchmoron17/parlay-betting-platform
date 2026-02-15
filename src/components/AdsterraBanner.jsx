@@ -5,7 +5,7 @@ const AdsterraBanner = () => (
     <a href="https://adsterra.com/?referral=YOUR_REFERRAL_ID" rel="nofollow" target="_blank">
       <img
         alt="banner"
-        src="/src/images/adsterra-banner.gif"
+        src="/adsterra-banner.gif"
         style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
       />
     </a>
