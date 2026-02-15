@@ -96,7 +96,11 @@ const BetTicket = ({ bet, onClose }) => {
                   )}
                 </div>
                 <div className="selection-bet">
-                  <p className="selection-team">{selection.team || selection.selected_team}</p>
+                  <p className="selection-team">
+                    {isTotals
+                      ? (selection.over_under_type ? selection.over_under_type.toUpperCase() : '')
+                      : (selection.team || selection.selected_team)}
+                  </p>
                   <p className="selection-odds">@{selection.odds || selection.selected_odds}</p>
                 </div>
               </div>

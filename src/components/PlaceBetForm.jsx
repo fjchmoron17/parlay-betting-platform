@@ -73,21 +73,42 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
         total_stake: parseFloat(formData.stake),
         total_odds: totalOdds,
         potential_win: potentialWin,
-        selections: selectedGames.map(game => ({
-          game_id: game.id,
-          sport_key: game.sport_key || game.sportKey || game.sport_key_original || game.sportKeyOriginal || 'unknown',
-          home_team: game.home_team,
-          away_team: game.away_team,
-          league: game.league || game.sport_title || game.sportTitle || game.sport_key || game.sportKey || 'OTHER',
-          market: game.market,
-          selected_team: game.selectedTeam,
-          selected_odds: game.selectedOdds,
-          point_spread: game.pointSpread || null,
-          bookmaker: game.bookmaker,
-          game_commence_time: game.game_commence_time || game.game_time || game.commence_time || game.commenceTime
-          ,over_under_type: game.over_under_type || null,
-          over_under_value: game.over_under_value || null
-        })),
+        selections: selectedGames.map(game => {
+          // Refuerzo: detectar y normalizar OVER/UNDER en totales
+          let overUnderType = game.over_under_type;
+          let overUnderValue = game.over_under_value;
+          let selectedTeam = game.selectedTeam;
+          // Si el mercado es de totales y el equipo seleccionado contiene over/under, extraerlo
+          if (game.market && game.market.toLowerCase().includes('total')) {
+            const teamStr = (game.selectedTeam || '').toLowerCase();
+            if (!overUnderType && (teamStr.includes('over') || teamStr.includes('under'))) {
+              overUnderType = teamStr.includes('over') ? 'over' : 'under';
+            }
+            // Extraer valor si viene en el nombre del equipo (ej: "Over 143.5" o "Under 141")
+            if (!overUnderValue && teamStr.match(/(over|under)\s*([\d\.]+)/)) {
+              overUnderValue = teamStr.match(/(over|under)\s*([\d\.]+)/)[2];
+            }
+            // Limpiar selectedTeam para que no incluya Over/Under ni el valor
+            if (teamStr.includes('over') || teamStr.includes('under')) {
+              selectedTeam = (game.selectedTeam || '').replace(/(Over|Under)\s*[\d\.]+/i, '').trim();
+            }
+          }
+          return {
+            game_id: game.id,
+            sport_key: game.sport_key || game.sportKey || game.sport_key_original || game.sportKeyOriginal || 'unknown',
+            home_team: game.home_team,
+            away_team: game.away_team,
+            league: game.league || game.sport_title || game.sportTitle || game.sport_key || game.sportKey || 'OTHER',
+            market: game.market,
+            selected_team: selectedTeam,
+            selected_odds: game.selectedOdds,
+            point_spread: game.pointSpread || null,
+            bookmaker: game.bookmaker,
+            game_commence_time: game.game_commence_time || game.game_time || game.commence_time || game.commenceTime,
+            over_under_type: overUnderType || null,
+            over_under_value: overUnderValue || null
+          };
+        }),
       };
 
       // LOG: Mostrar el objeto betData antes de enviarlo al backend
