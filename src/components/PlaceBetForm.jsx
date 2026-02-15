@@ -30,12 +30,11 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
   };
 
   const handleSubmit = async (e) => {
+    // LOG: Confirmar que handleSubmit se ejecuta y mostrar estado inicial
+    console.log('[DEBUG] handleSubmit ejecutado. selectedGames:', JSON.stringify(selectedGames, null, 2), 'formData:', formData);
 
-  // LOG: Confirmar que handleSubmit se ejecuta y mostrar estado inicial
-  console.log('[DEBUG] handleSubmit ejecutado. selectedGames:', JSON.stringify(selectedGames, null, 2), 'formData:', formData);
-
-  // LOG: Mostrar el contenido de selectedGames antes de validar sport_key
-  console.log('[DEBUG] selectedGames en handleSubmit:', JSON.stringify(selectedGames, null, 2));
+    // LOG: Mostrar el contenido de selectedGames antes de validar sport_key
+    console.log('[DEBUG] selectedGames en handleSubmit:', JSON.stringify(selectedGames, null, 2));
 
     e.preventDefault();
 
