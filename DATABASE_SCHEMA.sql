@@ -89,6 +89,7 @@ CREATE TABLE bet_selections (
     
     -- Información del evento/juego
     game_id VARCHAR(100) NOT NULL, -- ID del juego de The Odds API
+    sport_key VARCHAR(100) NOT NULL, -- Clave del deporte de la API (ej: soccer_italy_serie_a)
     home_team VARCHAR(255) NOT NULL,
     away_team VARCHAR(255) NOT NULL,
     league VARCHAR(100) NOT NULL,

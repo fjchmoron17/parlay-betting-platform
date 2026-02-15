@@ -30,18 +30,29 @@ async function runMigration() {
     console.log('📊 Iniciando migración de base de datos...');
     console.log(`🔗 Conectando a: ${DATABASE_URL.split('@')[1]}`);
 
-    // Leer el archivo SQL
-    const schemaPath = path.join(process.cwd(), '..', 'DATABASE_SCHEMA.sql');
-    const schema = fs.readFileSync(schemaPath, 'utf-8');
+    // Leer todos los archivos de migración en orden
+    const migrationsDir = path.join(process.cwd(), 'backend', 'db', 'migrations');
+    const migrationFiles = fs.readdirSync(migrationsDir)
+      .filter(f => f.endsWith('.sql'))
+      .sort();
+
+    if (migrationFiles.length === 0) {
+      console.log('No se encontraron archivos de migración.');
+      process.exit(0);
+    }
 
     // Conectar
     const client = await pool.connect();
     console.log('✅ Conexión establecida');
 
     try {
-      // Ejecutar el script SQL
-      await client.query(schema);
-      console.log('✅ Schema ejecutado exitosamente');
+      for (const file of migrationFiles) {
+        const filePath = path.join(migrationsDir, file);
+        const sql = fs.readFileSync(filePath, 'utf-8');
+        console.log(`\n▶️ Ejecutando migración: ${file}`);
+        await client.query(sql);
+        console.log(`✅ Migración ${file} ejecutada`);
+      }
 
       // Verificar tablas
       const tables = await client.query(`
@@ -49,7 +60,7 @@ async function runMigration() {
         FROM information_schema.tables 
         WHERE table_schema = 'public'
       `);
-      console.log(`✅ Tablas creadas: ${tables.rows.length}`);
+      console.log(`✅ Tablas: ${tables.rows.length}`);
       tables.rows.forEach(t => console.log(`   - ${t.table_name}`));
 
       // Verificar vistas
@@ -58,14 +69,14 @@ async function runMigration() {
         FROM information_schema.views 
         WHERE table_schema = 'public'
       `);
-      console.log(`✅ Vistas creadas: ${views.rows.length}`);
+      console.log(`✅ Vistas: ${views.rows.length}`);
       views.rows.forEach(v => console.log(`   - ${v.table_name}`));
 
     } finally {
       client.release();
     }
 
-    console.log('\n✅ Migración completada exitosamente');
+    console.log('\n✅ Todas las migraciones completadas exitosamente');
     process.exit(0);
 
   } catch (error) {

@@ -431,8 +431,8 @@ export const BetSelection = {
     const params = [];
 
     selections.forEach((sel, idx) => {
-      const baseIndex = idx * 11;
-      values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10}, $${baseIndex + 11})`);
+      const baseIndex = idx * 12;
+      values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, $${baseIndex + 10}, $${baseIndex + 11}, $${baseIndex + 12})`);
       const commenceTime =
         sel.game_commence_time ??
         sel.gameCommenceTime ??
@@ -443,6 +443,7 @@ export const BetSelection = {
       params.push(
         betId,
         sel.game_id,
+        sel.sport_key || sel.sportKey || 'unknown',
         sel.home_team,
         sel.away_team,
         sel.league,
@@ -457,10 +458,10 @@ export const BetSelection = {
 
     const sql = `
       INSERT INTO bet_selections (
-        bet_id, game_id, home_team, away_team, league, market,
+        bet_id, game_id, sport_key, home_team, away_team, league, market,
         selected_team, selected_odds, point_spread, bookmaker, game_commence_time
       ) VALUES ${values.join(', ')}
-      RETURNING id, bet_id, game_id, home_team, away_team, league, market, selected_team, selected_odds, point_spread, game_commence_time, selection_status;
+      RETURNING id, bet_id, game_id, sport_key, home_team, away_team, league, market, selected_team, selected_odds, point_spread, game_commence_time, selection_status;
     `;
 
     const result = await query(sql, params);
