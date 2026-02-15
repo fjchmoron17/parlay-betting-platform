@@ -58,6 +58,18 @@ const BetTicket = ({ bet, onClose }) => {
             const gameTime = selection.game_commence_time || selection.gameCommenceTime || selection.game_time || selection.commence_time || selection.commenceTime;
             // Considerar cualquier mercado que incluya 'total' (goles, puntos, juegos, sets, etc)
             const isTotals = selection.market && selection.market.toLowerCase().includes('total');
+            // Fallback: si falta over_under_type/over_under_value, intentar extraer de selected_team
+            let overUnderType = selection.over_under_type;
+            let overUnderValue = selection.over_under_value;
+            if (isTotals && (!overUnderType || !overUnderValue) && selection.selected_team) {
+              const teamStr = selection.selected_team.toLowerCase();
+              if (!overUnderType && (teamStr.includes('over') || teamStr.includes('under'))) {
+                overUnderType = teamStr.includes('over') ? 'over' : 'under';
+              }
+              if (!overUnderValue && teamStr.match(/(over|under)\s*([\d\.]+)/)) {
+                overUnderValue = teamStr.match(/(over|under)\s*([\d\.]+)/)[2];
+              }
+            }
             return (
               <div key={index} className={`ticket-selection-item ${selectionStatus ? `status-${selectionStatus}` : ''}`}>
                 <div className="selection-number">#{index + 1}</div>
@@ -67,9 +79,8 @@ const BetTicket = ({ bet, onClose }) => {
                   </p>
                   <p className="selection-meta">
                     {selection.league} • {selection.market}
-                    {isTotals && (selection.over_under_type && selection.over_under_value) && (
-                      <span className="totals-detail"> • {selection.over_under_type.toUpperCase()} {selection.over_under_value} {selection.over_under_type && selection.market && (() => {
-                        // Mostrar tipo de totales: goles, puntos, juegos, sets, etc
+                    {isTotals && (overUnderType && overUnderValue) && (
+                      <span className="totals-detail"> • {overUnderType.toUpperCase()} {overUnderValue} {overUnderType && selection.market && (() => {
                         if (selection.market.toLowerCase().includes('goles')) return 'goles';
                         if (selection.market.toLowerCase().includes('puntos')) return 'puntos';
                         if (selection.market.toLowerCase().includes('juegos')) return 'juegos';
@@ -98,7 +109,7 @@ const BetTicket = ({ bet, onClose }) => {
                 <div className="selection-bet">
                   <p className="selection-team">
                     {isTotals
-                      ? (selection.over_under_type ? selection.over_under_type.toUpperCase() : '')
+                      ? (overUnderType ? overUnderType.toUpperCase() : '')
                       : (selection.team || selection.selected_team)}
                   </p>
                   <p className="selection-odds">@{selection.odds || selection.selected_odds}</p>
