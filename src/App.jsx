@@ -12,14 +12,13 @@ import Promotions from "./pages/Promotions";
 const COMMIT_HASH = process.env.REACT_APP_COMMIT_HASH || 'unknown';
 
 function AppContent() {
-  if (pathname.startsWith("/promociones") || view === "promociones") {
-    return <Promotions />;
-  }
-
-  const { isAuthenticated, isSuperAdmin, user, logout, loading } = useAuth();
   const pathname = window.location.pathname;
   const params = new URLSearchParams(window.location.search);
   const view = params.get("view");
+  const { isAuthenticated, isSuperAdmin, user, logout, loading } = useAuth();
+  if (pathname.startsWith("/promociones") || view === "promociones") {
+    return <Promotions />;
+  }
 
   // Ruta especial para test de ticket
   const [BetTicketTest, setBetTicketTest] = React.useState(null);
