@@ -79,6 +79,7 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
           let overUnderValue = game.over_under_value;
           let selectedTeam = game.selectedTeam;
           // Si el mercado es de totales y el equipo seleccionado contiene over/under, extraerlo
+                    // [COPILOT] Refuerzo: lógica Over/Under explícita para totales
           if (game.market && game.market.toLowerCase().includes('total')) {
             const teamStr = (game.selectedTeam || '').toLowerCase();
             if (!overUnderType && (teamStr.includes('over') || teamStr.includes('under'))) {
