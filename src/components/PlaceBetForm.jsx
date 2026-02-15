@@ -147,19 +147,41 @@ export default function PlaceBetForm({ selectedGames, onSuccess, onCancel }) {
       <div className="selections-summary">
         <h4>Selecciones ({selectedGames.length})</h4>
         <div className="selections-list">
-          {selectedGames.map((game, index) => (
-            <div key={index} className="selection-item">
-              <div className="selection-info">
-                <span className="selection-teams">
-                  {game.home_team} vs {game.away_team}
-                </span>
-                <span className="selection-pick">
-                  {game.selectedTeam} {game.pointSpread ? `(${game.pointSpread})` : ''}
-                </span>
+          {selectedGames.map((game, index) => {
+            // Refuerzo: mostrar Over/Under explícito en la selección si es totales
+            let overUnderType = game.over_under_type;
+            let overUnderValue = game.over_under_value;
+            let selectedTeam = game.selectedTeam;
+            if (game.market && game.market.toLowerCase().includes('total')) {
+              const teamStr = (game.selectedTeam || '').toLowerCase();
+              if (!overUnderType && (teamStr.includes('over') || teamStr.includes('under'))) {
+                overUnderType = teamStr.includes('over') ? 'Over' : 'Under';
+              }
+              if (!overUnderValue && teamStr.match(/(over|under)\s*([\d\.]+)/)) {
+                overUnderValue = teamStr.match(/(over|under)\s*([\d\.]+)/)[2];
+              }
+              if (teamStr.includes('over') || teamStr.includes('under')) {
+                selectedTeam = (game.selectedTeam || '').replace(/(Over|Under)\s*[\d\.]+/i, '').trim();
+              }
+            }
+            return (
+              <div key={index} className="selection-item">
+                <div className="selection-info">
+                  <span className="selection-teams">
+                    {game.home_team} vs {game.away_team}
+                  </span>
+                  <span className="selection-pick">
+                    {game.market && game.market.toLowerCase().includes('total') && overUnderType && overUnderValue ? (
+                      <span className="team-name">{overUnderType} <span className="reference-value">{overUnderValue}</span></span>
+                    ) : (
+                      <>{selectedTeam} {game.pointSpread ? `(${game.pointSpread})` : ''}</>
+                    )}
+                  </span>
+                </div>
+                <span className="selection-odds">{game.selectedOdds.toFixed(2)}</span>
               </div>
-              <span className="selection-odds">{game.selectedOdds.toFixed(2)}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
