@@ -163,6 +163,8 @@ export default function HousePortal() {
   };
 
   const handlePlaceBet = async () => {
+      // LOG: Mostrar selectedGames antes de mapear a betData
+      console.log('[DEBUG] selectedGames en handlePlaceBet:', JSON.stringify(selectedGames, null, 2));
     if (selectedGames.length === 0) {
       setError('Selecciona al menos un juego para apostar');
       return;
